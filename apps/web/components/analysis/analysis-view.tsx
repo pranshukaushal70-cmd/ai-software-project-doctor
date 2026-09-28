@@ -1,0 +1,166 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { AlertTriangle, ExternalLink } from "lucide-react";
+import { ANALYSIS_STAGES } from "@pd/shared/constants";
+import { StatusBadge } from "../status-badge";
+import { Card, CardContent } from "../ui/card";
+import { api } from "@/lib/api-client";
+import { cn, formatDate } from "@/lib/utils";
+import { CodeMetrics } from "./code-metrics";
+import { FindingsList } from "./findings-list";
+import { ProgressPanel } from "./progress-panel";
+import { ScanOverview } from "./scan-overview";
+import type { ScanSummaryDto } from "./types";
+
+export interface AnalysisDto {
+  id: string;
+  status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+  stage: (typeof ANALYSIS_STAGES)[number]["id"];
+  progress: number;
+  mode: "LOCAL_ONLY" | "AI";
+  analyzerVersion: string;
+  commitSha: string | null;
+  error: string | null;
+  summary: ScanSummaryDto | null;
+  createdAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  repository: { id: string; name: string; owner: string | null; url: string | null; source: string; branch: string | null };
+}
+
+const POLL_MS = 2000;
+
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "code", label: "Code quality" },
+  { id: "findings", label: "Findings" },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
+
+function tabFromHash(): TabId {
+  if (typeof window === "undefined") return "overview";
+  const id = window.location.hash.slice(1);
+  return TABS.some((t) => t.id === id) ? (id as TabId) : "overview";
+}
+
+function CompletedAnalysis({ analysis }: { analysis: AnalysisDto }) {
+  const [tab, setTab] = useState<TabId>("overview");
+  useEffect(() => setTab(tabFromHash()), []);
+  const select = (id: TabId) => {
+    setTab(id);
+    window.history.replaceState(null, "", `#${id}`);
+  };
+  const summary = analysis.summary!;
+  const code = summary.codeMetrics;
+  const findingCount = code?.findings.stored;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div role="tablist" aria-label="Analysis sections" className="flex gap-1 border-b">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            type="button"
+            id={`tab-${t.id}`}
+            aria-selected={tab === t.id}
+            aria-controls={`panel-${t.id}`}
+            onClick={() => select(t.id)}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              tab === t.id ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t.label}
+            {t.id === "findings" && findingCount !== undefined && (
+              <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs tabular-nums">{findingCount}</span>
+            )}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        {tab === "overview" && <ScanOverview analysisId={analysis.id} summary={summary} />}
+        {tab !== "overview" && !code && (
+          <Card>
+            <CardContent className="pt-5 text-sm text-muted-foreground">
+              This analysis was produced by analyzer v{analysis.analyzerVersion}, before code metrics existed. Run a new analysis of
+              this repository to see code quality and findings.
+            </CardContent>
+          </Card>
+        )}
+        {tab === "code" && code && <CodeMetrics analysisId={analysis.id} metrics={code} />}
+        {tab === "findings" && code && <FindingsList analysisId={analysis.id} />}
+      </div>
+    </div>
+  );
+}
+
+export function AnalysisView({ initial }: { initial: AnalysisDto }) {
+  const [analysis, setAnalysis] = useState(initial);
+  const [pollError, setPollError] = useState(false);
+  const active = analysis.status === "QUEUED" || analysis.status === "RUNNING";
+
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    const timer = setInterval(async () => {
+      try {
+        const next = await api<AnalysisDto>(`/api/analysis/${initial.id}`);
+        if (!cancelled) {
+          setAnalysis(next);
+          setPollError(false);
+        }
+      } catch {
+        if (!cancelled) setPollError(true);
+      }
+    }, POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [active, initial.id]);
+
+  const repo = analysis.repository;
+  const title = repo.owner ? `${repo.owner}/${repo.name}` : repo.name;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
+            <StatusBadge status={analysis.status} />
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            {repo.url && (
+              <a href={repo.url} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 hover:text-foreground">
+                {repo.url.replace("https://", "")} <ExternalLink className="size-3" />
+              </a>
+            )}
+            {repo.branch && <span>branch {repo.branch}</span>}
+            {analysis.commitSha && <span className="font-mono">{analysis.commitSha.slice(0, 10)}</span>}
+            <span>analyzer v{analysis.analyzerVersion}</span>
+            <span>{formatDate(analysis.createdAt)}</span>
+          </div>
+        </div>
+      </div>
+
+      {active && <ProgressPanel stage={analysis.stage} progress={analysis.progress} connectionLost={pollError} />}
+
+      {analysis.status === "FAILED" && (
+        <Card className="border-sev-critical/30">
+          <CardContent className="flex items-start gap-3 pt-5">
+            <AlertTriangle className="mt-0.5 size-5 text-sev-critical" />
+            <div>
+              <div className="font-medium">Analysis failed</div>
+              <p className="text-sm text-muted-foreground">{analysis.error ?? "An unknown error occurred."}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {analysis.status === "COMPLETED" && analysis.summary && <CompletedAnalysis analysis={analysis} />}
+    </div>
+  );
+}

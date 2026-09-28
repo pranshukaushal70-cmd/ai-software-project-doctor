@@ -1,0 +1,371 @@
+// AI Software Project Doctor — database schema.
+// Every analysis stores the analyzer version, commit SHA and scoring weights
+// it was produced with so results are reproducible.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------- Auth
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  sessions     Session[]
+  repositories Repository[]
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// HMAC-SHA256 of the opaque session token; the raw token only lives in the cookie.
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ---------------------------------------------------------------- Repositories & analyses
+
+enum RepositorySource {
+  GITHUB
+  GITLAB
+  ZIP
+  DEMO
+}
+
+model Repository {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source    RepositorySource
+  name      String
+  url       String?
+  owner     String?
+  branch    String?
+  /// Key of the uploaded archive in local workspace storage (ZIP sources only).
+  uploadKey String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  analyses  Analysis[]
+
+  @@index([userId, createdAt])
+}
+
+enum AnalysisStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum AnalysisStage {
+  QUEUED
+  CLONING
+  SCANNING
+  PARSING
+  SECURITY
+  DEPENDENCIES
+  ARCHITECTURE
+  GIT
+  AI
+  REPORT
+  COMPLETED
+}
+
+enum AnalysisMode {
+  LOCAL_ONLY
+  AI
+}
+
+model Analysis {
+  id              String         @id @default(cuid())
+  repositoryId    String
+  repository      Repository     @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  status          AnalysisStatus @default(QUEUED)
+  stage           AnalysisStage  @default(QUEUED)
+  progress        Int            @default(0)
+  mode            AnalysisMode   @default(LOCAL_ONLY)
+  analyzerVersion String
+  commitSha       String?
+  /// Structured repository scan summary (languages, tooling, counts).
+  summary         Json?
+  healthScore     Int?
+  scoreBreakdown  Json?
+  weightsUsed     Json?
+  /// User-safe error message when status = FAILED.
+  error           String?
+  createdAt       DateTime       @default(now())
+  startedAt       DateTime?
+  finishedAt      DateTime?
+
+  files           File[]
+  findings        Finding[]
+  metrics         Metric[]
+  dependencies    Dependency[]
+  nodes           ArchitectureNode[]
+  edges           ArchitectureEdge[]
+  gitInsights     GitInsight[]
+  recommendations Recommendation[]
+  reports         Report[]
+
+  @@index([repositoryId, createdAt])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------- Analysis results
+
+enum FileKind {
+  SOURCE
+  TEST
+  DOCUMENTATION
+  CONFIG
+  GENERATED
+  BINARY
+  OTHER
+}
+
+model File {
+  id              String    @id @default(cuid())
+  analysisId      String
+  analysis        Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  path            String
+  language        String?
+  kind            FileKind
+  size            Int
+  /// Physical lines.
+  lines           Int?
+  /// Lines containing code (excludes blank and comment-only lines).
+  loc             Int?
+  /// Logical lines: statement and declaration nodes.
+  lloc            Int?
+  commentLines    Int?
+  blankLines      Int?
+  functionCount   Int?
+  classCount      Int?
+  maxComplexity   Int?
+  avgComplexity   Float?
+  maxNesting      Int?
+  /// Lines that are part of a detected clone.
+  duplicatedLines Int?
+  /// Syntax-error nodes from parser recovery; metrics for such files are approximate.
+  parseErrors     Int?
+  /// Module specifiers imported/included by the file (capped).
+  imports         String[]
+  /// Names the file exports (capped).
+  exports         String[]
+  findings        Finding[]
+  metrics         Metric[]
+
+  @@unique([analysisId, path])
+  @@index([analysisId, kind])
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum FindingCategory {
+  CODE_QUALITY
+  SECURITY
+  SECRET
+  DEPENDENCY
+  ARCHITECTURE
+  API
+  DATABASE
+  TESTING
+  DOCUMENTATION
+  GIT
+  DEVOPS
+}
+
+model Finding {
+  id              String          @id @default(cuid())
+  analysisId      String
+  analysis        Analysis        @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  fileId          String?
+  file            File?           @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  category        FindingCategory
+  type            String
+  severity        Severity
+  ruleId          String
+  title           String
+  line            Int?
+  endLine         Int?
+  /// Always redacted — raw secrets are never persisted.
+  evidence        String?
+  impact          String?
+  recommendation  String?
+  /// Stable hash of (ruleId, path, normalised evidence) for de-duplication across runs.
+  fingerprint     String
+  /// Structured measurements behind the finding (value, limit, related location, …).
+  data            Json?
+  /// Analyzer module and version that produced the finding, for reproducibility.
+  analyzer        String
+  analyzerVersion String
+  createdAt       DateTime        @default(now())
+  fixes           FixSuggestion[]
+
+  @@index([analysisId, severity])
+  @@index([analysisId, category])
+  @@index([analysisId, fileId])
+  @@index([fingerprint])
+}
+
+model Metric {
+  id         String   @id @default(cuid())
+  analysisId String
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  fileId     String?
+  file       File?    @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  key        String
+  value      Float
+
+  @@index([analysisId, key])
+}
+
+model Dependency {
+  id              String   @id @default(cuid())
+  analysisId      String
+  analysis        Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  ecosystem       String
+  name            String
+  versionSpec     String?
+  resolvedVersion String?
+  direct          Boolean  @default(true)
+  dev             Boolean  @default(false)
+  manifestPath    String
+  latestVersion   String?
+  vulnIds         String[]
+  /// Where vulnerability / version data came from, e.g. "osv.dev".
+  dataSource      String?
+  unusedCandidate Boolean  @default(false)
+
+  @@index([analysisId, ecosystem])
+}
+
+enum NodeKind {
+  FILE
+  MODULE
+  LAYER
+  PACKAGE
+}
+
+model ArchitectureNode {
+  id         String             @id @default(cuid())
+  analysisId String
+  analysis   Analysis           @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  key        String
+  kind       NodeKind
+  label      String
+  layer      String?
+  metrics    Json?
+  outgoing   ArchitectureEdge[] @relation("edgeFrom")
+  incoming   ArchitectureEdge[] @relation("edgeTo")
+
+  @@unique([analysisId, key])
+}
+
+model ArchitectureEdge {
+  id         String           @id @default(cuid())
+  analysisId String
+  analysis   Analysis         @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  fromId     String
+  from       ArchitectureNode @relation("edgeFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toId       String
+  to         ArchitectureNode @relation("edgeTo", fields: [toId], references: [id], onDelete: Cascade)
+  kind       String           @default("import")
+  weight     Int              @default(1)
+  inCycle    Boolean          @default(false)
+
+  @@index([analysisId])
+}
+
+model GitInsight {
+  id         String   @id @default(cuid())
+  analysisId String
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  kind       String
+  path       String?
+  data       Json
+
+  @@index([analysisId, kind])
+}
+
+enum RecommendationSource {
+  AI
+  RULE
+}
+
+enum Effort {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+model Recommendation {
+  id                 String               @id @default(cuid())
+  analysisId         String
+  analysis           Analysis             @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  phase              Int
+  priority           Int
+  title              String
+  rationale          String
+  effort             Effort?
+  evidenceFindingIds String[]
+  source             RecommendationSource
+
+  @@index([analysisId, phase])
+}
+
+model FixSuggestion {
+  id            String   @id @default(cuid())
+  findingId     String
+  finding       Finding  @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  originalCode  String
+  suggestedCode String
+  explanation   String
+  provider      String
+  model         String
+  createdAt     DateTime @default(now())
+
+  @@index([findingId])
+}
+
+enum ReportFormat {
+  PDF
+  JSON
+  MARKDOWN
+  HTML
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  analysisId  String
+  analysis    Analysis     @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  format      ReportFormat
+  storagePath String
+  createdAt   DateTime     @default(now())
+
+  @@index([analysisId])
+}

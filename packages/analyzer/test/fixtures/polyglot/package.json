@@ -1,0 +1,6 @@
+{
+  "name": "polyglot-demo",
+  "private": true,
+  "scripts": { "test": "vitest run" },
+  "devDependencies": { "vitest": "^5.0.0" }
+}

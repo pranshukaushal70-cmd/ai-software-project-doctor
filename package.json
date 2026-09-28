@@ -1,0 +1,33 @@
+{
+  "name": "project-doctor",
+  "private": true,
+  "type": "module",
+  "description": "AI Software Project Doctor — diagnose your software before it breaks.",
+  "packageManager": "npm@11.6.2",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @pd/web",
+    "worker": "npm run dev -w @pd/worker",
+    "build": "npm run build -w @pd/web",
+    "db:generate": "npm run generate -w @pd/db",
+    "db:migrate": "npm run migrate:dev -w @pd/db",
+    "db:deploy": "npm run migrate:deploy -w @pd/db",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "services:up": "docker compose up -d postgres redis",
+    "services:down": "docker compose down"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "6.0.3",
+    "vitest": "^5.0.2"
+  }
+}
