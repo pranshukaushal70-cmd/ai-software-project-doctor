@@ -74,10 +74,15 @@ afterEach(async () => {
   await rm(workspaceDir, { recursive: true, force: true });
 });
 
+/** A committed .env with a credential, so the upload exercises the security stage. */
+const ENV_FILE = { path: ".env", content: "PORT=3000\nDB_PASSWORD=Xk92_mq7PzLw\n" };
+const ALL_FILES = [...FIXTURE_FILES, ENV_FILE.path];
+
 async function stageUpload(): Promise<string> {
   const entries = await Promise.all(
     FIXTURE_FILES.map(async (rel) => ({ name: `polyglot-main/${rel}`, data: await readFile(path.join(FIXTURE, rel)), deflate: true })),
   );
+  entries.push({ name: `polyglot-main/${ENV_FILE.path}`, data: Buffer.from(ENV_FILE.content), deflate: false });
   const key = randomUUID();
   await mkdir(uploadsDir(workspaceDir), { recursive: true });
   await writeFile(uploadPath(workspaceDir, key), buildZip(entries));
@@ -101,9 +106,9 @@ describe("runAnalysis", () => {
     await runAnalysis("an1", { prisma, limits, log: silentLog });
 
     expect(analysis).toMatchObject({ status: "COMPLETED", stage: "COMPLETED", progress: 100, analyzerVersion: expect.any(String) });
-    expect(updates.map((u) => u.stage).filter(Boolean)).toEqual(["CLONING", "SCANNING", "PARSING", "COMPLETED"]);
+    expect(updates.map((u) => u.stage).filter(Boolean)).toEqual(["CLONING", "SCANNING", "PARSING", "SECURITY", "COMPLETED"]);
 
-    expect(tables.file.map((f) => f.path).sort()).toEqual([...FIXTURE_FILES].sort());
+    expect(tables.file.map((f) => f.path).sort()).toEqual([...ALL_FILES].sort());
     expect(tables.file.find((f) => f.path === "src/orders.ts")).toMatchObject({ kind: "SOURCE", loc: 62, maxComplexity: 15 });
     expect(tables.finding.some((f) => f.id === "stale")).toBe(false);
     expect(tables.finding.length).toBeGreaterThan(0);
@@ -111,10 +116,21 @@ describe("runAnalysis", () => {
     expect(tables.finding.every((f) => fileIds.has(f.fileId as string))).toBe(true);
     expect(tables.metric.find((m) => m.key === "code.files")?.value).toBe(5);
 
-    const summary = analysis.summary as { modulesRun: string[]; ingest: Row; codeMetrics: { totals: Row } };
-    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics"]);
-    expect(summary.ingest).toMatchObject({ source: "ZIP", extractedFiles: FIXTURE_FILES.length });
+    // Security findings are persisted next to code-quality findings, linked to their file.
+    const envFileId = tables.file.find((f) => f.path === ".env")?.id;
+    const secrets = tables.finding.filter((f) => f.category === "SECRET");
+    expect(secrets.map((f) => f.ruleId).sort()).toEqual(["secret/committed-env-file", "secret/hardcoded-credential"]);
+    expect(secrets.every((f) => f.fileId === envFileId && f.analyzer === "security")).toBe(true);
+    expect(JSON.stringify(tables.finding)).not.toContain("Xk92_mq7PzLw");
+    expect(tables.metric.find((m) => m.key === "security.secrets")?.value).toBe(2);
+
+    const summary = analysis.summary as { modulesRun: string[]; ingest: Row; codeMetrics: { totals: Row }; security: { totals: Row; envFiles: string[] } };
+    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics", "security"]);
+    expect(summary.ingest).toMatchObject({ source: "ZIP", extractedFiles: ALL_FILES.length });
+    expect(summary.security.totals).toMatchObject({ secrets: 2 });
+    expect(summary.security.envFiles).toEqual([".env"]);
     expect(JSON.stringify(summary)).not.toContain(workspaceDir);
+    expect(JSON.stringify(summary)).not.toContain("Xk92_mq7PzLw");
 
     // The upload and the extraction workspace are removed afterwards.
     await expect(stat(uploadPath(workspaceDir, key))).rejects.toThrow();

@@ -15,7 +15,7 @@ The analyzer processes **untrusted repositories** on behalf of **authenticated u
 | Git option injection | Branch names may not start with `-`; passed as `--branch=<b>`; `--` precedes positional args | same |
 | Code execution | Repository code is never run: no installs, builds or scripts | whole pipeline |
 | Leftover source code | Per-run workspace is deleted in `finally`; uploaded ZIPs are deleted after analysis | `worker/src/pipeline.ts` |
-| Secrets in reports/logs | (Phase 3) findings store masked evidence only; pino redacts credential-like keys already | `shared/src/logger.ts` |
+| Secrets in reports/logs | Detected secret values are masked before evidence is built (at most a public prefix such as `ghp_` remains); fingerprints use the variable name or rule, never the value; every evidence string passes a second redaction pass; pino redacts credential-like keys | `analyzer/src/security/secrets.ts`, `metrics/evidence.ts`, `shared/src/logger.ts` |
 
 ## Authentication
 

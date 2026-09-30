@@ -9,7 +9,7 @@ import { Skeleton } from "../ui/skeleton";
 import { api } from "@/lib/api-client";
 import { cn, formatNumber } from "@/lib/utils";
 import { EvidenceText } from "./evidence-text";
-import { SEVERITY_LABEL, SEVERITY_TONE, typeLabel } from "./labels";
+import { CATEGORY_LABEL, SEVERITY_LABEL, SEVERITY_TONE, typeLabel } from "./labels";
 import type { FindingDto, FindingsPageDto, SeverityDto } from "./types";
 
 const PAGE_SIZE = 50;
@@ -34,6 +34,7 @@ function FindingRow({ finding }: { finding: FindingDto }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={SEVERITY_TONE[finding.severity]}>{SEVERITY_LABEL[finding.severity]}</Badge>
+            {finding.category !== "CODE_QUALITY" && <Badge tone="neutral">{CATEGORY_LABEL[finding.category] ?? finding.category}</Badge>}
             <span className="font-medium">{finding.title}</span>
           </div>
           <div className="mt-1 flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
@@ -63,6 +64,17 @@ function FindingRow({ finding }: { finding: FindingDto }) {
             <span>
               rule <span className="font-mono">{finding.ruleId}</span>
             </span>
+            {typeof finding.data?.cwe === "string" && (
+              <a
+                href={`https://cwe.mitre.org/data/definitions/${finding.data.cwe.replace(/^CWE-/, "")}.html`}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="font-mono underline-offset-2 hover:text-foreground hover:underline"
+              >
+                {finding.data.cwe}
+              </a>
+            )}
+            {typeof finding.data?.owasp === "string" && <span>OWASP {finding.data.owasp}</span>}
             <span>
               {finding.analyzer} v{finding.analyzerVersion}
             </span>
@@ -92,7 +104,16 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
   );
 }
 
-export function FindingsList({ analysisId }: { analysisId: string }) {
+export function FindingsList({
+  analysisId,
+  categories,
+  emptyMessage = "No findings. Nice work.",
+}: {
+  analysisId: string;
+  /** Comma-separated FindingCategory values to scope the list to (a string, so it is referentially stable). */
+  categories?: string;
+  emptyMessage?: string;
+}) {
   const [severity, setSeverity] = useState<SeverityDto | null>(null);
   const [type, setType] = useState<string | null>(null);
   const [data, setData] = useState<FindingsPageDto | null>(null);
@@ -105,11 +126,12 @@ export function FindingsList({ analysisId }: { analysisId: string }) {
   const fetchPage = useCallback(
     (page: number) => {
       const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+      if (categories) params.set("category", categories);
       if (severity) params.set("severity", severity);
       if (type) params.set("type", type);
       return api<FindingsPageDto>(`/api/analysis/${analysisId}/findings?${params}`);
     },
-    [analysisId, severity, type],
+    [analysisId, categories, severity, type],
   );
 
   useEffect(() => {
@@ -190,7 +212,7 @@ export function FindingsList({ analysisId }: { analysisId: string }) {
           </div>
         ) : items.length === 0 ? (
           <CardContent className="pt-5 text-sm text-muted-foreground">
-            {allCount === 0 ? "No code-quality findings. Nice work." : "No findings match these filters."}
+            {allCount === 0 ? emptyMessage : "No findings match these filters."}
           </CardContent>
         ) : (
           <ul aria-label="Findings">

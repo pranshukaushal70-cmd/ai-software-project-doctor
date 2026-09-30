@@ -10,10 +10,11 @@ import {
   type Workspace,
 } from "@pd/analyzer";
 import { analyzeCode } from "@pd/analyzer/metrics";
+import { createSecurityScanner } from "@pd/analyzer/security";
 import type { AnalysisStage, Prisma, PrismaClient } from "@pd/db";
 import { AppError, stageProgress, type AnalyzerLimits } from "@pd/shared";
 import type { Logger } from "@pd/shared/logger";
-import { buildFileRows, buildFindingRows, buildRepositoryMetricRows } from "./persist";
+import { buildFileRows, buildFindingRows, buildRepositoryMetricRows, buildSecurityMetricRows } from "./persist";
 import { summarizeScan, type IngestInfo } from "./summary";
 
 export interface PipelineDeps {
@@ -105,7 +106,10 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
     const parseStart = stageProgress("PARSING");
     const parseSpan = stageProgress("SECURITY") - parseStart - 1;
     let lastProgressAt = 0;
+    // Insecure-pattern rules run on the same syntax trees as the metrics (one parse per file).
+    const security = createSecurityScanner();
     const code = await analyzeCode(scan.files, {
+      onTree: security.inspectTree,
       onProgress: async (done, total) => {
         if (Date.now() - lastProgressAt < PROGRESS_INTERVAL_MS) return;
         lastProgressAt = Date.now();
@@ -120,12 +124,22 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
       "code metrics complete",
     );
 
+    await setStage("SECURITY");
+    const sec = await security.finish(scan);
+    log.info(
+      { findings: sec.summary.totals.findings, secrets: sec.summary.totals.secrets, ms: sec.summary.durationMs },
+      "security analysis complete",
+    );
+
     await insertInBatches(buildFileRows(analysisId, scan, code), (data) => prisma.file.createMany({ data }));
     const fileIds = new Map(
       (await prisma.file.findMany({ where: { analysisId }, select: { id: true, path: true } })).map((f) => [f.path, f.id]),
     );
-    await insertInBatches(buildFindingRows(analysisId, code.findings, fileIds), (data) => prisma.finding.createMany({ data }));
-    await prisma.metric.createMany({ data: buildRepositoryMetricRows(analysisId, code) });
+    const findingRows = buildFindingRows(analysisId, [...code.findings, ...sec.findings], fileIds);
+    await insertInBatches(findingRows, (data) => prisma.finding.createMany({ data }));
+    await prisma.metric.createMany({
+      data: [...buildRepositoryMetricRows(analysisId, code), ...buildSecurityMetricRows(analysisId, sec)],
+    });
 
     await prisma.analysis.update({
       where: { id: analysisId },
@@ -133,7 +147,7 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
         status: "COMPLETED",
         stage: "COMPLETED",
         progress: 100,
-        summary: summarizeScan(scan, ingest, code.summary) as unknown as Prisma.InputJsonObject,
+        summary: summarizeScan(scan, ingest, code.summary, sec.summary) as unknown as Prisma.InputJsonObject,
         finishedAt: new Date(),
       },
     });

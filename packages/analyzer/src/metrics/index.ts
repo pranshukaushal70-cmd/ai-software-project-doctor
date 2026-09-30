@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import type { Tree } from "web-tree-sitter";
 import type { Severity } from "@pd/shared/constants";
 import type { ScannedFile } from "../scanner";
 import { isAnalyzedLanguage, type AnalyzedLanguage } from "../scanner/languages";
@@ -102,6 +103,20 @@ export interface AnalyzeCodeOptions {
   maxFindings?: number;
   maxDuplicationTokens?: number;
   onProgress?: (done: number, total: number) => void | Promise<void>;
+  /**
+   * Called with every successfully parsed file before its tree is released, so
+   * other analyzers (security) can reuse the parse. Errors thrown here are
+   * swallowed and never affect code metrics.
+   */
+  onTree?: (ctx: TreeContext) => void;
+}
+
+export interface TreeContext {
+  tree: Tree;
+  source: string;
+  path: string;
+  grammar: GrammarId;
+  kind: ScannedFile["kind"];
 }
 
 const SEVERITY_ORDER: Severity[] = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
@@ -134,7 +149,12 @@ function percentile(sorted: number[], p: number): number {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-async function analyzeOne(file: ScannedFile, language: AnalyzedLanguage, timeoutMs: number): Promise<{ result: FileAnalysis; grammar: GrammarId } | SkippedFile["reason"]> {
+async function analyzeOne(
+  file: ScannedFile,
+  language: AnalyzedLanguage,
+  timeoutMs: number,
+  onTree?: AnalyzeCodeOptions["onTree"],
+): Promise<{ result: FileAnalysis; grammar: GrammarId } | SkippedFile["reason"]> {
   let source: string;
   try {
     source = await readFile(file.absPath, "utf8");
@@ -162,6 +182,11 @@ async function analyzeOne(file: ScannedFile, language: AnalyzedLanguage, timeout
       emitFindings: file.kind === "SOURCE",
       collectTokens: file.kind === "SOURCE",
     });
+    try {
+      onTree?.({ tree, source, path: file.path, grammar, kind: file.kind });
+    } catch {
+      // A consumer bug must not cost the file its metrics.
+    }
     return { result, grammar };
   } finally {
     tree.delete();
@@ -195,7 +220,7 @@ export async function analyzeCode(files: readonly ScannedFile[], opts: AnalyzeCo
     if (file.oversized) {
       skipped.push({ path: file.path, reason: "oversized" });
     } else {
-      const outcome = await analyzeOne(file, file.language, timeoutMs);
+      const outcome = await analyzeOne(file, file.language, timeoutMs, opts.onTree);
       if (typeof outcome === "string") skipped.push({ path: file.path, reason: outcome });
       else {
         const { result, grammar } = outcome;

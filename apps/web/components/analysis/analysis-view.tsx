@@ -11,6 +11,7 @@ import { CodeMetrics } from "./code-metrics";
 import { FindingsList } from "./findings-list";
 import { ProgressPanel } from "./progress-panel";
 import { ScanOverview } from "./scan-overview";
+import { SecurityPanel } from "./security-panel";
 import type { ScanSummaryDto } from "./types";
 
 export interface AnalysisDto {
@@ -34,7 +35,8 @@ const POLL_MS = 2000;
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "code", label: "Code quality" },
-  { id: "findings", label: "Findings" },
+  { id: "security", label: "Security" },
+  { id: "findings", label: "All findings" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -53,7 +55,9 @@ function CompletedAnalysis({ analysis }: { analysis: AnalysisDto }) {
   };
   const summary = analysis.summary!;
   const code = summary.codeMetrics;
-  const findingCount = code?.findings.stored;
+  const security = summary.security;
+  const findingCount = code ? code.findings.stored + (security?.findings.stored ?? 0) : undefined;
+  const securityCount = security?.totals.findings;
 
   return (
     <div className="flex flex-col gap-6">
@@ -76,6 +80,16 @@ function CompletedAnalysis({ analysis }: { analysis: AnalysisDto }) {
             {t.id === "findings" && findingCount !== undefined && (
               <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs tabular-nums">{findingCount}</span>
             )}
+            {t.id === "security" && securityCount !== undefined && securityCount > 0 && (
+              <span
+                className={cn(
+                  "ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums",
+                  security!.totals.secrets > 0 ? "bg-sev-critical/12 text-sev-critical" : "bg-muted",
+                )}
+              >
+                {securityCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -90,6 +104,15 @@ function CompletedAnalysis({ analysis }: { analysis: AnalysisDto }) {
           </Card>
         )}
         {tab === "code" && code && <CodeMetrics analysisId={analysis.id} metrics={code} />}
+        {tab === "security" && code && !security && (
+          <Card>
+            <CardContent className="pt-5 text-sm text-muted-foreground">
+              This analysis was produced by analyzer v{analysis.analyzerVersion}, before security analysis existed. Run a new analysis of this
+              repository to check it for secrets and insecure code.
+            </CardContent>
+          </Card>
+        )}
+        {tab === "security" && security && <SecurityPanel analysisId={analysis.id} security={security} />}
         {tab === "findings" && code && <FindingsList analysisId={analysis.id} />}
       </div>
     </div>

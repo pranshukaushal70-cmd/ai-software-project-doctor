@@ -7,7 +7,7 @@ evidence-based health report. Deterministic analysis (parsing, metrics, secret d
 architecture graphs) comes first; an LLM is used only afterwards, over structured and redacted findings, to
 explain, prioritise and recommend, and it must cite the evidence it uses.
 
-**Status: Phase 1 (foundation) complete; Phase 2 (code metrics & static analysis) implemented, end-to-end verification pending.** See [Roadmap](#roadmap) for what exists today and what is next.
+**Status: Phase 1 (foundation) complete; Phases 2 (code metrics & static analysis) and 3 (secret & insecure-pattern detection) implemented, end-to-end verification pending.** See [Roadmap](#roadmap) for what exists today and what is next.
 Nothing described as "planned" below is implemented yet.
 
 ## Problem statement
@@ -27,7 +27,7 @@ Browser ─► Next.js (UI + /api) ─► PostgreSQL
                ▼                        │ results
              Redis ◄── BullMQ ──► Worker ┘
                                    │
-          ingest (hardened clone / safe ZIP) → scan → code metrics → [security → dependencies
+          ingest (hardened clone / safe ZIP) → scan → code metrics → security → [dependencies
           → architecture → git → scoring → redaction → AI reasoning → report]   (bracketed: planned)
 ```
 
@@ -98,7 +98,7 @@ bombs and size limits before anything is written. Details and threat model: [doc
 |---|---|---|
 | 1 | Workspace, schema, auth, hardened ingest, repository scanner, job queue, base UI | ✅ Done |
 | 2 | Tree-sitter adapters (JS/TS/Python/Java/C/C++), LOC, complexity, smells | Implemented; E2E pending |
-| 3 | Secret detection, insecure-pattern rules, security dashboard | Planned |
+| 3 | Secret detection, insecure-pattern rules, security dashboard | Implemented; E2E pending |
 | 4 | Dependencies + OSV.dev, import graph, cycles, architecture view | Planned |
 | 5 | API/DB/test/docs analyzers, explainable health score, demo project | Planned |
 | 6 | Git history insights | Planned |

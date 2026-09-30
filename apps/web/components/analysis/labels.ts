@@ -40,6 +40,32 @@ export const FINDING_TYPE_LABEL: Record<string, string> = {
   "unreachable-code": "Unreachable code",
   "unused-import": "Unused import",
   "unused-private-member": "Unused private function",
+  // security
+  "private-key": "Private key",
+  "cloud-credential": "Cloud credential",
+  "api-token": "API token",
+  "database-credentials": "Database credentials",
+  "json-web-token": "JSON Web Token",
+  "hardcoded-credential": "Hard-coded credential",
+  "committed-env-file": "Committed .env file",
+  "code-injection": "Code injection",
+  "command-injection": "Command injection",
+  "sql-injection": "SQL injection",
+  xss: "Cross-site scripting",
+  "insecure-deserialization": "Unsafe deserialization",
+  "tls-verification-disabled": "TLS verification disabled",
+  "jwt-verification-disabled": "JWT verification disabled",
+  "weak-hash": "Weak hash",
+  "weak-cipher": "Weak cipher",
+  "insecure-randomness": "Insecure randomness",
+  "unsafe-c-function": "Unsafe C function",
+  "debug-mode": "Debug mode",
+};
+
+export const CATEGORY_LABEL: Record<string, string> = {
+  CODE_QUALITY: "Code quality",
+  SECURITY: "Security",
+  SECRET: "Secret",
 };
 
 export const typeLabel = (type: string) => FINDING_TYPE_LABEL[type] ?? type;

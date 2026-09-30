@@ -83,8 +83,54 @@ identity when code moves. At most 5,000 findings are stored per analysis (most s
 The worker runs this in the `PARSING` stage and stores per-file metrics on `File`, findings on `Finding`, repository
 aggregates on `Metric` (`fileId = null`), and `summary.codeMetrics` (totals, per-language stats, hotspots, parser versions).
 
+## Security analysis (Phase 3)
+
+`@pd/analyzer/security` has two parts, both deterministic:
+
+**Secret detection** (`security/secrets.ts`) searches every text file (source, tests, config, docs, `.env`; not binaries,
+generated files or oversized files) line by line for:
+
+- well-known credential formats: PEM private keys (only when key material follows the header), AWS access key IDs and
+  secret keys, Google API keys, GitHub/GitLab/Slack/Stripe/OpenAI/Anthropic/npm/SendGrid tokens, Slack webhooks, JWTs;
+- passwords embedded in connection strings (`postgres://user:pass@host`), LOW when the host is local;
+- values assigned to credential-like names (`password`, `secret`, `token`, `api_key`, `client_secret`, …) in code, JSON,
+  YAML, `.properties`, INI/TOML and `.env` files, excluding placeholders (`changeme`, `${VAR}`, `process.env…`,
+  `<your-key>`, UPPER_CASE names, labels with spaces, i18n keys, ternaries, and similar);
+- committed (non-template) `.env` files that assign values.
+
+Secret values never leave the scanner: evidence shows the line with the value replaced by a mask that keeps at most a
+public identifying prefix (e.g. `ghp_…[redacted]`), and fingerprints are derived from the variable name or rule label,
+not from the value (a hash of a weak password could be brute-forced). Matches in test and documentation files are one
+severity level lower and say why. Templates (`.env.example`) only report real token formats.
+
+**Insecure-pattern detection** (`security/patterns.ts`) inspects the tree-sitter trees of production source through the
+`onTree` hook of `analyzeCode`, so each file is parsed once. Rules match the syntactic shape of a dangerous call, with
+"dynamic" meaning "not a constant literal":
+
+| Rule | Examples |
+|---|---|
+| `injection/dynamic-code-execution` (CWE-95) | `eval(x)`, `new Function(x)`, `setTimeout("…" + x)`, Python `eval`/`exec` |
+| `injection/os-command` (CWE-78) | `child_process.exec(\`…${x}\`)`, `spawn(…, { shell: true })`, `os.system(x)`, `subprocess.run(…, shell=True)`, `Runtime.exec(x)`, C `system(x)` |
+| `injection/sql` (CWE-89) | SQL text built with `+`, template literals, f-strings, `%`, `.format` or `String.format` and passed to `query`/`execute`/`executeQuery`/… (tagged templates such as Prisma's `$queryRaw\`\`` are safe) |
+| `injection/xss-sink` (CWE-79) | `innerHTML`/`outerHTML` assignment, `document.write`, `insertAdjacentHTML`, `dangerouslySetInnerHTML` with a dynamic value |
+| `unsafe/deserialization` (CWE-502) | `pickle.loads`, `yaml.load` without a safe Loader, `ObjectInputStream`, `XMLDecoder` |
+| `crypto/tls-verification-disabled` (CWE-295) | `rejectUnauthorized: false`, `NODE_TLS_REJECT_UNAUTHORIZED=0`, `verify=False`, `ssl.CERT_NONE`, `NoopHostnameVerifier`, `CURLOPT_SSL_VERIFYPEER 0` |
+| `crypto/jwt-verification-disabled` (CWE-347) | `algorithms: ['none']`, `jwt.decode(…, verify=False)`, `verify_signature: False` |
+| `crypto/weak-hash` (CWE-328) | MD5/SHA-1 via `createHash`, `hashlib` (unless `usedforsecurity=False`), `MessageDigest`, OpenSSL |
+| `crypto/weak-cipher` (CWE-327) | `createCipher`, DES/RC4/Blowfish, ECB mode, Java `Cipher.getInstance("AES")` |
+| `crypto/insecure-randomness` (CWE-338) | `Math.random()`/`random.*`/`java.util.Random` assigned to a token/secret/password/nonce/salt name |
+| `memory/unsafe-c-function` (CWE-120) | `gets`, `strcpy`, `strcat`, `sprintf`, `scanf("%s")` |
+| `config/debug-mode` (CWE-489) | Flask `app.run(debug=True)`, Django `DEBUG = True` in a settings module |
+
+There is no data-flow analysis, so a flagged call may be safe when its input is trusted; the evidence says what was
+matched so a reviewer can judge. Each finding stores `data.cwe` and `data.owasp`. The worker runs this in the `SECURITY`
+stage, stores findings (category `SECRET` or `SECURITY`, analyzer `security`) next to the code-quality findings,
+`security.*` rows on `Metric`, and `summary.security` (totals, per-rule counts, most affected files, committed env files).
+At most 2,000 security findings are stored (most severe first).
+
 ## Data model
 
 See `packages/db/prisma/schema.prisma`. Results hang off `Analysis` and cascade on delete:
 `File`, `Finding`, `Metric`, `Dependency`, `ArchitectureNode`/`ArchitectureEdge`, `GitInsight`, `Recommendation`,
-`Report`. Phase 1 populates `Analysis.summary` and `File`; Phase 2 adds file metrics, `Finding` and `Metric`; later phases fill the rest.
+`Report`. Phase 1 populates `Analysis.summary` and `File`; Phase 2 adds file metrics, `Finding` and `Metric`; Phase 3 adds
+`SECRET`/`SECURITY` findings and `summary.security` (no schema change: the categories already existed); later phases fill the rest.

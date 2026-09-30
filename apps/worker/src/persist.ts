@@ -1,5 +1,6 @@
 import type { RepositoryScan } from "@pd/analyzer";
 import type { CodeAnalysis, CodeFinding } from "@pd/analyzer/metrics";
+import type { SecurityAnalysis, SecurityFinding } from "@pd/analyzer/security";
 import type { Prisma } from "@pd/db";
 
 /** File rows: scanner inventory merged with code metrics where the file was analysed. */
@@ -35,7 +36,7 @@ export function buildFileRows(analysisId: string, scan: RepositoryScan, code: Co
 
 export function buildFindingRows(
   analysisId: string,
-  findings: readonly CodeFinding[],
+  findings: ReadonlyArray<CodeFinding | SecurityFinding>,
   fileIds: ReadonlyMap<string, string>,
 ): Prisma.FindingCreateManyInput[] {
   return findings.map((f) => ({
@@ -82,5 +83,19 @@ export function buildRepositoryMetricRows(analysisId: string, code: CodeAnalysis
   for (const [severity, n] of Object.entries(code.summary.findings.bySeverity)) {
     values[`findings.code_quality.${severity.toLowerCase()}`] = n;
   }
+  return Object.entries(values).map(([key, value]) => ({ analysisId, key, value }));
+}
+
+/** Repository-level security metrics, stored alongside the code metrics for trends and scoring. */
+export function buildSecurityMetricRows(analysisId: string, sec: SecurityAnalysis): Prisma.MetricCreateManyInput[] {
+  const t = sec.summary.totals;
+  const values: Record<string, number> = {
+    "security.findings": t.findings,
+    "security.secrets": t.secrets,
+    "security.insecure_patterns": t.insecurePatterns,
+    "security.files_with_findings": t.filesWithFindings,
+    "security.files_scanned": t.filesScanned,
+  };
+  for (const [severity, n] of Object.entries(t.bySeverity)) values[`security.findings.${severity.toLowerCase()}`] = n;
   return Object.entries(values).map(([key, value]) => ({ analysisId, key, value }));
 }

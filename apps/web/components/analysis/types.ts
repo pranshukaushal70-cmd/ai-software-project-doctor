@@ -23,6 +23,38 @@ export interface ScanSummaryDto {
   oversizedFiles: string[];
   /** Present from analyzer v0.2.0 on. */
   codeMetrics?: CodeMetricsDto;
+  /** Present from analyzer v0.3.0 on. */
+  security?: SecuritySummaryDto;
+}
+
+/** Shape of summary.security (packages/analyzer/src/security/index.ts SecuritySummary). */
+export interface SecuritySummaryDto {
+  analyzer: string;
+  analyzerVersion: string;
+  totals: {
+    findings: number;
+    secrets: number;
+    insecurePatterns: number;
+    filesScanned: number;
+    sourceFilesInspected: number;
+    filesWithFindings: number;
+    bySeverity: Record<SeverityDto, number>;
+  };
+  rules: Array<{
+    id: string;
+    type: string;
+    category: "SECRET" | "SECURITY";
+    title: string;
+    cwe: string;
+    owasp: string;
+    count: number;
+    maxSeverity: SeverityDto;
+  }>;
+  topFiles: Array<{ path: string; findings: number; maxSeverity: SeverityDto }>;
+  envFiles: string[];
+  findings: { total: number; stored: number; truncated: boolean };
+  errors: number;
+  durationMs: number;
 }
 
 export type SeverityDto = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
