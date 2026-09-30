@@ -62,6 +62,8 @@ export interface CodeMetricsDto {
     duplicationPercent: number;
     commentRatio: number;
     filesWithParseErrors: number;
+    /** Present from analyzer v0.2.1 on; `skipped` below lists at most 200 files. */
+    filesSkipped?: number;
   };
   byLanguage: Array<{
     language: string;

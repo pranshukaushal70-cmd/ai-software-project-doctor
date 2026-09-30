@@ -67,6 +67,8 @@ export interface CodeMetricsSummary {
     duplicationPercent: number;
     commentRatio: number;
     filesWithParseErrors: number;
+    /** All skipped files; `skipped` lists at most MAX_SKIPPED_LISTED of them. */
+    filesSkipped: number;
   };
   byLanguage: Array<{
     language: string;
@@ -347,6 +349,7 @@ export async function analyzeCode(files: readonly ScannedFile[], opts: AnalyzeCo
       duplicationPercent: sourceCode ? round2((duplicatedLines / sourceCode) * 100) : 0,
       commentRatio: codeLines + commentLines ? round2(commentLines / (codeLines + commentLines)) : 0,
       filesWithParseErrors: results.filter((r) => r.metrics.parseErrors > 0).length,
+      filesSkipped: skipped.length,
     },
     byLanguage,
     hotspots,

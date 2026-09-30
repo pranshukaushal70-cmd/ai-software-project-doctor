@@ -2,12 +2,12 @@ import { getPrisma } from "@pd/db";
 import { AppError, loginSchema } from "@pd/shared";
 import { getDummyHash, verifyPassword } from "@/server/auth/password";
 import { createSession } from "@/server/auth/session";
-import { clientIp, ok, route } from "@/server/http";
+import { clientIp, ok, readJson, route } from "@/server/http";
 import { rateLimit } from "@/server/rate-limit";
 
 export const POST = route(async (req) => {
   const ip = clientIp(req);
-  const input = loginSchema.parse(await req.json());
+  const input = loginSchema.parse(await readJson(req));
   // Limit per IP and per account so neither spraying nor targeted guessing is cheap.
   await rateLimit("login", `ip:${ip}`);
   await rateLimit("login", `email:${input.email}`);

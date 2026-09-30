@@ -1,6 +1,6 @@
 import { AppError, analysisModeSchema, createAnalysisFromUrlSchema, loadLimits } from "@pd/shared";
 import { requireApiUser } from "@/server/auth/session";
-import { ok, route } from "@/server/http";
+import { ok, readJson, route } from "@/server/http";
 import { rateLimit } from "@/server/rate-limit";
 import { createAnalysisFromUrl, createAnalysisFromZip } from "@/server/services/analysis-service";
 
@@ -30,6 +30,6 @@ export const POST = route(async (req) => {
   }
 
   await rateLimit("analysis", user.id);
-  const input = createAnalysisFromUrlSchema.parse(await req.json());
+  const input = createAnalysisFromUrlSchema.parse(await readJson(req));
   return ok(await createAnalysisFromUrl(user.id, input.url, input.mode), { status: 202 });
 });

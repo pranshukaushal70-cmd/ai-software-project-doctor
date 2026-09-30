@@ -113,6 +113,16 @@ describe("scanRepository", () => {
     const src = scan.tree.children!.find((c) => c.name === "src")!;
     expect(src.fileCount).toBe(4);
   });
+
+  it("returns sorted, deterministic output when the file limit truncates the walk", async () => {
+    const limited = await scanRepository(root, { maxFileBytes: 1024 * 1024, maxFiles: 11 });
+    expect(limited.ignored.truncated).toBe(true);
+    expect(limited.files).toHaveLength(11);
+    const paths = limited.files.map((f) => f.path);
+    expect(paths).toEqual([...paths].sort((a, b) => a.localeCompare(b)));
+    const again = await scanRepository(root, { maxFileBytes: 1024 * 1024, maxFiles: 11 });
+    expect(again.files.map((f) => f.path)).toEqual(paths);
+  });
 });
 
 describe("helpers", () => {

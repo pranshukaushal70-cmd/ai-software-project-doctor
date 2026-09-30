@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFindingsWhere } from "@/server/services/findings-service";
+import { buildFacetWhere, buildFindingsWhere } from "@/server/services/findings-service";
 
 describe("buildFindingsWhere", () => {
   it("always scopes to the analysis", () => {
@@ -17,5 +17,14 @@ describe("buildFindingsWhere", () => {
       analysisId: "a1",
       category: { in: ["CODE_QUALITY"] },
     });
+  });
+});
+
+describe("buildFacetWhere", () => {
+  it("keeps the category/path scope but drops the facet filters themselves", () => {
+    expect(
+      buildFacetWhere("a1", { severity: ["HIGH"], type: ["unused-import"], category: ["CODE_QUALITY"], path: "src/a.ts" }),
+    ).toEqual({ analysisId: "a1", category: { in: ["CODE_QUALITY"] }, file: { path: "src/a.ts" } });
+    expect(buildFacetWhere("a1", { severity: ["LOW"] })).toEqual({ analysisId: "a1" });
   });
 });

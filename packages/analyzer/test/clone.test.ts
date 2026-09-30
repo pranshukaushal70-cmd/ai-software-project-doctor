@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cloneRepository, describeCloneFailure } from "../src/ingest/clone";
+import { cloneRepository, describeCloneFailure, runGit } from "../src/ingest/clone";
 
 describe("describeCloneFailure", () => {
   it.each([
@@ -18,4 +18,14 @@ describe("cloneRepository", () => {
     await expect(cloneRepository({ url: "file:///etc", destDir: ".", depth: 1, timeoutMs: 1000 })).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
     await expect(cloneRepository({ url: "https://internal.corp/o/r", destDir: ".", depth: 1, timeoutMs: 1000 })).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
   });
+});
+
+describe("runGit", () => {
+  it("enforces the timeout even when a git helper process keeps the output pipes open", async () => {
+    // A shell alias makes git spawn a long-running child, like git-remote-https on a stalled clone.
+    const started = performance.now();
+    const res = await runGit(["-c", "alias.stall=!sleep 20", "stall"], { timeoutMs: 500 });
+    expect(res.timedOut).toBe(true);
+    expect(performance.now() - started).toBeLessThan(8_000);
+  }, 30_000);
 });

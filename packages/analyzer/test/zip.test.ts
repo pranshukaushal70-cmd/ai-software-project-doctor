@@ -54,6 +54,45 @@ describe("extractZipSafely", () => {
     expect(await readFile(path.join(res.root, "src/index.js"), "utf8")).toBe("console.log(1);\n");
   });
 
+  it("keeps the first copy of a duplicated entry instead of rejecting the whole archive", async () => {
+    const { result } = await extract([
+      { name: "src/a.js", data: "first" },
+      { name: "src/a.js", data: "second" },
+      { name: "src/b.js", data: "b" },
+    ]);
+    const res = await result;
+    expect(res).toMatchObject({ extractedFiles: 2, skippedEntries: 1 });
+    // Everything is under src/, which is unwrapped as the analysis root.
+    expect(await readFile(path.join(res.root, "a.js"), "utf8")).toBe("first");
+  });
+
+  it("extracts case-variant names where the filesystem allows, and never fails the archive over them", async () => {
+    const { result } = await extract([
+      { name: "Makefile", data: "upper" },
+      { name: "makefile", data: "lower" },
+    ]);
+    const res = await result;
+    // Case-insensitive filesystems (Windows, macOS) can hold only one of them.
+    expect(res.extractedFiles + res.skippedEntries).toBe(2);
+    expect(res.extractedFiles).toBeGreaterThanOrEqual(1);
+  });
+
+  it.runIf(process.platform === "win32")(
+    "skips names Windows would map to devices, alternate data streams or altered names",
+    async () => {
+      const { result } = await extract([
+        { name: "ok.js", data: "1" },
+        { name: "src/aux.c", data: "device" },
+        { name: "x/NUL.txt", data: "device" },
+        { name: "docs/a:b.txt", data: "stream" },
+        { name: "trail./f.js", data: "renamed" },
+      ]);
+      const res = await result;
+      expect(res).toMatchObject({ extractedFiles: 1, skippedEntries: 4 });
+      expect(existsSync(path.join(res.root, "docs", "a"))).toBe(false);
+    },
+  );
+
   it("skips vendored directories like node_modules", async () => {
     const { result } = await extract([
       { name: "a.js", data: "1" },

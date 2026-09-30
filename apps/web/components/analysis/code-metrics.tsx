@@ -46,6 +46,7 @@ function FileMetricsTable({ analysisId, limits }: { analysisId: string; limits: 
   useEffect(() => {
     let cancelled = false;
     setFiles(null);
+    setError(null);
     api<{ files: FileMetricsDto[] }>(`/api/analysis/${analysisId}/files?kind=SOURCE&sort=${sort}&pageSize=25`)
       .then((d) => !cancelled && setFiles(d.files.filter((f) => f.loc !== null)))
       .catch((e: Error) => !cancelled && setError(e.message));
@@ -267,7 +268,7 @@ export function CodeMetrics({ analysisId, metrics }: { analysisId: string; metri
           {(metrics.skipped.length > 0 || t.filesWithParseErrors > 0) && (
             <p>
               {metrics.skipped.length > 0 &&
-                `${metrics.skipped.length} files were skipped (${[...new Set(metrics.skipped.map((s) => s.reason))].join(", ")}). `}
+                `${formatNumber(t.filesSkipped ?? metrics.skipped.length)} files were skipped (${[...new Set(metrics.skipped.map((s) => s.reason))].join(", ")}). `}
               {t.filesWithParseErrors > 0 &&
                 `${t.filesWithParseErrors} files contained syntax the parser could not fully recognise; their metrics are approximate.`}
             </p>

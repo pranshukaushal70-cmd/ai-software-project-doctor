@@ -12,16 +12,23 @@ export function buildFindingsWhere(analysisId: string, q: Omit<FindingsQuery, "p
   };
 }
 
+/** Scope for facet counts: the filters that are not themselves facets. */
+export function buildFacetWhere(analysisId: string, q: Omit<FindingsQuery, "page" | "pageSize">): Prisma.FindingWhereInput {
+  return buildFindingsWhere(analysisId, { category: q.category, path: q.path });
+}
+
 const SEVERITY_RANK = Object.fromEntries(SEVERITIES.map((s, i) => [s, i])) as Record<Severity, number>;
 
 /**
  * Findings for one analysis, most severe first. Postgres sorts enums by
  * declaration order (CRITICAL … INFO), which is the order we want.
- * Facet counts ignore the severity/type filters so the UI can show totals.
+ * Facet counts ignore the severity/type filters (so the UI can show totals for
+ * every chip) but respect the category/path scope.
  */
 export async function listFindings(analysisId: string, q: FindingsQuery) {
   const prisma = getPrisma();
   const where = buildFindingsWhere(analysisId, q);
+  const facetWhere = buildFacetWhere(analysisId, q);
   const [total, findings, bySeverity, byType] = await Promise.all([
     prisma.finding.count({ where }),
     prisma.finding.findMany({
@@ -48,8 +55,8 @@ export async function listFindings(analysisId: string, q: FindingsQuery) {
         file: { select: { path: true, language: true } },
       },
     }),
-    prisma.finding.groupBy({ by: ["severity"], where: { analysisId }, _count: { _all: true } }),
-    prisma.finding.groupBy({ by: ["type"], where: { analysisId }, _count: { _all: true } }),
+    prisma.finding.groupBy({ by: ["severity"], where: facetWhere, _count: { _all: true } }),
+    prisma.finding.groupBy({ by: ["type"], where: facetWhere, _count: { _all: true } }),
   ]);
 
   return {

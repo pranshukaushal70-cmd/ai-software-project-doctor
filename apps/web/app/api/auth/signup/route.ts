@@ -2,13 +2,13 @@ import { getPrisma, Prisma } from "@pd/db";
 import { AppError, signupSchema } from "@pd/shared";
 import { hashPassword } from "@/server/auth/password";
 import { createSession } from "@/server/auth/session";
-import { clientIp, ok, route } from "@/server/http";
+import { clientIp, ok, readJson, route } from "@/server/http";
 import { rateLimit } from "@/server/rate-limit";
 
 export const POST = route(async (req) => {
   const ip = clientIp(req);
   await rateLimit("signup", ip);
-  const input = signupSchema.parse(await req.json());
+  const input = signupSchema.parse(await readJson(req));
 
   let user;
   try {

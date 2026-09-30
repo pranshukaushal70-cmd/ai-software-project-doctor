@@ -34,12 +34,13 @@ export async function createAnalysisFromUrl(userId: string, url: string, mode: A
     where: { userId, source, url: parsed.webUrl, branch: parsed.branch ?? null },
     select: { id: true },
   });
-  const repo =
-    existing ??
-    (await prisma.repository.create({
-      data: { userId, source, url: parsed.webUrl, owner: parsed.owner, name: parsed.name, branch: parsed.branch },
-      select: { id: true },
-    }));
+  const repo = existing
+    ? // Touch updatedAt so a re-analysed repository moves to the top of the dashboard.
+      await prisma.repository.update({ where: { id: existing.id }, data: { updatedAt: new Date() }, select: { id: true } })
+    : await prisma.repository.create({
+        data: { userId, source, url: parsed.webUrl, owner: parsed.owner, name: parsed.name, branch: parsed.branch },
+        select: { id: true },
+      });
   return createAndEnqueue(repo.id, mode);
 }
 

@@ -65,6 +65,15 @@ export function route<P = Record<string, never>>(handler: Handler<P>) {
   };
 }
 
+/** Parse a JSON request body; a malformed body is the client's error (400), not a server failure. */
+export async function readJson(req: NextRequest): Promise<unknown> {
+  try {
+    return await req.json();
+  } catch {
+    throw new AppError("VALIDATION_ERROR", "Request body must be valid JSON");
+  }
+}
+
 export function clientIp(req: NextRequest): string {
   if (process.env.TRUST_PROXY === "true") {
     const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();

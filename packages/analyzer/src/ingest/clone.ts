@@ -68,15 +68,30 @@ function gitEnv(): NodeJS.ProcessEnv {
 
 export function runGit(args: string[], opts: { cwd?: string; timeoutMs: number }): Promise<RunResult> {
   const fullArgs = HARDENED_CONFIG.flatMap((c) => ["-c", c]).concat(args);
+  const isWindows = process.platform === "win32";
   return new Promise((resolve, reject) => {
-    const child = spawn("git", fullArgs, { cwd: opts.cwd, env: gitEnv(), windowsHide: true, shell: false });
+    // On POSIX git gets its own process group so a timeout can kill its helpers
+    // (git-remote-https, …) too; on Windows taskkill /T does the same.
+    const child = spawn("git", fullArgs, { cwd: opts.cwd, env: gitEnv(), windowsHide: true, shell: false, detached: !isWindows });
     let stdout = "";
     let stderr = "";
     let timedOut = false;
+    let settled = false;
+    const finish = (code: number | null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve({ code, stdout, stderr, timedOut });
+    };
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill("SIGKILL");
+      killTree(child.pid, () => child.kill("SIGKILL"));
     }, opts.timeoutMs);
+    // A helper process that survives the kill keeps stdout/stderr open, so after a
+    // timeout 'close' may never come: settle on 'exit' of git itself instead.
+    child.on("exit", (code) => {
+      if (timedOut) finish(code);
+    });
     child.stdout.on("data", (d: Buffer) => {
       if (stdout.length < 50 * 1024 * 1024) stdout += d.toString("utf8");
     });
@@ -84,14 +99,34 @@ export function runGit(args: string[], opts: { cwd?: string; timeoutMs: number }
       if (stderr.length < 64 * 1024) stderr += d.toString("utf8");
     });
     child.on("error", (err) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
       reject(err);
     });
-    child.on("close", (code) => {
-      clearTimeout(timer);
-      resolve({ code, stdout, stderr, timedOut });
-    });
+    child.on("close", finish);
   });
+}
+
+/**
+ * Best-effort kill of a process and all of its descendants. `fallback` kills
+ * the direct child; on Windows it runs only after taskkill has walked the tree,
+ * otherwise the helpers would be orphaned before taskkill could find them.
+ */
+function killTree(pid: number | undefined, fallback: () => void) {
+  if (pid === undefined) return fallback();
+  if (process.platform === "win32") {
+    const tk = spawn("taskkill", ["/pid", String(pid), "/T", "/F"], { windowsHide: true, stdio: "ignore" });
+    tk.on("error", fallback);
+    tk.on("exit", fallback);
+    return;
+  }
+  try {
+    process.kill(-pid, "SIGKILL");
+  } catch {
+    // Process group already gone.
+  }
+  fallback();
 }
 
 /**

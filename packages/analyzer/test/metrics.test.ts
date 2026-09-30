@@ -290,6 +290,7 @@ describe("analyzeCode edge cases", () => {
     const res = await analyzeFiles({ "src/vendor-lib.js": `var a=1;${"function x(){return 1};".repeat(400)}\n` });
     expect(res.files).toEqual([]);
     expect(res.summary.skipped).toEqual([{ path: "src/vendor-lib.js", reason: "minified" }]);
+    expect(res.summary.totals.filesSkipped).toBe(1);
   });
 
   it("skips files whose parse exceeds the time budget", async () => {
@@ -375,6 +376,32 @@ describe("redactSecrets", () => {
     expect(redactSecrets("api_key: 'abc'")).toBe("api_key: '<redacted>'");
     expect(redactSecrets('headers = { x: "test_stripe_secret_key_placeholder" }')).toBe('headers = { x: "<redacted>" }');
     expect(redactSecrets('log("processing the order now")')).toBe('log("processing the order now")');
+  });
+
+  it("masks well-known token formats even outside quotes", () => {
+    // Built at runtime so the repository never contains a string that looks like a real key.
+    const stripe = ["sk", "live", "0".repeat(24)].join("_");
+    const github = `ghp_${"A1".repeat(18)}`;
+    const aws = `AKIA${"7".repeat(16)}`;
+    expect(redactSecrets(`// rotate ${stripe} soon`)).toBe("// rotate <redacted> soon");
+    expect(redactSecrets(`fetch(url, { token: ${github} })`)).toBe("fetch(url, { token: <redacted> })");
+    expect(redactSecrets(`const id = "${aws}";`)).toBe('const id = "<redacted>";');
+  });
+
+  it("leaves ordinary long identifiers and prose alone", () => {
+    expect(redactSecrets('emit("order_processing_completed_event")')).toBe('emit("order_processing_completed_event")');
+    expect(redactSecrets("const total = computeInvoiceTotalWithDiscounts(order);")).toBe(
+      "const total = computeInvoiceTotalWithDiscounts(order);",
+    );
+  });
+
+  it("is applied to code excerpts in persisted evidence", async () => {
+    const res = await analyzeFiles({
+      "src/cfg.ts": `export function connect(a: number, b: number, c: number, d: number, e: number, password = "hunter2") {\n  return a + b + c + d + e + password.length;\n}\n`,
+    });
+    const [finding] = findingsOf(res, "src/cfg.ts", "smell/long-parameter-list");
+    expect(finding?.evidence).toContain('password = "<redacted>"');
+    expect(res.findings.some((f) => f.evidence.includes("hunter2"))).toBe(false);
   });
 });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronRight, FileCode2 } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -99,6 +99,8 @@ export function FindingsList({ analysisId }: { analysisId: string }) {
   const [items, setItems] = useState<FindingDto[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Bumped whenever the filters change, so a slow "load more" cannot append results for old filters. */
+  const generation = useRef(0);
 
   const fetchPage = useCallback(
     (page: number) => {
@@ -112,6 +114,7 @@ export function FindingsList({ analysisId }: { analysisId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    generation.current++;
     setData(null);
     setError(null);
     fetchPage(1)
@@ -128,13 +131,15 @@ export function FindingsList({ analysisId }: { analysisId: string }) {
 
   const loadMore = async () => {
     if (!data) return;
+    const gen = generation.current;
     setLoadingMore(true);
     try {
       const next = await fetchPage(data.page + 1);
+      if (gen !== generation.current) return;
       setData(next);
       setItems((prev) => [...prev, ...next.findings]);
     } catch (e) {
-      setError((e as Error).message);
+      if (gen === generation.current) setError((e as Error).message);
     } finally {
       setLoadingMore(false);
     }

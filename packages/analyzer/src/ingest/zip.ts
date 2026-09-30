@@ -31,6 +31,20 @@ const S_IFLNK = 0o120000;
 // Ratios are only meaningful for entries large enough to matter; tiny text files compress extremely well.
 const RATIO_MIN_BYTES = 1024 * 1024;
 
+/**
+ * Names Windows cannot store as ordinary files: device names (`aux.c`, `NUL.txt`
+ * open the device), `:` (an NTFS alternate data stream), reserved characters, and
+ * trailing dots/spaces (silently stripped). Legitimate on Linux, so only checked on Windows.
+ */
+const WINDOWS_RESERVED_SEGMENT = /^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\..*)?$|[<>:"|?*\x00-\x1f]|[. ]$/i;
+
+/** Filesystem errors meaning "this one entry cannot be written here" (e.g. a case-insensitive name collision). */
+const UNWRITABLE_ENTRY_CODES = new Set(["EEXIST", "ENOTDIR", "EISDIR", "EINVAL", "ENAMETOOLONG"]);
+
+function isStorableName(rel: string): boolean {
+  return process.platform !== "win32" || !rel.split("/").some((seg) => WINDOWS_RESERVED_SEGMENT.test(seg));
+}
+
 function unsafe(message: string): AppError {
   return new AppError("UNSAFE_ARCHIVE", message);
 }
@@ -130,9 +144,12 @@ export async function extractZipSafely(zipPath: string, destDir: string, limits:
       throw unsafe("Archive exceeds the maximum extracted size");
     }
 
+    if (!isStorableName(rel)) {
+      skippedEntries++;
+      return;
+    }
     const target = path.resolve(destDir, rel);
     if (!isInside(destDir, target)) throw unsafe(`Entry escapes the extraction directory: ${rel.slice(0, 120)}`);
-    await mkdir(path.dirname(target), { recursive: true });
 
     // Count real bytes too: declared sizes in a crafted archive cannot be trusted.
     let written = 0;
@@ -146,8 +163,17 @@ export async function extractZipSafely(zipPath: string, destDir: string, limits:
         cb(null, chunk);
       },
     });
-    const stream = await openEntryStream(zip, entry);
-    await pipeline(stream, counter, createWriteStream(target, { flags: "wx" }));
+    try {
+      await mkdir(path.dirname(target), { recursive: true });
+      const stream = await openEntryStream(zip, entry);
+      // "wx": never overwrite. A second entry with the same (or, on Windows/macOS,
+      // case-insensitively equal) name keeps the first copy and is skipped.
+      await pipeline(stream, counter, createWriteStream(target, { flags: "wx" }));
+    } catch (err) {
+      if (err instanceof AppError || !UNWRITABLE_ENTRY_CODES.has((err as NodeJS.ErrnoException).code ?? "")) throw err;
+      skippedEntries++;
+      return;
+    }
     extractedBytes += written;
     extractedFiles++;
   };

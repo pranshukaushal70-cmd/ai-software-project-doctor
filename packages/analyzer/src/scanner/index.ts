@@ -85,11 +85,12 @@ export async function scanRepository(root: string, opts: ScanOptions): Promise<R
   for (const f of walk.files) {
     const language = detectLanguage(f.path);
     const oversized = f.size > opts.maxFileBytes;
-    const binary = !oversized && f.size > 0 ? await looksBinary(f.absPath) : false;
+    const binary = !oversized && f.size > 0 ? await looksBinary(f.absPath).catch(() => false) : false;
     const kind = classifyFile(f.path, language, binary);
     let lines: number | null = null;
     if (!oversized && kind !== "BINARY") {
-      lines = countLines(await readFile(f.absPath, "utf8"));
+      // A file that vanished or cannot be read keeps lines = null; the metrics stage reports it as a read error.
+      lines = await readFile(f.absPath, "utf8").then(countLines, () => null);
     }
     files.push({ ...f, language: kind === "BINARY" ? null : language, kind, lines, oversized });
   }

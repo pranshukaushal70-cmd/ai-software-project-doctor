@@ -31,7 +31,7 @@ Error codes: `VALIDATION_ERROR` 400, `UNAUTHENTICATED` 401, `FORBIDDEN` 403, `NO
 | POST | `/api/analysis` | JSON `{ url, mode }` **or** multipart `file=<zip>, mode`. Returns 202 `{ analysisId, status: "queued" }` |
 | GET | `/api/analysis/:id` | Status, stage, progress, scan summary, repository |
 | GET | `/api/analysis/:id/files` | `?page=&pageSize=&kind=&sort=path|loc|complexity|duplication` paginated list with per-file metrics, or `?view=tree` for the nested tree |
-| GET | `/api/analysis/:id/findings` | `?severity=HIGH,MEDIUM&category=&type=&path=&page=&pageSize=`. Most severe first; includes `facets` (counts by severity and type) |
+| GET | `/api/analysis/:id/findings` | `?severity=HIGH,MEDIUM&category=&type=&path=&page=&pageSize=`. Most severe first; includes `facets` (counts by severity and type, scoped by `category`/`path` but not by the severity/type filters) |
 
 `mode` is `LOCAL_ONLY` (default) or `AI` (AI mode takes effect in Phase 7).
 

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { AppError } from "@pd/shared";
-import { ok, route } from "@/server/http";
+import { ok, readJson, route } from "@/server/http";
 
 const ctx = { params: Promise.resolve({}) };
 
@@ -35,6 +35,21 @@ describe("route wrapper", () => {
     const body = await res.json();
     expect(body).toMatchObject({ success: false, error: { code: "NOT_FOUND", message: "Analysis not found" } });
     expect(body.error.requestId).toBe(res.headers.get("x-request-id"));
+  });
+
+  it("answers a malformed JSON body with 400, not 500", async () => {
+    const handler = route(async (req) => ok(await readJson(req)));
+    const post = (body: string) =>
+      new NextRequest("http://localhost:3000/api/test", {
+        method: "POST",
+        headers: { origin: "http://localhost:3000", "content-type": "application/json" },
+        body,
+      });
+    const bad = await handler(post("{not json"), ctx);
+    expect(bad.status).toBe(400);
+    expect((await bad.json()).error).toMatchObject({ code: "VALIDATION_ERROR", message: "Request body must be valid JSON" });
+    const good = await handler(post('{"a":1}'), ctx);
+    expect(await good.json()).toEqual({ success: true, data: { a: 1 } });
   });
 
   it("maps zod errors to VALIDATION_ERROR", async () => {

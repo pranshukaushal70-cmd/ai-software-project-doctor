@@ -43,7 +43,7 @@ export async function walkRepository(root: string, opts: WalkOptions = {}): Prom
   const result: WalkResult = { files: [], ignoredDirs: [], gitignoredFiles: 0, symlinksSkipped: 0, truncated: false };
 
   const stack: string[] = [""];
-  while (stack.length > 0) {
+  walk: while (stack.length > 0) {
     const relDir = stack.pop()!;
     const entries = await readdir(path.join(root, relDir), { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name));
@@ -73,7 +73,7 @@ export async function walkRepository(root: string, opts: WalkOptions = {}): Prom
       }
       if (result.files.length >= maxFiles) {
         result.truncated = true;
-        return result;
+        break walk;
       }
       const absPath = path.join(root, relDir, entry.name);
       const stat = await lstat(absPath);

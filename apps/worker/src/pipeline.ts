@@ -7,6 +7,7 @@ import {
   extractZipSafely,
   scanRepository,
   uploadPath,
+  type Workspace,
 } from "@pd/analyzer";
 import { analyzeCode } from "@pd/analyzer/metrics";
 import type { AnalysisStage, Prisma, PrismaClient } from "@pd/db";
@@ -51,14 +52,17 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
     where: { id: analysisId },
     data: { status: "RUNNING", startedAt: new Date(), error: null, analyzerVersion: ANALYZER_VERSION },
   });
-  // A retried job must not duplicate rows from a previous partial attempt.
-  await prisma.finding.deleteMany({ where: { analysisId } });
-  await prisma.metric.deleteMany({ where: { analysisId } });
-  await prisma.file.deleteMany({ where: { analysisId } });
-
-  const workspace = await createWorkspace(limits.workspaceDir, analysisId);
   const repo = analysis.repository;
+  let workspace: Workspace | undefined;
+  // Everything after the RUNNING transition is inside the try, so any failure
+  // marks the analysis FAILED instead of leaving the UI polling a RUNNING row forever.
   try {
+    // A retried job must not duplicate rows from a previous partial attempt.
+    await prisma.finding.deleteMany({ where: { analysisId } });
+    await prisma.metric.deleteMany({ where: { analysisId } });
+    await prisma.file.deleteMany({ where: { analysisId } });
+
+    workspace = await createWorkspace(limits.workspaceDir, analysisId);
     await setStage("CLONING");
     let root: string;
     const ingest: IngestInfo = { source: repo.source };
@@ -142,7 +146,7 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
       data: { status: "FAILED", error: message, finishedAt: new Date() },
     });
   } finally {
-    await workspace.dispose().catch((err) => log.warn({ err }, "workspace cleanup failed"));
+    await workspace?.dispose().catch((err) => log.warn({ err }, "workspace cleanup failed"));
     if (repo.source === "ZIP" && repo.uploadKey) {
       // Uploaded source code is deleted as soon as it has been analysed.
       await rm(uploadPath(limits.workspaceDir, repo.uploadKey), { force: true }).catch(() => undefined);
