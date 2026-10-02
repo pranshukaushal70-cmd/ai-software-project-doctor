@@ -19,6 +19,14 @@ export const RepositorySource = {
 export type RepositorySource = (typeof RepositorySource)[keyof typeof RepositorySource]
 
 
+export const TriageStatus = {
+  EXPECTED: 'EXPECTED',
+  IGNORED: 'IGNORED'
+} as const
+
+export type TriageStatus = (typeof TriageStatus)[keyof typeof TriageStatus]
+
+
 export const AnalysisStatus = {
   QUEUED: 'QUEUED',
   RUNNING: 'RUNNING',

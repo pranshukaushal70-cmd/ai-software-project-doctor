@@ -28,3 +28,26 @@ describe("buildFacetWhere", () => {
     expect(buildFacetWhere("a1", { severity: ["LOW"] })).toEqual({ analysisId: "a1" });
   });
 });
+
+describe("triage filter", () => {
+  const triaged = ["fp1", "fp2"];
+
+  it("shows everything by default, including triaged findings", () => {
+    expect(buildFindingsWhere("a1", {}, triaged)).toEqual({ analysisId: "a1" });
+    expect(buildFindingsWhere("a1", { triage: "all" }, triaged)).toEqual({ analysisId: "a1" });
+  });
+
+  it("hides only the triaged fingerprints of this repository when asked", () => {
+    expect(buildFindingsWhere("a1", { triage: "untriaged" }, triaged)).toEqual({ analysisId: "a1", fingerprint: { notIn: ["fp1", "fp2"] } });
+    expect(buildFindingsWhere("a1", { triage: "untriaged" }, [])).toEqual({ analysisId: "a1" });
+  });
+
+  it("can list only triaged findings (none when nothing is triaged)", () => {
+    expect(buildFindingsWhere("a1", { triage: "triaged" }, triaged)).toEqual({ analysisId: "a1", fingerprint: { in: ["fp1", "fp2"] } });
+    expect(buildFindingsWhere("a1", { triage: "triaged" }, [])).toEqual({ analysisId: "a1", fingerprint: { in: [] } });
+  });
+
+  it("applies the triage scope to facet counts as well", () => {
+    expect(buildFacetWhere("a1", { severity: ["HIGH"], triage: "untriaged" }, triaged)).toEqual({ analysisId: "a1", fingerprint: { notIn: ["fp1", "fp2"] } });
+  });
+});

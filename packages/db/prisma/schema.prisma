@@ -64,8 +64,38 @@ model Repository {
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   analyses  Analysis[]
+  triages   FindingTriage[]
 
   @@index([userId, createdAt])
+}
+
+enum TriageStatus {
+  /// The finding is real but intended (e.g. a deliberate fake secret in a test fixture).
+  EXPECTED
+  /// The finding is a false positive or accepted risk.
+  IGNORED
+}
+
+/// A user's decision about one specific finding of a repository. It applies to every
+/// analysis of that repository whose finding has the same fingerprint (rule + path +
+/// stable key), so it follows the finding across re-analyses but never covers a new or
+/// different finding. Triaged findings are still reported; they are only labelled.
+model FindingTriage {
+  id           String       @id @default(cuid())
+  repositoryId String
+  repository   Repository   @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  fingerprint  String
+  /// Rule and path at the time of triage, for display and auditing.
+  ruleId       String
+  path         String?
+  status       TriageStatus
+  reason       String?
+  /// The user who made the decision (audit only; the repository owns the record).
+  createdById  String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([repositoryId, fingerprint])
 }
 
 enum AnalysisStatus {

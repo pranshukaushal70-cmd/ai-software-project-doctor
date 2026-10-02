@@ -94,7 +94,7 @@ generated files or oversized files) line by line for:
 
 - well-known credential formats: PEM private keys (only when key material follows the header), AWS access key IDs and
   secret keys, Google API keys, GitHub/GitLab/Slack/Stripe/OpenAI/Anthropic/npm/SendGrid tokens, Slack webhooks, JWTs;
-- passwords embedded in connection strings (`postgres://user:pass@host`), LOW when the host is local;
+- passwords embedded in connection strings (`postgres://user:<password>@host`), LOW when the host is local;
 - values assigned to credential-like names (`password`, `secret`, `token`, `api_key`, `client_secret`, …) in code, JSON,
   YAML, `.properties`, INI/TOML and `.env` files, excluding placeholders (`changeme`, `${VAR}`, `process.env…`,
   `<your-key>`, UPPER_CASE names, labels with spaces, i18n keys, ternaries, and similar);
@@ -102,8 +102,11 @@ generated files or oversized files) line by line for:
 
 Secret values never leave the scanner: evidence shows the line with the value replaced by a mask that keeps at most a
 public identifying prefix (e.g. `ghp_…[redacted]`), and fingerprints are derived from the variable name or rule label,
-not from the value (a hash of a weak password could be brute-forced). Matches in test and documentation files are one
-severity level lower and say why. Templates (`.env.example`) only report real token formats.
+not from the value (a hash of a weak password could be brute-forced). Every secret finding records its file context
+(`source`, `configuration`, `template`, `test`, `documentation`; generated files are not scanned). In tests and docs,
+arbitrary passwords and connection strings are reported as INFO and marked likely intentional, while real provider
+token formats are only one level lower and ask for verification; see [security.md](security.md#secret-findings-context-and-triage).
+Templates (`.env.example`) only report real token formats.
 
 **Insecure-pattern detection** (`security/patterns.ts`) inspects the tree-sitter trees of production source through the
 `onTree` hook of `analyzeCode`, so each file is parsed once. Rules match the syntactic shape of a dangerous call, with
@@ -226,4 +229,6 @@ See `packages/db/prisma/schema.prisma`. Results hang off `Analysis` and cascade 
 `Report`. Phase 1 populates `Analysis.summary` and `File`; Phase 2 adds file metrics, `Finding` and `Metric`; Phase 3 adds
 `SECRET`/`SECURITY` findings and `summary.security`; Phase 4 fills `Dependency`, `ArchitectureNode` and `ArchitectureEdge`
 and adds `DEPENDENCY`/`ARCHITECTURE` findings and `summary.dependencies`/`summary.architecture`. Phases 3 and 4 needed no
-schema change: the tables, categories and stages already existed. Later phases fill the rest.
+schema change: the tables, categories and stages already existed. `FindingTriage` (migration `20261002120000_finding_triage`)
+stores Expected/Ignored decisions per repository and finding fingerprint; it is the only table that outlives an
+analysis's findings, and it is deleted with its repository. Later phases fill the rest.

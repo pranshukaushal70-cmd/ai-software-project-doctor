@@ -11,6 +11,7 @@
 export type * from './models/User'
 export type * from './models/Session'
 export type * from './models/Repository'
+export type * from './models/FindingTriage'
 export type * from './models/Analysis'
 export type * from './models/File'
 export type * from './models/Finding'

@@ -19,6 +19,7 @@ The analyzer processes **untrusted repositories** on behalf of **authenticated u
 | Malicious manifests and lockfiles | Read as data, never executed or installed: no `npm install`, `pip`, Maven/Gradle or `go` invocation. Parsers are line/regex based with bounded loops (no YAML/TOML/XML library that could expand entities or aliases); files over 20 MB are skipped; at most 20,000 dependencies and 2,000 dependency findings are stored | `analyzer/src/dependencies/` |
 | Credentials in dependency specs | `https://user:token@host/…` in a version spec (git or tarball dependencies) is rewritten to `https://<redacted>@host/…` and passed through secret redaction before it is stored or shown | `dependencies/index.ts` (`redactSpec`) |
 | Data sent to OSV.dev | Only ecosystem, package name and exact version, and only for registry packages not known to come from a private registry; see [Outbound network: OSV.dev](#outbound-network-osvdev) | `dependencies/osv.ts`, `dependencies/npm.ts` |
+| Local services exposed on the network | `docker-compose.yml` publishes PostgreSQL and Redis on `127.0.0.1` only (Redis has no password); the database password comes from `.env` (`POSTGRES_PASSWORD`, required, no default) and `scripts/setup-env.mjs` generates a random one | `docker-compose.yml`, `.env.example` |
 | Tokens in `.npmrc` / `.yarnrc.yml` | Read only to find registry URLs; just the `registry` / `npmRegistryServer` lines are parsed, so auth tokens are never stored or shown. Files over 64 KB are skipped | `dependencies/npm.ts` (`parseNpmRegistryConfig`) |
 | Untrusted OSV.dev responses | Fixed HTTPS endpoint, redirects refused, per-request timeout, overall time budget, 32 MB response cap; advisory ids validated (`[\w.:-]{1,100}`), summaries flattened to one line, backticks removed and truncated to 240 characters; withdrawn advisories ignored; malformed responses mark the lookup `failed` instead of failing the analysis | `dependencies/osv.ts` |
 | Hostile import specifiers | Import resolution is a pure string operation over the scanned file list; a specifier that normalises outside the repository root (`../../..`) is unresolved; only `tsconfig.json`/`jsconfig.json`/`package.json` files up to 512 KB are read, and `extends` chains are followed at most 5 levels and only inside the repository | `analyzer/src/architecture/resolve.ts` |
@@ -58,6 +59,31 @@ never stored, logged or sent.
 Two cases still send private package names: **PyPI, Maven and Go** packages, and npm packages whose private registry is
 configured **outside the repository** (a user's `~/.npmrc`, CI environment variables, `bunfig.toml`). Deployments that
 analyse such code should set `OSV_ENABLED=false`.
+
+## Secret findings: context and triage
+
+**Context.** Every secret finding records where it was found (`data.context`), and the evidence says so:
+
+| Context | Files | Severity |
+|---|---|---|
+| `source` | production source | as detected |
+| `configuration` | config files, committed `.env` | as detected |
+| `template` | `.env.example`-style templates | only real token formats are reported |
+| `test` | test files and fixtures | arbitrary passwords and connection strings: **INFO**, marked *likely intentional* ("detected in a security test fixture; likely intentional"). Real provider formats (AWS, GitHub, Stripe … keys, private keys, JWTs): **one level lower** only, with a request to verify the key is not live: real keys do get committed in tests |
+| `documentation` | README, docs | as for tests, with "verify that this is not a real credential" |
+
+Generated files (minified bundles, lockfiles, `*.d.ts`, `generated/`) are not scanned for secrets. Nothing is
+ignored by directory: a test or docs file is still scanned, and a real key there is still reported.
+Values that describe themselves as fake (`example-password`, `change-me…`, `not-a-real-…`, `<redacted>`,
+`${VAR}`, `user:pass@`) are treated as placeholders; ordinary words such as "test" or "demo" inside a
+password are not. `summary.security.totals.secretsByContext` counts secrets per context, and the
+dashboard only raises the "rotate now" alert for secrets outside tests and documentation.
+
+**Triage.** A repository owner can mark a finding **Expected** or **Ignored**, with an optional reason
+(`FindingTriage`, see [api.md](api.md)). The decision is stored for the repository and the finding's
+fingerprint (rule + path + stable key, never the secret value), so it carries over to re-analyses of the
+same repository but never applies to a different finding, file or repository. Triaged findings stay in
+results and summaries with a label; hiding them is an explicit, per-view filter.
 
 ## Authentication
 

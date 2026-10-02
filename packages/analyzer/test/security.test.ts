@@ -7,10 +7,13 @@ import { analyzeCode } from "../src/metrics";
 import { parseSource } from "../src/metrics/parser";
 import { scanRepository } from "../src/scanner";
 import { createSecurityScanner, inspectTree, maskSecret, scanTextForSecrets, SECURITY_RULES } from "../src/security";
-import type { SecretScanFile } from "../src/security/secrets";
+import { envFileFinding, type SecretScanFile } from "../src/security/secrets";
 
-// Token-shaped values are assembled at runtime so this repository never contains
-// strings that secret scanners (including GitHub push protection) treat as real keys.
+// Every credential in this file is a deliberate, fake test fixture for the secret detector;
+// none is a real credential. Token-shaped values are assembled at runtime so this repository
+// never contains strings that secret scanners (including GitHub push protection) treat as real
+// keys. Plain password literals (Tr0ub4dor&3, …) are well-known example values. When Project
+// Doctor scans itself, these are reported as low-severity "test" context findings, as intended.
 const rep = (s: string, n: number) => s.repeat(n);
 const FAKE = {
   aws: ["AKIA", rep("Q7", 8)].join(""),
@@ -144,11 +147,61 @@ describe("secret detection", () => {
   });
 
   it("lowers severity in test and documentation files and says why", () => {
+    // A real provider format in a test is only lowered one step: live keys do get committed in tests.
     const [f] = scan(`const key = "${FAKE.stripeLive}";`, { path: "tests/billing.test.ts", kind: "TEST" });
-    expect(f).toMatchObject({ severity: "HIGH" });
-    expect(f!.evidence).toContain("test file");
+    expect(f).toMatchObject({ severity: "HIGH", data: { context: "test", likelyIntentional: false } });
+    expect(f!.evidence).toContain("detected in a test file, but it matches a real Stripe live secret key format");
+    expect(f!.evidence).toContain("verify it is not a live credential");
+    // Arbitrary values in docs are examples: kept, but INFO and explained.
     const [doc] = scan(`password = "Tr0ub4dor&3"`, { path: "README.md", kind: "DOCUMENTATION" });
-    expect(doc).toMatchObject({ severity: "LOW" });
+    expect(doc).toMatchObject({ severity: "INFO", data: { context: "documentation", likelyIntentional: true } });
+    expect(doc!.evidence).toContain("detected in documentation/example content; verify that this is not a real credential");
+  });
+
+  it("classifies every finding by file context", () => {
+    const line = `const password = "Tr0ub4dor&3";`;
+    const contextOf = (file: Partial<SecretScanFile>) => scan(line, file)[0]?.data?.context;
+    expect(contextOf({})).toBe("source");
+    expect(contextOf({ path: "config/app.json", kind: "CONFIG" })).toBe("configuration");
+    expect(contextOf({ path: "tests/login.test.ts", kind: "TEST" })).toBe("test");
+    expect(contextOf({ path: "docs/setup.md", kind: "DOCUMENTATION" })).toBe("documentation");
+    const env = scan("DB_PASSWORD=Xk92_mq7PzLw\n", { path: ".env", kind: "CONFIG", isEnvFile: true });
+    expect(env[0]!.data).toMatchObject({ context: "configuration", likelyIntentional: false });
+    expect(envFileFinding("A=1\n", ".env")!.data).toMatchObject({ context: "configuration" });
+  });
+
+  it("reports arbitrary credentials in tests as INFO fixtures, naming security fixtures", () => {
+    const [plain] = scan(`login("admin", "Tr0ub4dor&3xyz", { password: "Tr0ub4dor&3xyz" })`, { path: "tests/login.test.ts", kind: "TEST" });
+    expect(plain).toMatchObject({ severity: "INFO", data: { context: "test", likelyIntentional: true } });
+    expect(plain!.evidence).toContain("detected in a test file; likely intentional");
+    const [fixture] = scan(`const password = "Tr0ub4dor&3";`, { path: "test/security.test.ts", kind: "TEST" });
+    expect(fixture!.evidence).toContain("detected in a security test fixture; likely intentional");
+    const [url] = scan(`const url = "postgresql://app:Xk92_mq7PzLw@db.prod.internal:5432/app";`, { path: "test/redact.test.ts", kind: "TEST" });
+    expect(url).toMatchObject({ rule: "databaseUrl", severity: "INFO" });
+  });
+
+  it("still reports real-looking secrets at full severity in production source and configuration", () => {
+    expect(scan(`const password = "Tr0ub4dor&3";`)).toMatchObject([{ severity: "HIGH", data: { context: "source", likelyIntentional: false } }]);
+    // Words like "test" or "demo" inside a real-looking password do not make it a placeholder.
+    expect(scan(`const password = "Test-Pr0d!2024x";`)).toMatchObject([{ severity: "HIGH" }]);
+    expect(scan(`const password = "demo_Xk92mq7Pz";`)).toMatchObject([{ severity: "HIGH" }]);
+    expect(scan("db:\n  password: pr0d-Pa55word\n", { path: "deploy/values.yaml", kind: "CONFIG" })).toMatchObject([{ severity: "MEDIUM", data: { context: "configuration" } }]);
+    expect(scan(`url = "postgresql://app:Xk92_mq7PzLw@db.prod.internal/app"`)).toMatchObject([{ rule: "databaseUrl", severity: "HIGH" }]);
+  });
+
+  it.each([
+    [`const password = "example-password";`],
+    [`DB_PASSWORD: change-me-local-db-password`],
+    [`const secret = "not-a-real-secret-value";`],
+    [`const token = "fake-token-for-tests";`],
+    [`const password = "<redacted>";`],
+    [`const password = "[redacted]";`],
+    [`url = "postgres://user:pass@db.example.com/app"`],
+    [`url = "postgres://user:pw@db/app"`],
+    [`url = "postgres://user:<password>@host/app"`],
+    [`url = "postgres://test-user:not-a-real-password@db.invalid/app"`],
+  ])("treats self-described placeholders as non-secrets: %s", (line) => {
+    expect(scan(line, { path: "config/settings.yml", kind: "CONFIG" })).toEqual([]);
   });
 
   it("treats .env files specially: unquoted values count, templates only report real tokens", () => {
@@ -403,6 +456,7 @@ describe("createSecurityScanner", () => {
     expect(security.findings.some((f) => f.path.startsWith("tests/"))).toBe(false);
     expect(summary.totals).toMatchObject({ findings: 5, secrets: 4, insecurePatterns: 1, sourceFilesInspected: 2, filesWithFindings: 3 });
     expect(summary.totals.bySeverity).toMatchObject({ CRITICAL: 1, HIGH: 3, MEDIUM: 1 });
+    expect(summary.totals.secretsByContext).toEqual({ source: 2, configuration: 2, template: 0, test: 0, documentation: 0 });
     expect(summary.envFiles).toEqual([".env"]);
     expect(summary.rules[0]).toMatchObject({ id: "secret/api-token", cwe: "CWE-798", maxSeverity: "CRITICAL", count: 1 });
     expect(summary.topFiles[0]).toMatchObject({ path: "src/config.py", findings: 2, maxSeverity: "CRITICAL" });

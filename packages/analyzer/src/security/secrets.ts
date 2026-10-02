@@ -63,7 +63,13 @@ const NON_SECRET_NAME =
 const BOOLEAN_NAME = /^(?:is|has|should|can|use|enable|disable|show|hide|require)[A-Z_]/;
 
 const PLACEHOLDER_VALUE =
-  /^(?:changeme|change[_-]?me|change[_-]?this|replace[_-]?me|password\d*|passw(?:or)?d|secret|token|example|sample|dummy|fake|mock|test(?:ing)?|placeholder|none|null|nil|undefined|true|false|empty|todo|tbd|redacted|default|foobar|foo|bar|your[_-].*|my[_-].*|insert[_-].*|enter[_-].*|put[_-].*|some[_-].*|(?:new|current)-password|one-time-code|same-origin|include|omit)$/i;
+  /^(?:changeme|change[_-]?me|change[_-]?this|replace[_-]?me|password\d*|passw(?:or)?d|pass|pwd?|secret|token|example|sample|dummy|fake|mock|test(?:ing)?|placeholder|none|null|nil|undefined|true|false|empty|todo|tbd|redacted|default|foobar|foo|bar|your[_-].*|my[_-].*|insert[_-].*|enter[_-].*|put[_-].*|some[_-].*|(?:new|current)-password|one-time-code|same-origin|include|omit)$/i;
+/**
+ * Values that describe themselves as not real ("example-password", "change-me-db-password",
+ * "not-a-real-password"). Deliberately a short list of self-describing words: generic words
+ * such as "test" or "demo" also occur in real passwords and are not matched as substrings.
+ */
+const SELF_DESCRIBED_FAKE = /example|placeholder|dummy|change[_-]?me|replace[_-]?me|not[_-]?(?:a[_-]?)?real|fake[_-]?(?:pass|secret|token|key)|redacted/i;
 
 /** Documentation examples of real token formats (AWS's AKIAIOSFODNN7EXAMPLE, "sk_live_xxxx…"). */
 function isTokenPlaceholder(value: string): boolean {
@@ -74,6 +80,7 @@ function isTokenPlaceholder(value: string): boolean {
 function isPlaceholder(value: string, name?: string): boolean {
   const v = value.trim();
   if (PLACEHOLDER_VALUE.test(v)) return true;
+  if (SELF_DESCRIBED_FAKE.test(v)) return true;
   if (/\s/.test(v)) return true; // prose, labels ("Enter your password")
   if (/^(.)\1+$/.test(v)) return true; // xxxxxx, ******
   if (/^[<[{(%$]|^\{\{|\$\{|\$\(|%\(|<redacted>|\.\.\.|…/.test(v)) return true; // templates and references
@@ -113,6 +120,57 @@ export interface SecretScanFile {
   isEnvTemplate: boolean;
 }
 
+/**
+ * Where a secret was found. Generated files are not scanned for secrets at all
+ * (see security/index.ts), so they have no context here.
+ */
+export type SecretContext = "source" | "configuration" | "template" | "test" | "documentation";
+export const SECRET_CONTEXTS: readonly SecretContext[] = ["source", "configuration", "template", "test", "documentation"];
+
+/** Test files whose purpose is exercising secret handling (detectors, redaction, leak checks). */
+const SECURITY_FIXTURE_FILE = /secur|secret|credential|password|redact|leak|sanitiz|vault|token/i;
+
+export function secretContextOf(file: SecretScanFile): SecretContext {
+  if (file.kind === "TEST") return "test";
+  if (file.kind === "DOCUMENTATION") return "documentation";
+  if (file.isEnvTemplate) return "template";
+  if (file.isEnvFile || CONFIG_EXT.test(file.path) || file.kind === "CONFIG") return "configuration";
+  return "source";
+}
+
+/** Formats that identify a real provider credential (as opposed to an arbitrary assigned string). */
+const isRealFormat = (rule: SecurityRuleKey) => rule === "privateKey" || rule === "cloudCredential" || rule === "apiToken" || rule === "jwt";
+
+/**
+ * Severity and explanation for a match in its file context.
+ * - source / configuration / template: as detected.
+ * - test / documentation: arbitrary values (passwords, connection strings) are almost always
+ *   fixtures or examples, so they are kept but reported as INFO and marked likely intentional.
+ *   Real provider formats (AWS keys, GitHub tokens, private keys …) are only lowered one step:
+ *   live keys do get committed in tests and docs, and these formats are unambiguous.
+ */
+function inContext(match: Match, file: SecretScanFile, context: SecretContext): { severity: Severity; note?: string; likelyIntentional: boolean } {
+  if (context !== "test" && context !== "documentation") return { severity: match.severity, likelyIntentional: false };
+  const where =
+    context === "documentation"
+      ? "detected in documentation/example content"
+      : SECURITY_FIXTURE_FILE.test(file.path.slice(file.path.lastIndexOf("/") + 1))
+        ? "detected in a security test fixture"
+        : "detected in a test file";
+  if (isRealFormat(match.rule)) {
+    return {
+      severity: downgrade(match.severity),
+      note: `${where}, but it matches a real ${match.label} format: verify it is not a live credential, and revoke it if it is`,
+      likelyIntentional: false,
+    };
+  }
+  return {
+    severity: "INFO",
+    note: context === "documentation" ? `${where}; verify that this is not a real credential` : `${where}; likely intentional`,
+    likelyIntentional: true,
+  };
+}
+
 const MAX_FINDINGS_PER_FILE = 50;
 /** Lines longer than this (minified bundles, data blobs) only get the anchored token patterns. */
 const MAX_GENERIC_LINE = 4000;
@@ -132,14 +190,14 @@ interface Match {
 }
 
 /**
- * Find secrets in one file's text. Severity is lowered one step in tests and
- * documentation (usually fixtures and examples) and the evidence says so.
+ * Find secrets in one file's text. Every finding records its file context; in tests and
+ * documentation the severity is lowered (see `inContext`) and the evidence says why.
  */
 export function scanTextForSecrets(text: string, file: SecretScanFile): RawSecurityFinding[] {
   const lines = text.split(/\r?\n/);
   const matches: Match[] = [];
   const isConfig = file.isEnvFile || file.isEnvTemplate || CONFIG_EXT.test(file.path) || file.kind === "CONFIG";
-  const nonProduction = file.kind === "TEST" || file.kind === "DOCUMENTATION";
+  const context = secretContextOf(file);
 
   for (let i = 0; i < lines.length && matches.length < MAX_FINDINGS_PER_FILE; i++) {
     const line = lines[i]!;
@@ -205,18 +263,24 @@ export function scanTextForSecrets(text: string, file: SecretScanFile): RawSecur
   }
 
   return matches.map((m) => {
-    const severity = nonProduction ? downgrade(m.severity) : m.severity;
+    const placed = inContext(m, file, context);
     const mask = m.rule === "privateKey" ? m.value : maskSecret(m.value, m.shown);
-    const context = maskedContext(lines[m.line]!, m.start, m.end, mask);
-    const notes = [m.note, nonProduction && `found in a ${file.kind === "TEST" ? "test" : "documentation"} file, so it may be a fixture or example`].filter(Boolean);
+    const excerpt = maskedContext(lines[m.line]!, m.start, m.end, mask);
+    const notes = [m.note, placed.note].filter(Boolean);
     return {
       rule: m.rule,
-      severity,
+      severity: placed.severity,
       line: m.line + 1,
       endLine: m.line + 1,
-      evidence: `${m.label} at line ${m.line + 1}: \`${context}\`${notes.length ? ` (${notes.join("; ")})` : ""}.`,
+      evidence: `${m.label} at line ${m.line + 1}: \`${excerpt}\`${notes.length ? ` (${notes.join("; ")})` : ""}.`,
       key: `${m.label}:${m.name ?? `${mask}#${m.value.length}`}`,
-      data: { label: m.label.replace(/`/g, ""), masked: mask, ...(m.name ? { name: m.name } : {}) },
+      data: {
+        label: m.label.replace(/`/g, ""),
+        masked: mask,
+        context,
+        likelyIntentional: placed.likelyIntentional,
+        ...(m.name ? { name: m.name } : {}),
+      },
     };
   });
 }
@@ -247,6 +311,6 @@ export function envFileFinding(text: string, path: string): RawSecurityFinding |
     endLine: 1,
     evidence: `\`${path}\` is committed and assigns ${assigned.length} value${assigned.length === 1 ? "" : "s"} (${names.join(", ")}${assigned.length > names.length ? ", …" : ""}). Values are not shown.`,
     key: "env-file",
-    data: { variables: assigned.length },
+    data: { variables: assigned.length, context: "configuration" satisfies SecretContext, likelyIntentional: false },
   };
 }

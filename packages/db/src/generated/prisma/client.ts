@@ -57,6 +57,14 @@ export type Session = Prisma.SessionModel
  */
 export type Repository = Prisma.RepositoryModel
 /**
+ * Model FindingTriage
+ * A user's decision about one specific finding of a repository. It applies to every
+ * analysis of that repository whose finding has the same fingerprint (rule + path +
+ * stable key), so it follows the finding across re-analyses but never covers a new or
+ * different finding. Triaged findings are still reported; they are only labelled.
+ */
+export type FindingTriage = Prisma.FindingTriageModel
+/**
  * Model Analysis
  * 
  */
