@@ -10,6 +10,9 @@ node_modules/
 .next/
 **/.next/
 out/
+# Agent instruction files that `next dev` writes into the app; local, not project docs
+apps/web/AGENTS.md
+apps/web/CLAUDE.md
 
 # Build
 dist/

@@ -33,7 +33,7 @@ run yet; `summary.modulesRun` lists what actually ran.
 |---|---|---|
 | `@pd/shared` | zod, pino | `constants` subpath is browser-safe; `logger` is server-only |
 | `@pd/analyzer` | shared, yauzl, ignore, web-tree-sitter | ingest (`clone`, `zip`, `workspace`), `scanner`; subpaths `metrics`, `security`, `dependencies`, `architecture` |
-| `@pd/db` | Prisma 7 + `@prisma/adapter-pg` | generated client in `src/generated` (gitignored) |
+| `@pd/db` | Prisma 7 + `@prisma/adapter-pg` | generated client in `src/generated`, committed; regenerate (`npm run db:generate`) and commit it with every `schema.prisma` change |
 | `@pd/worker` | analyzer, db, shared, bullmq | `pipeline.ts` orchestrates stages; `persist.ts` maps analyzer output to rows; supplies `fetch` for OSV.dev |
 | `@pd/web` | analyzer, db, shared, bullmq | route handlers are thin; logic lives in `server/services` |
 
