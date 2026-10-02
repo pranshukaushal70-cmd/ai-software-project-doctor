@@ -12,6 +12,7 @@ import { CodeMetrics } from "./code-metrics";
 import { DependenciesPanel } from "./dependencies-panel";
 import { FindingsList } from "./findings-list";
 import { HealthPanel, HealthScoreCard } from "./health-panel";
+import { IntelligencePanel } from "./intelligence-panel";
 import { PracticesPanel } from "./practices-panel";
 import { ProgressPanel } from "./progress-panel";
 import { ScanOverview } from "./scan-overview";
@@ -46,6 +47,7 @@ const TABS = [
   { id: "architecture", label: "Architecture" },
   { id: "practices", label: "Practices" },
   { id: "health", label: "Health" },
+  { id: "intelligence", label: "Intelligence" },
   { id: "findings", label: "All findings" },
 ] as const;
 export type TabId = (typeof TABS)[number]["id"];
@@ -88,6 +90,7 @@ export function CompletedAnalysis({ analysis, initialTab = "overview" }: { analy
   const dependencies = summary.dependencies;
   const architecture = summary.architecture;
   const practices = summary.practices;
+  const intelligence = summary.intelligence;
   const health = analysis.scoreBreakdown ?? null;
   const findingCount = code
     ? code.findings.stored + (security?.findings.stored ?? 0) + (dependencies?.findings.stored ?? 0) + (architecture?.findings.stored ?? 0) + (practices?.findings.stored ?? 0)
@@ -158,6 +161,10 @@ export function CompletedAnalysis({ analysis, initialTab = "overview" }: { analy
           <OlderAnalyzerNotice version={analysis.analyzerVersion} module="the health score" action="get an explainable health score" />
         )}
         {tab === "health" && health && <HealthPanel health={health} analyzerVersion={analysis.analyzerVersion} />}
+        {tab === "intelligence" && code && !intelligence && (
+          <OlderAnalyzerNotice version={analysis.analyzerVersion} module="the repository index" action="index its symbols, dependencies and call graph" />
+        )}
+        {tab === "intelligence" && intelligence && <IntelligencePanel analysisId={analysis.id} summary={intelligence} />}
         {tab === "findings" && code && <FindingsList analysisId={analysis.id} />}
       </div>
     </div>

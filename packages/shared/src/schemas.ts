@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEPENDENCY_ECOSYSTEMS, FINDING_CATEGORIES, SEVERITIES } from "./constants";
+import { DEPENDENCY_ECOSYSTEMS, FINDING_CATEGORIES, SEVERITIES, SYMBOL_KINDS } from "./constants";
 
 export const emailSchema = z.email().max(254).transform((v) => v.toLowerCase());
 
@@ -105,3 +105,77 @@ export const analysisJobSchema = z.object({
   analysisId: idSchema,
 });
 export type AnalysisJob = z.infer<typeof analysisJobSchema>;
+
+// ---------------------------------------------------------------- repository intelligence (Phase 6)
+
+/**
+ * A repository-relative posix path as stored on File rows. Paths are only matched
+ * against stored rows, never used on the filesystem; rejecting absolute paths,
+ * backslashes, NUL and `..` segments keeps it that way by construction.
+ */
+export const repoPathSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(1000)
+  .refine((p) => !p.startsWith("/") && !p.includes("\\") && !p.includes("\0") && !p.split("/").includes(".."), "Must be a path relative to the repository root");
+
+const symbolName = z.string().trim().min(1).max(200);
+
+/** GET /api/analysis/:id/symbols query. `q` matches names case-insensitively (substring). */
+export const symbolsQuerySchema = paginationSchema.extend({
+  q: z.string().trim().min(1).max(200).optional(),
+  kind: commaList(z.enum(SYMBOL_KINDS)).optional(),
+  path: repoPathSchema.optional(),
+  exported: queryFlag.optional(),
+});
+export type SymbolsQuery = z.infer<typeof symbolsQuerySchema>;
+
+/** GET /api/analysis/:id/references query: call sites of a symbol (by id) or of a name. */
+export const referencesQuerySchema = paginationSchema
+  .extend({ symbolId: idSchema.optional(), name: symbolName.optional() })
+  .refine((q) => !!q.symbolId !== !!q.name, "Give either symbolId or name");
+export type ReferencesQuery = z.infer<typeof referencesQuerySchema>;
+
+/** GET /api/analysis/:id/imports query. */
+export const importsQuerySchema = z.object({
+  path: repoPathSchema,
+  /** `imports`: what the file imports (including packages); `importers`: files importing it. */
+  direction: z.enum(["imports", "importers"]).default("imports"),
+});
+export type ImportsQuery = z.infer<typeof importsQuerySchema>;
+
+const impactType = z.enum(["file", "symbol", "module"]);
+
+/** GET /api/analysis/:id/impact query. For a symbol, `path` narrows it to the definition in that file. */
+export const impactQuerySchema = z.object({
+  type: impactType,
+  target: z.string().trim().min(1).max(1000),
+  path: repoPathSchema.optional(),
+  depth: z.coerce.number().int().min(1).max(20).default(10),
+});
+export type ImpactQuery = z.infer<typeof impactQuerySchema>;
+
+/**
+ * POST /api/analysis/:id/context: the structured interface for AI agents. Each operation
+ * returns structured, bounded context (no file contents) computed deterministically.
+ */
+export const contextRequestSchema = z.discriminatedUnion("operation", [
+  z.object({ operation: z.literal("manifest") }),
+  z.object({ operation: z.literal("search"), query: z.string().trim().min(1).max(300), limit: z.number().int().min(1).max(100).default(25) }),
+  z.object({ operation: z.literal("find_symbol"), name: symbolName, path: repoPathSchema.optional() }),
+  z.object({ operation: z.literal("find_references"), name: symbolName, path: repoPathSchema.optional() }),
+  z.object({ operation: z.literal("file_imports"), path: repoPathSchema }),
+  z.object({ operation: z.literal("file_importers"), path: repoPathSchema }),
+  z.object({ operation: z.literal("related_tests"), path: repoPathSchema }),
+  z.object({ operation: z.literal("find_route"), query: z.string().trim().min(1).max(300) }),
+  z.object({
+    operation: z.literal("impact_analysis"),
+    target: z.string().trim().min(1).max(1000),
+    /** Inferred when omitted: a stored file path, else a module directory, else a symbol name. */
+    type: impactType.optional(),
+    path: repoPathSchema.optional(),
+    depth: z.number().int().min(1).max(20).default(10),
+  }),
+]);
+export type ContextRequest = z.infer<typeof contextRequestSchema>;

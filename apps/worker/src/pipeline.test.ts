@@ -24,6 +24,9 @@ function fakePrisma(analysis: Row, opts: { failOn?: string; triages?: Row[] } = 
     dependency: [] as Row[],
     architectureNode: [] as Row[],
     architectureEdge: [] as Row[],
+    codeSymbol: [] as Row[],
+    symbolReference: [] as Row[],
+    fileDependency: [] as Row[],
   };
   const updates: Row[] = [];
   let seq = 0;
@@ -60,6 +63,9 @@ function fakePrisma(analysis: Row, opts: { failOn?: string; triages?: Row[] } = 
     dependency: table("dependency"),
     architectureNode: table("architectureNode"),
     architectureEdge: table("architectureEdge"),
+    codeSymbol: table("codeSymbol"),
+    symbolReference: table("symbolReference"),
+    fileDependency: table("fileDependency"),
     findingTriage: {
       findMany: async ({ where }: { where: { repositoryId: string } }) => (opts.triages ?? []).filter((t) => t.repositoryId === where.repositoryId),
     },
@@ -170,6 +176,7 @@ describe("runAnalysis", () => {
       "DEPENDENCIES",
       "ARCHITECTURE",
       "PRACTICES",
+      "INDEXING",
       "COMPLETED",
     ]);
 
@@ -214,7 +221,7 @@ describe("runAnalysis", () => {
       dependencies: { vulnerabilityScan: Row; totals: Row };
       architecture: { totals: Row };
     };
-    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics", "security", "dependencies", "architecture", "practices", "health-score"]);
+    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics", "security", "dependencies", "architecture", "practices", "health-score", "intelligence"]);
 
     // Phase 5: practices findings and an explainable health score.
     const practices = (analysis.summary as { practices: { testing: Row; findings: { byCategory: Row } } }).practices;
@@ -227,6 +234,18 @@ describe("runAnalysis", () => {
     expect(breakdown.dimensions.find((d) => d.id === "api")!.score).toBeNull();
     expect(analysis.weightsUsed).toMatchObject({ version: "1.0" });
     expect(tables.metric.find((m) => m.key === "score.overall")?.value).toBe(analysis.healthScore);
+
+    // Phase 6: repository index rows reference stored files and symbols.
+    const symbolIds = new Set(tables.codeSymbol.map((s) => s.id));
+    expect(tables.codeSymbol.some((s) => s.name === "orderTotal" || s.kind === "FUNCTION")).toBe(true);
+    expect(tables.codeSymbol.every((s) => fileIds.has(s.fileId as string))).toBe(true);
+    expect(tables.fileDependency).toContainEqual(expect.objectContaining({ kind: "INTERNAL", fromFileId: tables.file.find((f) => f.path === "src/orders.ts")?.id, toFileId: tables.file.find((f) => f.path === "src/format.ts")?.id }));
+    expect(tables.symbolReference.every((r) => fileIds.has(r.fileId as string) && (r.targetSymbolId === null || symbolIds.has(r.targetSymbolId as string)))).toBe(true);
+    const intelligence = (analysis.summary as { intelligence: { totals: Row; manifest: { name: string } } }).intelligence;
+    expect(intelligence.totals).toMatchObject({ symbols: tables.codeSymbol.length, references: tables.symbolReference.length });
+    expect(tables.file.find((f) => f.path === "src/orders.ts")?.contentHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(tables.file.find((f) => f.path === ".env")?.contentHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(JSON.stringify(intelligence)).not.toContain("Xk92_mq7PzLw");
     expect(summary.dependencies.vulnerabilityScan).toMatchObject({ status: "skipped", queried: 0 });
     expect(summary.architecture.totals).toMatchObject({ cycles: 0 });
     expect(summary.ingest).toMatchObject({ source: "ZIP", extractedFiles: ALL_FILES.length });
@@ -247,12 +266,15 @@ describe("runAnalysis", () => {
     tables.dependency.push({ id: "staleDep", analysisId: "an1" });
     tables.architectureNode.push({ id: "staleNode", analysisId: "an1", key: "file:gone.ts" });
     tables.architectureEdge.push({ id: "staleEdge", analysisId: "an1", fromId: "staleNode", toId: "staleNode" });
+    tables.codeSymbol.push({ id: "staleSymbol", analysisId: "an1", key: "gone" });
+    tables.symbolReference.push({ id: "staleRef", analysisId: "an1" });
+    tables.fileDependency.push({ id: "staleDep2", analysisId: "an1" });
     const osv = fakeOsv();
 
     await runAnalysis("an1", { prisma, limits, log: silentLog, fetch: osv.fetch });
 
     expect(analysis).toMatchObject({ status: "COMPLETED" });
-    expect([...tables.dependency, ...tables.architectureNode, ...tables.architectureEdge].some((r) => String(r.id).startsWith("stale"))).toBe(false);
+    expect([...tables.dependency, ...tables.architectureNode, ...tables.architectureEdge, ...tables.codeSymbol, ...tables.symbolReference, ...tables.fileDependency].some((r) => String(r.id).startsWith("stale"))).toBe(false);
     expect(osv.requests.map((r) => r.split(" ")[0])).toEqual(["https://api.osv.dev/v1/querybatch", "https://api.osv.dev/v1/vulns/GHSA-35jh-r3h4-6jhm"]);
 
     expect(tables.dependency).toEqual([
@@ -357,6 +379,10 @@ describe("runAnalysis", () => {
     }
     expect(JSON.stringify(tables.finding)).not.toContain("Sup3r-Secret-Admin-Pw");
     expect(analysis.healthScore).toBeLessThan(75);
+    // The demo is indexed: its route handler calls into the database layer through resolved imports.
+    const sym = (name: string) => tables.codeSymbol.find((s) => s.name === name);
+    expect(sym("findProduct")).toMatchObject({ kind: "FUNCTION" });
+    expect(tables.symbolReference.some((r) => r.targetSymbolId === sym("createOrder")?.id && r.fileId === tables.file.find((f) => f.path === "src/server.js")?.id)).toBe(true);
     expect(await readdir(path.join(workspaceDir, "runs"))).toEqual([]);
   });
 

@@ -77,6 +77,7 @@ export type FileMinAggregateOutputType = {
   maxNesting: number | null
   duplicatedLines: number | null
   parseErrors: number | null
+  contentHash: string | null
 }
 
 export type FileMaxAggregateOutputType = {
@@ -98,6 +99,7 @@ export type FileMaxAggregateOutputType = {
   maxNesting: number | null
   duplicatedLines: number | null
   parseErrors: number | null
+  contentHash: string | null
 }
 
 export type FileCountAggregateOutputType = {
@@ -121,6 +123,7 @@ export type FileCountAggregateOutputType = {
   parseErrors: number
   imports: number
   exports: number
+  contentHash: number
   _all: number
 }
 
@@ -176,6 +179,7 @@ export type FileMinAggregateInputType = {
   maxNesting?: true
   duplicatedLines?: true
   parseErrors?: true
+  contentHash?: true
 }
 
 export type FileMaxAggregateInputType = {
@@ -197,6 +201,7 @@ export type FileMaxAggregateInputType = {
   maxNesting?: true
   duplicatedLines?: true
   parseErrors?: true
+  contentHash?: true
 }
 
 export type FileCountAggregateInputType = {
@@ -220,6 +225,7 @@ export type FileCountAggregateInputType = {
   parseErrors?: true
   imports?: true
   exports?: true
+  contentHash?: true
   _all?: true
 }
 
@@ -330,6 +336,7 @@ export type FileGroupByOutputType = {
   parseErrors: number | null
   imports: string[]
   exports: string[]
+  contentHash: string | null
   _count: FileCountAggregateOutputType | null
   _avg: FileAvgAggregateOutputType | null
   _sum: FileSumAggregateOutputType | null
@@ -376,9 +383,14 @@ export type FileWhereInput = {
   parseErrors?: Prisma.IntNullableFilter<"File"> | number | null
   imports?: Prisma.StringNullableListFilter<"File">
   exports?: Prisma.StringNullableListFilter<"File">
+  contentHash?: Prisma.StringNullableFilter<"File"> | string | null
   analysis?: Prisma.XOR<Prisma.AnalysisScalarRelationFilter, Prisma.AnalysisWhereInput>
   findings?: Prisma.FindingListRelationFilter
   metrics?: Prisma.MetricListRelationFilter
+  symbols?: Prisma.CodeSymbolListRelationFilter
+  references?: Prisma.SymbolReferenceListRelationFilter
+  dependenciesOut?: Prisma.FileDependencyListRelationFilter
+  dependenciesIn?: Prisma.FileDependencyListRelationFilter
 }
 
 export type FileOrderByWithRelationInput = {
@@ -402,9 +414,14 @@ export type FileOrderByWithRelationInput = {
   parseErrors?: Prisma.SortOrderInput | Prisma.SortOrder
   imports?: Prisma.SortOrder
   exports?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrderInput | Prisma.SortOrder
   analysis?: Prisma.AnalysisOrderByWithRelationInput
   findings?: Prisma.FindingOrderByRelationAggregateInput
   metrics?: Prisma.MetricOrderByRelationAggregateInput
+  symbols?: Prisma.CodeSymbolOrderByRelationAggregateInput
+  references?: Prisma.SymbolReferenceOrderByRelationAggregateInput
+  dependenciesOut?: Prisma.FileDependencyOrderByRelationAggregateInput
+  dependenciesIn?: Prisma.FileDependencyOrderByRelationAggregateInput
 }
 
 export type FileWhereUniqueInput = Prisma.AtLeast<{
@@ -432,9 +449,14 @@ export type FileWhereUniqueInput = Prisma.AtLeast<{
   parseErrors?: Prisma.IntNullableFilter<"File"> | number | null
   imports?: Prisma.StringNullableListFilter<"File">
   exports?: Prisma.StringNullableListFilter<"File">
+  contentHash?: Prisma.StringNullableFilter<"File"> | string | null
   analysis?: Prisma.XOR<Prisma.AnalysisScalarRelationFilter, Prisma.AnalysisWhereInput>
   findings?: Prisma.FindingListRelationFilter
   metrics?: Prisma.MetricListRelationFilter
+  symbols?: Prisma.CodeSymbolListRelationFilter
+  references?: Prisma.SymbolReferenceListRelationFilter
+  dependenciesOut?: Prisma.FileDependencyListRelationFilter
+  dependenciesIn?: Prisma.FileDependencyListRelationFilter
 }, "id" | "analysisId_path">
 
 export type FileOrderByWithAggregationInput = {
@@ -458,6 +480,7 @@ export type FileOrderByWithAggregationInput = {
   parseErrors?: Prisma.SortOrderInput | Prisma.SortOrder
   imports?: Prisma.SortOrder
   exports?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.FileCountOrderByAggregateInput
   _avg?: Prisma.FileAvgOrderByAggregateInput
   _max?: Prisma.FileMaxOrderByAggregateInput
@@ -489,6 +512,7 @@ export type FileScalarWhereWithAggregatesInput = {
   parseErrors?: Prisma.IntNullableWithAggregatesFilter<"File"> | number | null
   imports?: Prisma.StringNullableListFilter<"File">
   exports?: Prisma.StringNullableListFilter<"File">
+  contentHash?: Prisma.StringNullableWithAggregatesFilter<"File"> | string | null
 }
 
 export type FileCreateInput = {
@@ -511,9 +535,14 @@ export type FileCreateInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
   analysis: Prisma.AnalysisCreateNestedOneWithoutFilesInput
   findings?: Prisma.FindingCreateNestedManyWithoutFileInput
   metrics?: Prisma.MetricCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyCreateNestedManyWithoutToFileInput
 }
 
 export type FileUncheckedCreateInput = {
@@ -537,8 +566,13 @@ export type FileUncheckedCreateInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
   findings?: Prisma.FindingUncheckedCreateNestedManyWithoutFileInput
   metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutToFileInput
 }
 
 export type FileUpdateInput = {
@@ -561,9 +595,14 @@ export type FileUpdateInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   analysis?: Prisma.AnalysisUpdateOneRequiredWithoutFilesNestedInput
   findings?: Prisma.FindingUpdateManyWithoutFileNestedInput
   metrics?: Prisma.MetricUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUpdateManyWithoutToFileNestedInput
 }
 
 export type FileUncheckedUpdateInput = {
@@ -587,8 +626,13 @@ export type FileUncheckedUpdateInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   findings?: Prisma.FindingUncheckedUpdateManyWithoutFileNestedInput
   metrics?: Prisma.MetricUncheckedUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedUpdateManyWithoutToFileNestedInput
 }
 
 export type FileCreateManyInput = {
@@ -612,6 +656,7 @@ export type FileCreateManyInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
 }
 
 export type FileUpdateManyMutationInput = {
@@ -634,6 +679,7 @@ export type FileUpdateManyMutationInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type FileUncheckedUpdateManyInput = {
@@ -657,6 +703,7 @@ export type FileUncheckedUpdateManyInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type FileListRelationFilter = {
@@ -703,6 +750,7 @@ export type FileCountOrderByAggregateInput = {
   parseErrors?: Prisma.SortOrder
   imports?: Prisma.SortOrder
   exports?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrder
 }
 
 export type FileAvgOrderByAggregateInput = {
@@ -740,6 +788,7 @@ export type FileMaxOrderByAggregateInput = {
   maxNesting?: Prisma.SortOrder
   duplicatedLines?: Prisma.SortOrder
   parseErrors?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrder
 }
 
 export type FileMinOrderByAggregateInput = {
@@ -761,6 +810,7 @@ export type FileMinOrderByAggregateInput = {
   maxNesting?: Prisma.SortOrder
   duplicatedLines?: Prisma.SortOrder
   parseErrors?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrder
 }
 
 export type FileSumOrderByAggregateInput = {
@@ -782,6 +832,11 @@ export type FileSumOrderByAggregateInput = {
 export type FileNullableScalarRelationFilter = {
   is?: Prisma.FileWhereInput | null
   isNot?: Prisma.FileWhereInput | null
+}
+
+export type FileScalarRelationFilter = {
+  is?: Prisma.FileWhereInput
+  isNot?: Prisma.FileWhereInput
 }
 
 export type FileCreateNestedManyWithoutAnalysisInput = {
@@ -888,6 +943,64 @@ export type FileUpdateOneWithoutMetricsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.FileUpdateToOneWithWhereWithoutMetricsInput, Prisma.FileUpdateWithoutMetricsInput>, Prisma.FileUncheckedUpdateWithoutMetricsInput>
 }
 
+export type FileCreateNestedOneWithoutSymbolsInput = {
+  create?: Prisma.XOR<Prisma.FileCreateWithoutSymbolsInput, Prisma.FileUncheckedCreateWithoutSymbolsInput>
+  connectOrCreate?: Prisma.FileCreateOrConnectWithoutSymbolsInput
+  connect?: Prisma.FileWhereUniqueInput
+}
+
+export type FileUpdateOneRequiredWithoutSymbolsNestedInput = {
+  create?: Prisma.XOR<Prisma.FileCreateWithoutSymbolsInput, Prisma.FileUncheckedCreateWithoutSymbolsInput>
+  connectOrCreate?: Prisma.FileCreateOrConnectWithoutSymbolsInput
+  upsert?: Prisma.FileUpsertWithoutSymbolsInput
+  connect?: Prisma.FileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FileUpdateToOneWithWhereWithoutSymbolsInput, Prisma.FileUpdateWithoutSymbolsInput>, Prisma.FileUncheckedUpdateWithoutSymbolsInput>
+}
+
+export type FileCreateNestedOneWithoutReferencesInput = {
+  create?: Prisma.XOR<Prisma.FileCreateWithoutReferencesInput, Prisma.FileUncheckedCreateWithoutReferencesInput>
+  connectOrCreate?: Prisma.FileCreateOrConnectWithoutReferencesInput
+  connect?: Prisma.FileWhereUniqueInput
+}
+
+export type FileUpdateOneRequiredWithoutReferencesNestedInput = {
+  create?: Prisma.XOR<Prisma.FileCreateWithoutReferencesInput, Prisma.FileUncheckedCreateWithoutReferencesInput>
+  connectOrCreate?: Prisma.FileCreateOrConnectWithoutReferencesInput
+  upsert?: Prisma.FileUpsertWithoutReferencesInput
+  connect?: Prisma.FileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FileUpdateToOneWithWhereWithoutReferencesInput, Prisma.FileUpdateWithoutReferencesInput>, Prisma.FileUncheckedUpdateWithoutReferencesInput>
+}
+
+export type FileCreateNestedOneWithoutDependenciesOutInput = {
+  create?: Prisma.XOR<Prisma.FileCreateWithoutDependenciesOutInput, Prisma.FileUncheckedCreateWithoutDependenciesOutInput>
+  connectOrCreate?: Prisma.FileCreateOrConnectWithoutDependenciesOutInput
+  connect?: Prisma.FileWhereUniqueInput
+}
+
+export type FileCreateNestedOneWithoutDependenciesInInput = {
+  create?: Prisma.XOR<Prisma.FileCreateWithoutDependenciesInInput, Prisma.FileUncheckedCreateWithoutDependenciesInInput>
+  connectOrCreate?: Prisma.FileCreateOrConnectWithoutDependenciesInInput
+  connect?: Prisma.FileWhereUniqueInput
+}
+
+export type FileUpdateOneRequiredWithoutDependenciesOutNestedInput = {
+  create?: Prisma.XOR<Prisma.FileCreateWithoutDependenciesOutInput, Prisma.FileUncheckedCreateWithoutDependenciesOutInput>
+  connectOrCreate?: Prisma.FileCreateOrConnectWithoutDependenciesOutInput
+  upsert?: Prisma.FileUpsertWithoutDependenciesOutInput
+  connect?: Prisma.FileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FileUpdateToOneWithWhereWithoutDependenciesOutInput, Prisma.FileUpdateWithoutDependenciesOutInput>, Prisma.FileUncheckedUpdateWithoutDependenciesOutInput>
+}
+
+export type FileUpdateOneWithoutDependenciesInNestedInput = {
+  create?: Prisma.XOR<Prisma.FileCreateWithoutDependenciesInInput, Prisma.FileUncheckedCreateWithoutDependenciesInInput>
+  connectOrCreate?: Prisma.FileCreateOrConnectWithoutDependenciesInInput
+  upsert?: Prisma.FileUpsertWithoutDependenciesInInput
+  disconnect?: Prisma.FileWhereInput | boolean
+  delete?: Prisma.FileWhereInput | boolean
+  connect?: Prisma.FileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FileUpdateToOneWithWhereWithoutDependenciesInInput, Prisma.FileUpdateWithoutDependenciesInInput>, Prisma.FileUncheckedUpdateWithoutDependenciesInInput>
+}
+
 export type FileCreateWithoutAnalysisInput = {
   id?: string
   path: string
@@ -908,8 +1021,13 @@ export type FileCreateWithoutAnalysisInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
   findings?: Prisma.FindingCreateNestedManyWithoutFileInput
   metrics?: Prisma.MetricCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyCreateNestedManyWithoutToFileInput
 }
 
 export type FileUncheckedCreateWithoutAnalysisInput = {
@@ -932,8 +1050,13 @@ export type FileUncheckedCreateWithoutAnalysisInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
   findings?: Prisma.FindingUncheckedCreateNestedManyWithoutFileInput
   metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutToFileInput
 }
 
 export type FileCreateOrConnectWithoutAnalysisInput = {
@@ -986,6 +1109,7 @@ export type FileScalarWhereInput = {
   parseErrors?: Prisma.IntNullableFilter<"File"> | number | null
   imports?: Prisma.StringNullableListFilter<"File">
   exports?: Prisma.StringNullableListFilter<"File">
+  contentHash?: Prisma.StringNullableFilter<"File"> | string | null
 }
 
 export type FileCreateWithoutFindingsInput = {
@@ -1008,8 +1132,13 @@ export type FileCreateWithoutFindingsInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
   analysis: Prisma.AnalysisCreateNestedOneWithoutFilesInput
   metrics?: Prisma.MetricCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyCreateNestedManyWithoutToFileInput
 }
 
 export type FileUncheckedCreateWithoutFindingsInput = {
@@ -1033,7 +1162,12 @@ export type FileUncheckedCreateWithoutFindingsInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
   metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutToFileInput
 }
 
 export type FileCreateOrConnectWithoutFindingsInput = {
@@ -1072,8 +1206,13 @@ export type FileUpdateWithoutFindingsInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   analysis?: Prisma.AnalysisUpdateOneRequiredWithoutFilesNestedInput
   metrics?: Prisma.MetricUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUpdateManyWithoutToFileNestedInput
 }
 
 export type FileUncheckedUpdateWithoutFindingsInput = {
@@ -1097,7 +1236,12 @@ export type FileUncheckedUpdateWithoutFindingsInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metrics?: Prisma.MetricUncheckedUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedUpdateManyWithoutToFileNestedInput
 }
 
 export type FileCreateWithoutMetricsInput = {
@@ -1120,8 +1264,13 @@ export type FileCreateWithoutMetricsInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
   analysis: Prisma.AnalysisCreateNestedOneWithoutFilesInput
   findings?: Prisma.FindingCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyCreateNestedManyWithoutToFileInput
 }
 
 export type FileUncheckedCreateWithoutMetricsInput = {
@@ -1145,7 +1294,12 @@ export type FileUncheckedCreateWithoutMetricsInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
   findings?: Prisma.FindingUncheckedCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutToFileInput
 }
 
 export type FileCreateOrConnectWithoutMetricsInput = {
@@ -1184,8 +1338,13 @@ export type FileUpdateWithoutMetricsInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   analysis?: Prisma.AnalysisUpdateOneRequiredWithoutFilesNestedInput
   findings?: Prisma.FindingUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUpdateManyWithoutToFileNestedInput
 }
 
 export type FileUncheckedUpdateWithoutMetricsInput = {
@@ -1209,7 +1368,540 @@ export type FileUncheckedUpdateWithoutMetricsInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   findings?: Prisma.FindingUncheckedUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedUpdateManyWithoutToFileNestedInput
+}
+
+export type FileCreateWithoutSymbolsInput = {
+  id?: string
+  path: string
+  language?: string | null
+  kind: $Enums.FileKind
+  size: number
+  lines?: number | null
+  loc?: number | null
+  lloc?: number | null
+  commentLines?: number | null
+  blankLines?: number | null
+  functionCount?: number | null
+  classCount?: number | null
+  maxComplexity?: number | null
+  avgComplexity?: number | null
+  maxNesting?: number | null
+  duplicatedLines?: number | null
+  parseErrors?: number | null
+  imports?: Prisma.FileCreateimportsInput | string[]
+  exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
+  analysis: Prisma.AnalysisCreateNestedOneWithoutFilesInput
+  findings?: Prisma.FindingCreateNestedManyWithoutFileInput
+  metrics?: Prisma.MetricCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyCreateNestedManyWithoutToFileInput
+}
+
+export type FileUncheckedCreateWithoutSymbolsInput = {
+  id?: string
+  analysisId: string
+  path: string
+  language?: string | null
+  kind: $Enums.FileKind
+  size: number
+  lines?: number | null
+  loc?: number | null
+  lloc?: number | null
+  commentLines?: number | null
+  blankLines?: number | null
+  functionCount?: number | null
+  classCount?: number | null
+  maxComplexity?: number | null
+  avgComplexity?: number | null
+  maxNesting?: number | null
+  duplicatedLines?: number | null
+  parseErrors?: number | null
+  imports?: Prisma.FileCreateimportsInput | string[]
+  exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
+  findings?: Prisma.FindingUncheckedCreateNestedManyWithoutFileInput
+  metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutToFileInput
+}
+
+export type FileCreateOrConnectWithoutSymbolsInput = {
+  where: Prisma.FileWhereUniqueInput
+  create: Prisma.XOR<Prisma.FileCreateWithoutSymbolsInput, Prisma.FileUncheckedCreateWithoutSymbolsInput>
+}
+
+export type FileUpsertWithoutSymbolsInput = {
+  update: Prisma.XOR<Prisma.FileUpdateWithoutSymbolsInput, Prisma.FileUncheckedUpdateWithoutSymbolsInput>
+  create: Prisma.XOR<Prisma.FileCreateWithoutSymbolsInput, Prisma.FileUncheckedCreateWithoutSymbolsInput>
+  where?: Prisma.FileWhereInput
+}
+
+export type FileUpdateToOneWithWhereWithoutSymbolsInput = {
+  where?: Prisma.FileWhereInput
+  data: Prisma.XOR<Prisma.FileUpdateWithoutSymbolsInput, Prisma.FileUncheckedUpdateWithoutSymbolsInput>
+}
+
+export type FileUpdateWithoutSymbolsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumFileKindFieldUpdateOperationsInput | $Enums.FileKind
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  lines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  loc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lloc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  commentLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  blankLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  functionCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxComplexity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  avgComplexity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  maxNesting?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  duplicatedLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  imports?: Prisma.FileUpdateimportsInput | string[]
+  exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  analysis?: Prisma.AnalysisUpdateOneRequiredWithoutFilesNestedInput
+  findings?: Prisma.FindingUpdateManyWithoutFileNestedInput
+  metrics?: Prisma.MetricUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUpdateManyWithoutToFileNestedInput
+}
+
+export type FileUncheckedUpdateWithoutSymbolsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumFileKindFieldUpdateOperationsInput | $Enums.FileKind
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  lines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  loc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lloc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  commentLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  blankLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  functionCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxComplexity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  avgComplexity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  maxNesting?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  duplicatedLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  imports?: Prisma.FileUpdateimportsInput | string[]
+  exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  findings?: Prisma.FindingUncheckedUpdateManyWithoutFileNestedInput
+  metrics?: Prisma.MetricUncheckedUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedUpdateManyWithoutToFileNestedInput
+}
+
+export type FileCreateWithoutReferencesInput = {
+  id?: string
+  path: string
+  language?: string | null
+  kind: $Enums.FileKind
+  size: number
+  lines?: number | null
+  loc?: number | null
+  lloc?: number | null
+  commentLines?: number | null
+  blankLines?: number | null
+  functionCount?: number | null
+  classCount?: number | null
+  maxComplexity?: number | null
+  avgComplexity?: number | null
+  maxNesting?: number | null
+  duplicatedLines?: number | null
+  parseErrors?: number | null
+  imports?: Prisma.FileCreateimportsInput | string[]
+  exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
+  analysis: Prisma.AnalysisCreateNestedOneWithoutFilesInput
+  findings?: Prisma.FindingCreateNestedManyWithoutFileInput
+  metrics?: Prisma.MetricCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyCreateNestedManyWithoutToFileInput
+}
+
+export type FileUncheckedCreateWithoutReferencesInput = {
+  id?: string
+  analysisId: string
+  path: string
+  language?: string | null
+  kind: $Enums.FileKind
+  size: number
+  lines?: number | null
+  loc?: number | null
+  lloc?: number | null
+  commentLines?: number | null
+  blankLines?: number | null
+  functionCount?: number | null
+  classCount?: number | null
+  maxComplexity?: number | null
+  avgComplexity?: number | null
+  maxNesting?: number | null
+  duplicatedLines?: number | null
+  parseErrors?: number | null
+  imports?: Prisma.FileCreateimportsInput | string[]
+  exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
+  findings?: Prisma.FindingUncheckedCreateNestedManyWithoutFileInput
+  metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutFromFileInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutToFileInput
+}
+
+export type FileCreateOrConnectWithoutReferencesInput = {
+  where: Prisma.FileWhereUniqueInput
+  create: Prisma.XOR<Prisma.FileCreateWithoutReferencesInput, Prisma.FileUncheckedCreateWithoutReferencesInput>
+}
+
+export type FileUpsertWithoutReferencesInput = {
+  update: Prisma.XOR<Prisma.FileUpdateWithoutReferencesInput, Prisma.FileUncheckedUpdateWithoutReferencesInput>
+  create: Prisma.XOR<Prisma.FileCreateWithoutReferencesInput, Prisma.FileUncheckedCreateWithoutReferencesInput>
+  where?: Prisma.FileWhereInput
+}
+
+export type FileUpdateToOneWithWhereWithoutReferencesInput = {
+  where?: Prisma.FileWhereInput
+  data: Prisma.XOR<Prisma.FileUpdateWithoutReferencesInput, Prisma.FileUncheckedUpdateWithoutReferencesInput>
+}
+
+export type FileUpdateWithoutReferencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumFileKindFieldUpdateOperationsInput | $Enums.FileKind
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  lines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  loc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lloc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  commentLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  blankLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  functionCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxComplexity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  avgComplexity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  maxNesting?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  duplicatedLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  imports?: Prisma.FileUpdateimportsInput | string[]
+  exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  analysis?: Prisma.AnalysisUpdateOneRequiredWithoutFilesNestedInput
+  findings?: Prisma.FindingUpdateManyWithoutFileNestedInput
+  metrics?: Prisma.MetricUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUpdateManyWithoutToFileNestedInput
+}
+
+export type FileUncheckedUpdateWithoutReferencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumFileKindFieldUpdateOperationsInput | $Enums.FileKind
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  lines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  loc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lloc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  commentLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  blankLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  functionCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxComplexity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  avgComplexity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  maxNesting?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  duplicatedLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  imports?: Prisma.FileUpdateimportsInput | string[]
+  exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  findings?: Prisma.FindingUncheckedUpdateManyWithoutFileNestedInput
+  metrics?: Prisma.MetricUncheckedUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedUpdateManyWithoutToFileNestedInput
+}
+
+export type FileCreateWithoutDependenciesOutInput = {
+  id?: string
+  path: string
+  language?: string | null
+  kind: $Enums.FileKind
+  size: number
+  lines?: number | null
+  loc?: number | null
+  lloc?: number | null
+  commentLines?: number | null
+  blankLines?: number | null
+  functionCount?: number | null
+  classCount?: number | null
+  maxComplexity?: number | null
+  avgComplexity?: number | null
+  maxNesting?: number | null
+  duplicatedLines?: number | null
+  parseErrors?: number | null
+  imports?: Prisma.FileCreateimportsInput | string[]
+  exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
+  analysis: Prisma.AnalysisCreateNestedOneWithoutFilesInput
+  findings?: Prisma.FindingCreateNestedManyWithoutFileInput
+  metrics?: Prisma.MetricCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceCreateNestedManyWithoutFileInput
+  dependenciesIn?: Prisma.FileDependencyCreateNestedManyWithoutToFileInput
+}
+
+export type FileUncheckedCreateWithoutDependenciesOutInput = {
+  id?: string
+  analysisId: string
+  path: string
+  language?: string | null
+  kind: $Enums.FileKind
+  size: number
+  lines?: number | null
+  loc?: number | null
+  lloc?: number | null
+  commentLines?: number | null
+  blankLines?: number | null
+  functionCount?: number | null
+  classCount?: number | null
+  maxComplexity?: number | null
+  avgComplexity?: number | null
+  maxNesting?: number | null
+  duplicatedLines?: number | null
+  parseErrors?: number | null
+  imports?: Prisma.FileCreateimportsInput | string[]
+  exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
+  findings?: Prisma.FindingUncheckedCreateNestedManyWithoutFileInput
+  metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutFileInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutToFileInput
+}
+
+export type FileCreateOrConnectWithoutDependenciesOutInput = {
+  where: Prisma.FileWhereUniqueInput
+  create: Prisma.XOR<Prisma.FileCreateWithoutDependenciesOutInput, Prisma.FileUncheckedCreateWithoutDependenciesOutInput>
+}
+
+export type FileCreateWithoutDependenciesInInput = {
+  id?: string
+  path: string
+  language?: string | null
+  kind: $Enums.FileKind
+  size: number
+  lines?: number | null
+  loc?: number | null
+  lloc?: number | null
+  commentLines?: number | null
+  blankLines?: number | null
+  functionCount?: number | null
+  classCount?: number | null
+  maxComplexity?: number | null
+  avgComplexity?: number | null
+  maxNesting?: number | null
+  duplicatedLines?: number | null
+  parseErrors?: number | null
+  imports?: Prisma.FileCreateimportsInput | string[]
+  exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
+  analysis: Prisma.AnalysisCreateNestedOneWithoutFilesInput
+  findings?: Prisma.FindingCreateNestedManyWithoutFileInput
+  metrics?: Prisma.MetricCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyCreateNestedManyWithoutFromFileInput
+}
+
+export type FileUncheckedCreateWithoutDependenciesInInput = {
+  id?: string
+  analysisId: string
+  path: string
+  language?: string | null
+  kind: $Enums.FileKind
+  size: number
+  lines?: number | null
+  loc?: number | null
+  lloc?: number | null
+  commentLines?: number | null
+  blankLines?: number | null
+  functionCount?: number | null
+  classCount?: number | null
+  maxComplexity?: number | null
+  avgComplexity?: number | null
+  maxNesting?: number | null
+  duplicatedLines?: number | null
+  parseErrors?: number | null
+  imports?: Prisma.FileCreateimportsInput | string[]
+  exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
+  findings?: Prisma.FindingUncheckedCreateNestedManyWithoutFileInput
+  metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutFileInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutFileInput
+  references?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutFileInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutFromFileInput
+}
+
+export type FileCreateOrConnectWithoutDependenciesInInput = {
+  where: Prisma.FileWhereUniqueInput
+  create: Prisma.XOR<Prisma.FileCreateWithoutDependenciesInInput, Prisma.FileUncheckedCreateWithoutDependenciesInInput>
+}
+
+export type FileUpsertWithoutDependenciesOutInput = {
+  update: Prisma.XOR<Prisma.FileUpdateWithoutDependenciesOutInput, Prisma.FileUncheckedUpdateWithoutDependenciesOutInput>
+  create: Prisma.XOR<Prisma.FileCreateWithoutDependenciesOutInput, Prisma.FileUncheckedCreateWithoutDependenciesOutInput>
+  where?: Prisma.FileWhereInput
+}
+
+export type FileUpdateToOneWithWhereWithoutDependenciesOutInput = {
+  where?: Prisma.FileWhereInput
+  data: Prisma.XOR<Prisma.FileUpdateWithoutDependenciesOutInput, Prisma.FileUncheckedUpdateWithoutDependenciesOutInput>
+}
+
+export type FileUpdateWithoutDependenciesOutInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumFileKindFieldUpdateOperationsInput | $Enums.FileKind
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  lines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  loc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lloc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  commentLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  blankLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  functionCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxComplexity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  avgComplexity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  maxNesting?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  duplicatedLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  imports?: Prisma.FileUpdateimportsInput | string[]
+  exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  analysis?: Prisma.AnalysisUpdateOneRequiredWithoutFilesNestedInput
+  findings?: Prisma.FindingUpdateManyWithoutFileNestedInput
+  metrics?: Prisma.MetricUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUpdateManyWithoutFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUpdateManyWithoutToFileNestedInput
+}
+
+export type FileUncheckedUpdateWithoutDependenciesOutInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumFileKindFieldUpdateOperationsInput | $Enums.FileKind
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  lines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  loc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lloc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  commentLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  blankLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  functionCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxComplexity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  avgComplexity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  maxNesting?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  duplicatedLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  imports?: Prisma.FileUpdateimportsInput | string[]
+  exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  findings?: Prisma.FindingUncheckedUpdateManyWithoutFileNestedInput
+  metrics?: Prisma.MetricUncheckedUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedUpdateManyWithoutToFileNestedInput
+}
+
+export type FileUpsertWithoutDependenciesInInput = {
+  update: Prisma.XOR<Prisma.FileUpdateWithoutDependenciesInInput, Prisma.FileUncheckedUpdateWithoutDependenciesInInput>
+  create: Prisma.XOR<Prisma.FileCreateWithoutDependenciesInInput, Prisma.FileUncheckedCreateWithoutDependenciesInInput>
+  where?: Prisma.FileWhereInput
+}
+
+export type FileUpdateToOneWithWhereWithoutDependenciesInInput = {
+  where?: Prisma.FileWhereInput
+  data: Prisma.XOR<Prisma.FileUpdateWithoutDependenciesInInput, Prisma.FileUncheckedUpdateWithoutDependenciesInInput>
+}
+
+export type FileUpdateWithoutDependenciesInInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumFileKindFieldUpdateOperationsInput | $Enums.FileKind
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  lines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  loc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lloc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  commentLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  blankLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  functionCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxComplexity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  avgComplexity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  maxNesting?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  duplicatedLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  imports?: Prisma.FileUpdateimportsInput | string[]
+  exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  analysis?: Prisma.AnalysisUpdateOneRequiredWithoutFilesNestedInput
+  findings?: Prisma.FindingUpdateManyWithoutFileNestedInput
+  metrics?: Prisma.MetricUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUpdateManyWithoutFromFileNestedInput
+}
+
+export type FileUncheckedUpdateWithoutDependenciesInInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  path?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  kind?: Prisma.EnumFileKindFieldUpdateOperationsInput | $Enums.FileKind
+  size?: Prisma.IntFieldUpdateOperationsInput | number
+  lines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  loc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  lloc?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  commentLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  blankLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  functionCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  maxComplexity?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  avgComplexity?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  maxNesting?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  duplicatedLines?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  imports?: Prisma.FileUpdateimportsInput | string[]
+  exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  findings?: Prisma.FindingUncheckedUpdateManyWithoutFileNestedInput
+  metrics?: Prisma.MetricUncheckedUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedUpdateManyWithoutFromFileNestedInput
 }
 
 export type FileCreateManyAnalysisInput = {
@@ -1232,6 +1924,7 @@ export type FileCreateManyAnalysisInput = {
   parseErrors?: number | null
   imports?: Prisma.FileCreateimportsInput | string[]
   exports?: Prisma.FileCreateexportsInput | string[]
+  contentHash?: string | null
 }
 
 export type FileUpdateWithoutAnalysisInput = {
@@ -1254,8 +1947,13 @@ export type FileUpdateWithoutAnalysisInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   findings?: Prisma.FindingUpdateManyWithoutFileNestedInput
   metrics?: Prisma.MetricUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUpdateManyWithoutToFileNestedInput
 }
 
 export type FileUncheckedUpdateWithoutAnalysisInput = {
@@ -1278,8 +1976,13 @@ export type FileUncheckedUpdateWithoutAnalysisInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   findings?: Prisma.FindingUncheckedUpdateManyWithoutFileNestedInput
   metrics?: Prisma.MetricUncheckedUpdateManyWithoutFileNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutFileNestedInput
+  references?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutFileNestedInput
+  dependenciesOut?: Prisma.FileDependencyUncheckedUpdateManyWithoutFromFileNestedInput
+  dependenciesIn?: Prisma.FileDependencyUncheckedUpdateManyWithoutToFileNestedInput
 }
 
 export type FileUncheckedUpdateManyWithoutAnalysisInput = {
@@ -1302,6 +2005,7 @@ export type FileUncheckedUpdateManyWithoutAnalysisInput = {
   parseErrors?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   imports?: Prisma.FileUpdateimportsInput | string[]
   exports?: Prisma.FileUpdateexportsInput | string[]
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -1312,11 +2016,19 @@ export type FileUncheckedUpdateManyWithoutAnalysisInput = {
 export type FileCountOutputType = {
   findings: number
   metrics: number
+  symbols: number
+  references: number
+  dependenciesOut: number
+  dependenciesIn: number
 }
 
 export type FileCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   findings?: boolean | FileCountOutputTypeCountFindingsArgs
   metrics?: boolean | FileCountOutputTypeCountMetricsArgs
+  symbols?: boolean | FileCountOutputTypeCountSymbolsArgs
+  references?: boolean | FileCountOutputTypeCountReferencesArgs
+  dependenciesOut?: boolean | FileCountOutputTypeCountDependenciesOutArgs
+  dependenciesIn?: boolean | FileCountOutputTypeCountDependenciesInArgs
 }
 
 /**
@@ -1343,6 +2055,34 @@ export type FileCountOutputTypeCountMetricsArgs<ExtArgs extends runtime.Types.Ex
   where?: Prisma.MetricWhereInput
 }
 
+/**
+ * FileCountOutputType without action
+ */
+export type FileCountOutputTypeCountSymbolsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CodeSymbolWhereInput
+}
+
+/**
+ * FileCountOutputType without action
+ */
+export type FileCountOutputTypeCountReferencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SymbolReferenceWhereInput
+}
+
+/**
+ * FileCountOutputType without action
+ */
+export type FileCountOutputTypeCountDependenciesOutArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FileDependencyWhereInput
+}
+
+/**
+ * FileCountOutputType without action
+ */
+export type FileCountOutputTypeCountDependenciesInArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FileDependencyWhereInput
+}
+
 
 export type FileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1365,9 +2105,14 @@ export type FileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   parseErrors?: boolean
   imports?: boolean
   exports?: boolean
+  contentHash?: boolean
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
   findings?: boolean | Prisma.File$findingsArgs<ExtArgs>
   metrics?: boolean | Prisma.File$metricsArgs<ExtArgs>
+  symbols?: boolean | Prisma.File$symbolsArgs<ExtArgs>
+  references?: boolean | Prisma.File$referencesArgs<ExtArgs>
+  dependenciesOut?: boolean | Prisma.File$dependenciesOutArgs<ExtArgs>
+  dependenciesIn?: boolean | Prisma.File$dependenciesInArgs<ExtArgs>
   _count?: boolean | Prisma.FileCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["file"]>
 
@@ -1392,6 +2137,7 @@ export type FileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   parseErrors?: boolean
   imports?: boolean
   exports?: boolean
+  contentHash?: boolean
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["file"]>
 
@@ -1416,6 +2162,7 @@ export type FileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   parseErrors?: boolean
   imports?: boolean
   exports?: boolean
+  contentHash?: boolean
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["file"]>
 
@@ -1440,13 +2187,18 @@ export type FileSelectScalar = {
   parseErrors?: boolean
   imports?: boolean
   exports?: boolean
+  contentHash?: boolean
 }
 
-export type FileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "analysisId" | "path" | "language" | "kind" | "size" | "lines" | "loc" | "lloc" | "commentLines" | "blankLines" | "functionCount" | "classCount" | "maxComplexity" | "avgComplexity" | "maxNesting" | "duplicatedLines" | "parseErrors" | "imports" | "exports", ExtArgs["result"]["file"]>
+export type FileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "analysisId" | "path" | "language" | "kind" | "size" | "lines" | "loc" | "lloc" | "commentLines" | "blankLines" | "functionCount" | "classCount" | "maxComplexity" | "avgComplexity" | "maxNesting" | "duplicatedLines" | "parseErrors" | "imports" | "exports" | "contentHash", ExtArgs["result"]["file"]>
 export type FileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
   findings?: boolean | Prisma.File$findingsArgs<ExtArgs>
   metrics?: boolean | Prisma.File$metricsArgs<ExtArgs>
+  symbols?: boolean | Prisma.File$symbolsArgs<ExtArgs>
+  references?: boolean | Prisma.File$referencesArgs<ExtArgs>
+  dependenciesOut?: boolean | Prisma.File$dependenciesOutArgs<ExtArgs>
+  dependenciesIn?: boolean | Prisma.File$dependenciesInArgs<ExtArgs>
   _count?: boolean | Prisma.FileCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type FileIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1462,6 +2214,10 @@ export type $FilePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     analysis: Prisma.$AnalysisPayload<ExtArgs>
     findings: Prisma.$FindingPayload<ExtArgs>[]
     metrics: Prisma.$MetricPayload<ExtArgs>[]
+    symbols: Prisma.$CodeSymbolPayload<ExtArgs>[]
+    references: Prisma.$SymbolReferencePayload<ExtArgs>[]
+    dependenciesOut: Prisma.$FileDependencyPayload<ExtArgs>[]
+    dependenciesIn: Prisma.$FileDependencyPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1505,6 +2261,10 @@ export type $FilePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * Names the file exports (capped).
      */
     exports: string[]
+    /**
+     * SHA-256 of the file's bytes (text files within the size limit); identifies unchanged files across analyses.
+     */
+    contentHash: string | null
   }, ExtArgs["result"]["file"]>
   composites: {}
 }
@@ -1902,6 +2662,10 @@ export interface Prisma__FileClient<T, Null = never, ExtArgs extends runtime.Typ
   analysis<T extends Prisma.AnalysisDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AnalysisDefaultArgs<ExtArgs>>): Prisma.Prisma__AnalysisClient<runtime.Types.Result.GetResult<Prisma.$AnalysisPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   findings<T extends Prisma.File$findingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.File$findingsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FindingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   metrics<T extends Prisma.File$metricsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.File$metricsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MetricPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  symbols<T extends Prisma.File$symbolsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.File$symbolsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CodeSymbolPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  references<T extends Prisma.File$referencesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.File$referencesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SymbolReferencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  dependenciesOut<T extends Prisma.File$dependenciesOutArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.File$dependenciesOutArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FileDependencyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  dependenciesIn<T extends Prisma.File$dependenciesInArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.File$dependenciesInArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FileDependencyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1951,6 +2715,7 @@ export interface FileFieldRefs {
   readonly parseErrors: Prisma.FieldRef<"File", 'Int'>
   readonly imports: Prisma.FieldRef<"File", 'String[]'>
   readonly exports: Prisma.FieldRef<"File", 'String[]'>
+  readonly contentHash: Prisma.FieldRef<"File", 'String'>
 }
     
 
@@ -2397,6 +3162,102 @@ export type File$metricsArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   distinct?: Prisma.MetricScalarFieldEnum | Prisma.MetricScalarFieldEnum[]
+}
+
+/**
+ * File.symbols
+ */
+export type File$symbolsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CodeSymbol
+   */
+  select?: Prisma.CodeSymbolSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CodeSymbol
+   */
+  omit?: Prisma.CodeSymbolOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CodeSymbolInclude<ExtArgs> | null
+  where?: Prisma.CodeSymbolWhereInput
+  orderBy?: Prisma.CodeSymbolOrderByWithRelationInput | Prisma.CodeSymbolOrderByWithRelationInput[]
+  cursor?: Prisma.CodeSymbolWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CodeSymbolScalarFieldEnum | Prisma.CodeSymbolScalarFieldEnum[]
+}
+
+/**
+ * File.references
+ */
+export type File$referencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SymbolReference
+   */
+  select?: Prisma.SymbolReferenceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SymbolReference
+   */
+  omit?: Prisma.SymbolReferenceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SymbolReferenceInclude<ExtArgs> | null
+  where?: Prisma.SymbolReferenceWhereInput
+  orderBy?: Prisma.SymbolReferenceOrderByWithRelationInput | Prisma.SymbolReferenceOrderByWithRelationInput[]
+  cursor?: Prisma.SymbolReferenceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SymbolReferenceScalarFieldEnum | Prisma.SymbolReferenceScalarFieldEnum[]
+}
+
+/**
+ * File.dependenciesOut
+ */
+export type File$dependenciesOutArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FileDependency
+   */
+  select?: Prisma.FileDependencySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FileDependency
+   */
+  omit?: Prisma.FileDependencyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FileDependencyInclude<ExtArgs> | null
+  where?: Prisma.FileDependencyWhereInput
+  orderBy?: Prisma.FileDependencyOrderByWithRelationInput | Prisma.FileDependencyOrderByWithRelationInput[]
+  cursor?: Prisma.FileDependencyWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FileDependencyScalarFieldEnum | Prisma.FileDependencyScalarFieldEnum[]
+}
+
+/**
+ * File.dependenciesIn
+ */
+export type File$dependenciesInArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FileDependency
+   */
+  select?: Prisma.FileDependencySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FileDependency
+   */
+  omit?: Prisma.FileDependencyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FileDependencyInclude<ExtArgs> | null
+  where?: Prisma.FileDependencyWhereInput
+  orderBy?: Prisma.FileDependencyOrderByWithRelationInput | Prisma.FileDependencyOrderByWithRelationInput[]
+  cursor?: Prisma.FileDependencyWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FileDependencyScalarFieldEnum | Prisma.FileDependencyScalarFieldEnum[]
 }
 
 /**

@@ -9,7 +9,8 @@ explain, prioritise and recommend, and it must cite the evidence it uses.
 
 **Status: Phase 1 (foundation) complete. Phases 2 (code metrics & static analysis), 3 (secret & insecure-pattern
 detection), 4 (dependency & architecture analysis) and 5 (API, database, testing and documentation analysis, an
-explainable health score and a demo project) are implemented and tested.** See [Roadmap](#roadmap) and
+explainable health score and a demo project) and 6 (repository intelligence: manifest, symbol index, dependency graph,
+impact analysis and an agent context API) are implemented and tested.** See [Roadmap](#roadmap) and
 [Verification status](#verification-status). Nothing described as "planned" below is implemented yet.
 
 ## Problem statement
@@ -30,7 +31,7 @@ Browser ─► Next.js (UI + /api) ─► PostgreSQL
              Redis ◄── BullMQ ──► Worker ┘
                                    │
           ingest (hardened clone / safe ZIP) → scan → code metrics → security → dependencies (+ OSV.dev)
-          → architecture → API / database / tests / docs → health score
+          → architecture → API / database / tests / docs → health score → repository index
           → [git → redaction → AI reasoning → report]   (bracketed: planned)
 ```
 
@@ -57,6 +58,7 @@ Each completed analysis has one tab per module:
 | Architecture | Import graph (Phase 4) | File and module import graph (SVG), import cycles, module coupling and instability, inferred layers and violations, hubs, high fan-out |
 | Practices | API, database, testing & documentation (Phase 5) | HTTP endpoints (Express, Fastify, Koa, Hono, NestJS, Next.js, Flask, FastAPI, Django, Spring) with auth/validation checks, permissive CORS, leaked stack traces, unthrottled login; Prisma/SQL/ORM schemas with unindexed foreign keys, missing primary keys, missing migrations and automatic schema sync; test files, test cases, test-to-code ratio, committed coverage reports, CI test runs, focused/skipped tests; README completeness, license, undocumented environment variables, broken links |
 | Health | Explainable health score (Phase 5) | 0–100 score and grade from eight weighted dimensions, with every deduction listed; triaged findings excluded; capped while critical/high security findings are open |
+| Intelligence | Repository intelligence (Phase 6) | Repository manifest (languages, frameworks, runtimes, manifests, Docker, CI, infrastructure), symbol search with callers, resolved file dependencies, deterministic impact analysis (dependants, tests, routes, config, modules), most depended-upon files, external packages, unresolved imports, file tree. See [docs/repository-intelligence.md](docs/repository-intelligence.md) |
 | All findings | — | Every finding with evidence, impact and recommendation, filterable by severity and type |
 
 The same data is available from the API, including `GET /api/analysis/:id/dependencies` and
@@ -135,25 +137,37 @@ outside the repository cannot be seen, so set `OSV_ENABLED=false` when analysing
 | 3 | Secret detection, insecure-pattern rules, security dashboard | Implemented; E2E pending |
 | 4 | Dependencies + OSV.dev, import graph, cycles, architecture view (API + Dependencies/Architecture tabs) | Implemented and unit-tested; E2E pending |
 | 5 | API/DB/test/docs analyzers, explainable health score, demo project (Practices and Health tabs) | Implemented and tested |
-| 6 | Git history insights | Planned |
+| 6 | Repository intelligence layer: manifest, symbol index, dependency graph, impact analysis, agent context API (Intelligence tab) | Implemented and tested |
+| — | Git history insights (previously planned as Phase 6) | Planned |
 | 7 | LLM provider layer (Anthropic default), evidence-cited recommendations, fix suggestions | Planned |
 | 8 | Reports (PDF/JSON/Markdown/HTML) | Planned |
 | 9 | Dockerised web/worker, CI, E2E tests, benchmark & evaluation | Planned |
 
 ## Verification status
 
-`npm test` (Vitest, all workspaces): **502 tests in 27 files, all passing**; `npm run typecheck` is clean for all five
+`npm test` (Vitest, all workspaces): **544 tests in 30 files, all passing**; `npm run typecheck` is clean for all five
 workspaces and `npm run build` succeeds.
 
 | Area | Tests |
 |---|---|
+| Analyzer: repository intelligence (TS/JS/Python symbol extraction incl. CommonJS, default exports and `__all__`, malformed files, file roles, manifest and runtimes, untrusted version strings, secret files never read, ingestion of ignored/gitignored/binary/oversized/symlinked files, content hashing, imports escaping the root, internal/external/builtin/unresolved resolution, call resolution, cycles, PageRank, modules, importers/callers, file/symbol/module impact, depth limits, name-matched tests, unknown targets, keyword search) | 20 |
 | Analyzer: practices (API endpoints for every supported framework, auth/validation/CORS/stack-trace/rate-limit rules, Prisma/SQL/SQLAlchemy schemas, auto schema sync, test counting, coverage reports incl. `coverage/`, CI, README/license/env vars/links, fingerprints) | 24 |
 | Analyzer: scoring (penalties and caps, per-1,000-line dimensions, fixed penalties, duplication, applicability, security cap, triage exclusion, caveats, grades, weights) | 13 |
 | Analyzer: dependencies, architecture, metrics, security, scanner, ZIP, clone | 53, 32, 31, 155, 18, 23, 7 |
-| Worker: pipeline (fake Prisma and OSV.dev: ZIP upload, stages incl. `PRACTICES`, persisted score, OSV outage/disabled, demo project end to end, missing demo, triaged findings excluded from the score, retry clean-up) and row mapping | 10 + 14 |
+| Worker: pipeline (fake Prisma and OSV.dev: ZIP upload, stages incl. `PRACTICES` and `INDEXING`, persisted score and repository index, OSV outage/disabled, demo project end to end, missing demo, triaged findings excluded from the score, retry clean-up) and row mapping (incl. index rows) | 10 + 17 |
+| Web API: repository intelligence (manifest, modules, symbols, references, imports, impact, agent context; validation incl. path traversal, Origin check, 401/404 on every endpoint, unindexed analyses, graph cache) | 13 |
 | Web API: analysis modules, triage, demo endpoint (auth, Origin check, rate limit, one demo repository per user, `scoreBreakdown` owner-only), services, HTTP helpers, session tokens | 13 + 7 + 4 + 20 + 7 + 7 |
-| Web UI (server-rendered markup): tabs incl. Practices and Health, Health and Practices panels, security, dependencies and architecture panels, graph layout | 10 + 7 + 8 + 8 + 6 + 6 |
+| Web UI (server-rendered markup): Intelligence panel and impact view | 6 |
+| Web UI (server-rendered markup): tabs incl. Practices, Health and Intelligence, Health and Practices panels, security, dependencies and architecture panels, graph layout | 10 + 7 + 8 + 8 + 6 + 6 |
 | Shared: URL validation, schemas | 15 + 4 |
+
+**End to end (Phase 6, on 2026-10-03)** against PostgreSQL 17 and Redis 7 with the production build and the worker: the
+`20261004120000_repository_intelligence` migration applied with no schema drift; this repository (328 files) indexed to
+1,115 symbols and 2,449 call references (1,805 resolved, including across workspace packages) with correct answers for
+definitions, callers, importers and impact; a generated 2,701-file repository indexed to exactly the expected 17,500 symbols
+and 7,700 internal imports (index built in 0.3 s; impact query 1.4 s cold, 0.16 s cached); the Intelligence tab worked in
+headless Chromium (search, callers, impact graph, dark mode, 390 px); and the Phase 5 and earlier end-to-end checks passed
+unchanged.
 
 **End to end (Phase 5, on 2026-10-03)** against PostgreSQL 17 and Redis 7 in Docker with the production build and the
 worker: the `20261003120000_practices_stage` migration applied with no schema drift (`prisma migrate diff`); the demo

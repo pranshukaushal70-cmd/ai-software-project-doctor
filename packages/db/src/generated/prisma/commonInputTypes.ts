@@ -460,6 +460,40 @@ export type EnumNodeKindWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumNodeKindFilter<$PrismaModel>
 }
 
+export type EnumSymbolKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.SymbolKind | Prisma.EnumSymbolKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SymbolKind[] | Prisma.ListEnumSymbolKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SymbolKind[] | Prisma.ListEnumSymbolKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSymbolKindFilter<$PrismaModel> | $Enums.SymbolKind
+}
+
+export type EnumSymbolKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SymbolKind | Prisma.EnumSymbolKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SymbolKind[] | Prisma.ListEnumSymbolKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SymbolKind[] | Prisma.ListEnumSymbolKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSymbolKindWithAggregatesFilter<$PrismaModel> | $Enums.SymbolKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSymbolKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSymbolKindFilter<$PrismaModel>
+}
+
+export type EnumDependencyKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.DependencyKind | Prisma.EnumDependencyKindFieldRefInput<$PrismaModel>
+  in?: $Enums.DependencyKind[] | Prisma.ListEnumDependencyKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DependencyKind[] | Prisma.ListEnumDependencyKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDependencyKindFilter<$PrismaModel> | $Enums.DependencyKind
+}
+
+export type EnumDependencyKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DependencyKind | Prisma.EnumDependencyKindFieldRefInput<$PrismaModel>
+  in?: $Enums.DependencyKind[] | Prisma.ListEnumDependencyKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DependencyKind[] | Prisma.ListEnumDependencyKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDependencyKindWithAggregatesFilter<$PrismaModel> | $Enums.DependencyKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDependencyKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDependencyKindFilter<$PrismaModel>
+}
+
 export type JsonFilter<$PrismaModel = never> =
 | Prisma.PatchUndefined<
     Prisma.Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
@@ -970,6 +1004,40 @@ export type NestedEnumNodeKindWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumNodeKindFilter<$PrismaModel>
   _max?: Prisma.NestedEnumNodeKindFilter<$PrismaModel>
+}
+
+export type NestedEnumSymbolKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.SymbolKind | Prisma.EnumSymbolKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SymbolKind[] | Prisma.ListEnumSymbolKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SymbolKind[] | Prisma.ListEnumSymbolKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSymbolKindFilter<$PrismaModel> | $Enums.SymbolKind
+}
+
+export type NestedEnumSymbolKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SymbolKind | Prisma.EnumSymbolKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SymbolKind[] | Prisma.ListEnumSymbolKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SymbolKind[] | Prisma.ListEnumSymbolKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSymbolKindWithAggregatesFilter<$PrismaModel> | $Enums.SymbolKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSymbolKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSymbolKindFilter<$PrismaModel>
+}
+
+export type NestedEnumDependencyKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.DependencyKind | Prisma.EnumDependencyKindFieldRefInput<$PrismaModel>
+  in?: $Enums.DependencyKind[] | Prisma.ListEnumDependencyKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DependencyKind[] | Prisma.ListEnumDependencyKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDependencyKindFilter<$PrismaModel> | $Enums.DependencyKind
+}
+
+export type NestedEnumDependencyKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.DependencyKind | Prisma.EnumDependencyKindFieldRefInput<$PrismaModel>
+  in?: $Enums.DependencyKind[] | Prisma.ListEnumDependencyKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.DependencyKind[] | Prisma.ListEnumDependencyKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumDependencyKindWithAggregatesFilter<$PrismaModel> | $Enums.DependencyKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumDependencyKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumDependencyKindFilter<$PrismaModel>
 }
 
 export type NestedJsonFilter<$PrismaModel = never> =

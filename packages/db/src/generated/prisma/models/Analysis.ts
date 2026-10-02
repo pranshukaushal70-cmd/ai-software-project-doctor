@@ -306,6 +306,9 @@ export type AnalysisWhereInput = {
   gitInsights?: Prisma.GitInsightListRelationFilter
   recommendations?: Prisma.RecommendationListRelationFilter
   reports?: Prisma.ReportListRelationFilter
+  symbols?: Prisma.CodeSymbolListRelationFilter
+  symbolReferences?: Prisma.SymbolReferenceListRelationFilter
+  fileDependencies?: Prisma.FileDependencyListRelationFilter
 }
 
 export type AnalysisOrderByWithRelationInput = {
@@ -335,6 +338,9 @@ export type AnalysisOrderByWithRelationInput = {
   gitInsights?: Prisma.GitInsightOrderByRelationAggregateInput
   recommendations?: Prisma.RecommendationOrderByRelationAggregateInput
   reports?: Prisma.ReportOrderByRelationAggregateInput
+  symbols?: Prisma.CodeSymbolOrderByRelationAggregateInput
+  symbolReferences?: Prisma.SymbolReferenceOrderByRelationAggregateInput
+  fileDependencies?: Prisma.FileDependencyOrderByRelationAggregateInput
 }
 
 export type AnalysisWhereUniqueInput = Prisma.AtLeast<{
@@ -367,6 +373,9 @@ export type AnalysisWhereUniqueInput = Prisma.AtLeast<{
   gitInsights?: Prisma.GitInsightListRelationFilter
   recommendations?: Prisma.RecommendationListRelationFilter
   reports?: Prisma.ReportListRelationFilter
+  symbols?: Prisma.CodeSymbolListRelationFilter
+  symbolReferences?: Prisma.SymbolReferenceListRelationFilter
+  fileDependencies?: Prisma.FileDependencyListRelationFilter
 }, "id">
 
 export type AnalysisOrderByWithAggregationInput = {
@@ -441,6 +450,9 @@ export type AnalysisCreateInput = {
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateInput = {
@@ -469,6 +481,9 @@ export type AnalysisUncheckedCreateInput = {
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUpdateInput = {
@@ -497,6 +512,9 @@ export type AnalysisUpdateInput = {
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateInput = {
@@ -525,6 +543,9 @@ export type AnalysisUncheckedUpdateInput = {
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateManyInput = {
@@ -817,6 +838,48 @@ export type AnalysisUpdateOneRequiredWithoutEdgesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AnalysisUpdateToOneWithWhereWithoutEdgesInput, Prisma.AnalysisUpdateWithoutEdgesInput>, Prisma.AnalysisUncheckedUpdateWithoutEdgesInput>
 }
 
+export type AnalysisCreateNestedOneWithoutSymbolsInput = {
+  create?: Prisma.XOR<Prisma.AnalysisCreateWithoutSymbolsInput, Prisma.AnalysisUncheckedCreateWithoutSymbolsInput>
+  connectOrCreate?: Prisma.AnalysisCreateOrConnectWithoutSymbolsInput
+  connect?: Prisma.AnalysisWhereUniqueInput
+}
+
+export type AnalysisUpdateOneRequiredWithoutSymbolsNestedInput = {
+  create?: Prisma.XOR<Prisma.AnalysisCreateWithoutSymbolsInput, Prisma.AnalysisUncheckedCreateWithoutSymbolsInput>
+  connectOrCreate?: Prisma.AnalysisCreateOrConnectWithoutSymbolsInput
+  upsert?: Prisma.AnalysisUpsertWithoutSymbolsInput
+  connect?: Prisma.AnalysisWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AnalysisUpdateToOneWithWhereWithoutSymbolsInput, Prisma.AnalysisUpdateWithoutSymbolsInput>, Prisma.AnalysisUncheckedUpdateWithoutSymbolsInput>
+}
+
+export type AnalysisCreateNestedOneWithoutSymbolReferencesInput = {
+  create?: Prisma.XOR<Prisma.AnalysisCreateWithoutSymbolReferencesInput, Prisma.AnalysisUncheckedCreateWithoutSymbolReferencesInput>
+  connectOrCreate?: Prisma.AnalysisCreateOrConnectWithoutSymbolReferencesInput
+  connect?: Prisma.AnalysisWhereUniqueInput
+}
+
+export type AnalysisUpdateOneRequiredWithoutSymbolReferencesNestedInput = {
+  create?: Prisma.XOR<Prisma.AnalysisCreateWithoutSymbolReferencesInput, Prisma.AnalysisUncheckedCreateWithoutSymbolReferencesInput>
+  connectOrCreate?: Prisma.AnalysisCreateOrConnectWithoutSymbolReferencesInput
+  upsert?: Prisma.AnalysisUpsertWithoutSymbolReferencesInput
+  connect?: Prisma.AnalysisWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AnalysisUpdateToOneWithWhereWithoutSymbolReferencesInput, Prisma.AnalysisUpdateWithoutSymbolReferencesInput>, Prisma.AnalysisUncheckedUpdateWithoutSymbolReferencesInput>
+}
+
+export type AnalysisCreateNestedOneWithoutFileDependenciesInput = {
+  create?: Prisma.XOR<Prisma.AnalysisCreateWithoutFileDependenciesInput, Prisma.AnalysisUncheckedCreateWithoutFileDependenciesInput>
+  connectOrCreate?: Prisma.AnalysisCreateOrConnectWithoutFileDependenciesInput
+  connect?: Prisma.AnalysisWhereUniqueInput
+}
+
+export type AnalysisUpdateOneRequiredWithoutFileDependenciesNestedInput = {
+  create?: Prisma.XOR<Prisma.AnalysisCreateWithoutFileDependenciesInput, Prisma.AnalysisUncheckedCreateWithoutFileDependenciesInput>
+  connectOrCreate?: Prisma.AnalysisCreateOrConnectWithoutFileDependenciesInput
+  upsert?: Prisma.AnalysisUpsertWithoutFileDependenciesInput
+  connect?: Prisma.AnalysisWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AnalysisUpdateToOneWithWhereWithoutFileDependenciesInput, Prisma.AnalysisUpdateWithoutFileDependenciesInput>, Prisma.AnalysisUncheckedUpdateWithoutFileDependenciesInput>
+}
+
 export type AnalysisCreateNestedOneWithoutGitInsightsInput = {
   create?: Prisma.XOR<Prisma.AnalysisCreateWithoutGitInsightsInput, Prisma.AnalysisUncheckedCreateWithoutGitInsightsInput>
   connectOrCreate?: Prisma.AnalysisCreateOrConnectWithoutGitInsightsInput
@@ -884,6 +947,9 @@ export type AnalysisCreateWithoutRepositoryInput = {
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutRepositoryInput = {
@@ -911,6 +977,9 @@ export type AnalysisUncheckedCreateWithoutRepositoryInput = {
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutRepositoryInput = {
@@ -986,6 +1055,9 @@ export type AnalysisCreateWithoutFilesInput = {
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutFilesInput = {
@@ -1013,6 +1085,9 @@ export type AnalysisUncheckedCreateWithoutFilesInput = {
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutFilesInput = {
@@ -1056,6 +1131,9 @@ export type AnalysisUpdateWithoutFilesInput = {
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutFilesInput = {
@@ -1083,6 +1161,9 @@ export type AnalysisUncheckedUpdateWithoutFilesInput = {
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateWithoutFindingsInput = {
@@ -1110,6 +1191,9 @@ export type AnalysisCreateWithoutFindingsInput = {
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutFindingsInput = {
@@ -1137,6 +1221,9 @@ export type AnalysisUncheckedCreateWithoutFindingsInput = {
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutFindingsInput = {
@@ -1180,6 +1267,9 @@ export type AnalysisUpdateWithoutFindingsInput = {
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutFindingsInput = {
@@ -1207,6 +1297,9 @@ export type AnalysisUncheckedUpdateWithoutFindingsInput = {
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateWithoutMetricsInput = {
@@ -1234,6 +1327,9 @@ export type AnalysisCreateWithoutMetricsInput = {
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutMetricsInput = {
@@ -1261,6 +1357,9 @@ export type AnalysisUncheckedCreateWithoutMetricsInput = {
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutMetricsInput = {
@@ -1304,6 +1403,9 @@ export type AnalysisUpdateWithoutMetricsInput = {
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutMetricsInput = {
@@ -1331,6 +1433,9 @@ export type AnalysisUncheckedUpdateWithoutMetricsInput = {
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateWithoutDependenciesInput = {
@@ -1358,6 +1463,9 @@ export type AnalysisCreateWithoutDependenciesInput = {
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutDependenciesInput = {
@@ -1385,6 +1493,9 @@ export type AnalysisUncheckedCreateWithoutDependenciesInput = {
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutDependenciesInput = {
@@ -1428,6 +1539,9 @@ export type AnalysisUpdateWithoutDependenciesInput = {
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutDependenciesInput = {
@@ -1455,6 +1569,9 @@ export type AnalysisUncheckedUpdateWithoutDependenciesInput = {
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateWithoutNodesInput = {
@@ -1482,6 +1599,9 @@ export type AnalysisCreateWithoutNodesInput = {
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutNodesInput = {
@@ -1509,6 +1629,9 @@ export type AnalysisUncheckedCreateWithoutNodesInput = {
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutNodesInput = {
@@ -1552,6 +1675,9 @@ export type AnalysisUpdateWithoutNodesInput = {
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutNodesInput = {
@@ -1579,6 +1705,9 @@ export type AnalysisUncheckedUpdateWithoutNodesInput = {
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateWithoutEdgesInput = {
@@ -1606,6 +1735,9 @@ export type AnalysisCreateWithoutEdgesInput = {
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutEdgesInput = {
@@ -1633,6 +1765,9 @@ export type AnalysisUncheckedCreateWithoutEdgesInput = {
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutEdgesInput = {
@@ -1676,6 +1811,9 @@ export type AnalysisUpdateWithoutEdgesInput = {
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutEdgesInput = {
@@ -1703,6 +1841,417 @@ export type AnalysisUncheckedUpdateWithoutEdgesInput = {
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
+}
+
+export type AnalysisCreateWithoutSymbolsInput = {
+  id?: string
+  status?: $Enums.AnalysisStatus
+  stage?: $Enums.AnalysisStage
+  progress?: number
+  mode?: $Enums.AnalysisMode
+  analyzerVersion: string
+  commitSha?: string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: string | null
+  createdAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  repository: Prisma.RepositoryCreateNestedOneWithoutAnalysesInput
+  files?: Prisma.FileCreateNestedManyWithoutAnalysisInput
+  findings?: Prisma.FindingCreateNestedManyWithoutAnalysisInput
+  metrics?: Prisma.MetricCreateNestedManyWithoutAnalysisInput
+  dependencies?: Prisma.DependencyCreateNestedManyWithoutAnalysisInput
+  nodes?: Prisma.ArchitectureNodeCreateNestedManyWithoutAnalysisInput
+  edges?: Prisma.ArchitectureEdgeCreateNestedManyWithoutAnalysisInput
+  gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
+  recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
+  reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
+}
+
+export type AnalysisUncheckedCreateWithoutSymbolsInput = {
+  id?: string
+  repositoryId: string
+  status?: $Enums.AnalysisStatus
+  stage?: $Enums.AnalysisStage
+  progress?: number
+  mode?: $Enums.AnalysisMode
+  analyzerVersion: string
+  commitSha?: string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: string | null
+  createdAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  files?: Prisma.FileUncheckedCreateNestedManyWithoutAnalysisInput
+  findings?: Prisma.FindingUncheckedCreateNestedManyWithoutAnalysisInput
+  metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutAnalysisInput
+  dependencies?: Prisma.DependencyUncheckedCreateNestedManyWithoutAnalysisInput
+  nodes?: Prisma.ArchitectureNodeUncheckedCreateNestedManyWithoutAnalysisInput
+  edges?: Prisma.ArchitectureEdgeUncheckedCreateNestedManyWithoutAnalysisInput
+  gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
+  recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
+}
+
+export type AnalysisCreateOrConnectWithoutSymbolsInput = {
+  where: Prisma.AnalysisWhereUniqueInput
+  create: Prisma.XOR<Prisma.AnalysisCreateWithoutSymbolsInput, Prisma.AnalysisUncheckedCreateWithoutSymbolsInput>
+}
+
+export type AnalysisUpsertWithoutSymbolsInput = {
+  update: Prisma.XOR<Prisma.AnalysisUpdateWithoutSymbolsInput, Prisma.AnalysisUncheckedUpdateWithoutSymbolsInput>
+  create: Prisma.XOR<Prisma.AnalysisCreateWithoutSymbolsInput, Prisma.AnalysisUncheckedCreateWithoutSymbolsInput>
+  where?: Prisma.AnalysisWhereInput
+}
+
+export type AnalysisUpdateToOneWithWhereWithoutSymbolsInput = {
+  where?: Prisma.AnalysisWhereInput
+  data: Prisma.XOR<Prisma.AnalysisUpdateWithoutSymbolsInput, Prisma.AnalysisUncheckedUpdateWithoutSymbolsInput>
+}
+
+export type AnalysisUpdateWithoutSymbolsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAnalysisStatusFieldUpdateOperationsInput | $Enums.AnalysisStatus
+  stage?: Prisma.EnumAnalysisStageFieldUpdateOperationsInput | $Enums.AnalysisStage
+  progress?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumAnalysisModeFieldUpdateOperationsInput | $Enums.AnalysisMode
+  analyzerVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  commitSha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  repository?: Prisma.RepositoryUpdateOneRequiredWithoutAnalysesNestedInput
+  files?: Prisma.FileUpdateManyWithoutAnalysisNestedInput
+  findings?: Prisma.FindingUpdateManyWithoutAnalysisNestedInput
+  metrics?: Prisma.MetricUpdateManyWithoutAnalysisNestedInput
+  dependencies?: Prisma.DependencyUpdateManyWithoutAnalysisNestedInput
+  nodes?: Prisma.ArchitectureNodeUpdateManyWithoutAnalysisNestedInput
+  edges?: Prisma.ArchitectureEdgeUpdateManyWithoutAnalysisNestedInput
+  gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
+  recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
+}
+
+export type AnalysisUncheckedUpdateWithoutSymbolsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAnalysisStatusFieldUpdateOperationsInput | $Enums.AnalysisStatus
+  stage?: Prisma.EnumAnalysisStageFieldUpdateOperationsInput | $Enums.AnalysisStage
+  progress?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumAnalysisModeFieldUpdateOperationsInput | $Enums.AnalysisMode
+  analyzerVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  commitSha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  files?: Prisma.FileUncheckedUpdateManyWithoutAnalysisNestedInput
+  findings?: Prisma.FindingUncheckedUpdateManyWithoutAnalysisNestedInput
+  metrics?: Prisma.MetricUncheckedUpdateManyWithoutAnalysisNestedInput
+  dependencies?: Prisma.DependencyUncheckedUpdateManyWithoutAnalysisNestedInput
+  nodes?: Prisma.ArchitectureNodeUncheckedUpdateManyWithoutAnalysisNestedInput
+  edges?: Prisma.ArchitectureEdgeUncheckedUpdateManyWithoutAnalysisNestedInput
+  gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
+  recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
+}
+
+export type AnalysisCreateWithoutSymbolReferencesInput = {
+  id?: string
+  status?: $Enums.AnalysisStatus
+  stage?: $Enums.AnalysisStage
+  progress?: number
+  mode?: $Enums.AnalysisMode
+  analyzerVersion: string
+  commitSha?: string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: string | null
+  createdAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  repository: Prisma.RepositoryCreateNestedOneWithoutAnalysesInput
+  files?: Prisma.FileCreateNestedManyWithoutAnalysisInput
+  findings?: Prisma.FindingCreateNestedManyWithoutAnalysisInput
+  metrics?: Prisma.MetricCreateNestedManyWithoutAnalysisInput
+  dependencies?: Prisma.DependencyCreateNestedManyWithoutAnalysisInput
+  nodes?: Prisma.ArchitectureNodeCreateNestedManyWithoutAnalysisInput
+  edges?: Prisma.ArchitectureEdgeCreateNestedManyWithoutAnalysisInput
+  gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
+  recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
+  reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
+}
+
+export type AnalysisUncheckedCreateWithoutSymbolReferencesInput = {
+  id?: string
+  repositoryId: string
+  status?: $Enums.AnalysisStatus
+  stage?: $Enums.AnalysisStage
+  progress?: number
+  mode?: $Enums.AnalysisMode
+  analyzerVersion: string
+  commitSha?: string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: string | null
+  createdAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  files?: Prisma.FileUncheckedCreateNestedManyWithoutAnalysisInput
+  findings?: Prisma.FindingUncheckedCreateNestedManyWithoutAnalysisInput
+  metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutAnalysisInput
+  dependencies?: Prisma.DependencyUncheckedCreateNestedManyWithoutAnalysisInput
+  nodes?: Prisma.ArchitectureNodeUncheckedCreateNestedManyWithoutAnalysisInput
+  edges?: Prisma.ArchitectureEdgeUncheckedCreateNestedManyWithoutAnalysisInput
+  gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
+  recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
+}
+
+export type AnalysisCreateOrConnectWithoutSymbolReferencesInput = {
+  where: Prisma.AnalysisWhereUniqueInput
+  create: Prisma.XOR<Prisma.AnalysisCreateWithoutSymbolReferencesInput, Prisma.AnalysisUncheckedCreateWithoutSymbolReferencesInput>
+}
+
+export type AnalysisUpsertWithoutSymbolReferencesInput = {
+  update: Prisma.XOR<Prisma.AnalysisUpdateWithoutSymbolReferencesInput, Prisma.AnalysisUncheckedUpdateWithoutSymbolReferencesInput>
+  create: Prisma.XOR<Prisma.AnalysisCreateWithoutSymbolReferencesInput, Prisma.AnalysisUncheckedCreateWithoutSymbolReferencesInput>
+  where?: Prisma.AnalysisWhereInput
+}
+
+export type AnalysisUpdateToOneWithWhereWithoutSymbolReferencesInput = {
+  where?: Prisma.AnalysisWhereInput
+  data: Prisma.XOR<Prisma.AnalysisUpdateWithoutSymbolReferencesInput, Prisma.AnalysisUncheckedUpdateWithoutSymbolReferencesInput>
+}
+
+export type AnalysisUpdateWithoutSymbolReferencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAnalysisStatusFieldUpdateOperationsInput | $Enums.AnalysisStatus
+  stage?: Prisma.EnumAnalysisStageFieldUpdateOperationsInput | $Enums.AnalysisStage
+  progress?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumAnalysisModeFieldUpdateOperationsInput | $Enums.AnalysisMode
+  analyzerVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  commitSha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  repository?: Prisma.RepositoryUpdateOneRequiredWithoutAnalysesNestedInput
+  files?: Prisma.FileUpdateManyWithoutAnalysisNestedInput
+  findings?: Prisma.FindingUpdateManyWithoutAnalysisNestedInput
+  metrics?: Prisma.MetricUpdateManyWithoutAnalysisNestedInput
+  dependencies?: Prisma.DependencyUpdateManyWithoutAnalysisNestedInput
+  nodes?: Prisma.ArchitectureNodeUpdateManyWithoutAnalysisNestedInput
+  edges?: Prisma.ArchitectureEdgeUpdateManyWithoutAnalysisNestedInput
+  gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
+  recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
+}
+
+export type AnalysisUncheckedUpdateWithoutSymbolReferencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAnalysisStatusFieldUpdateOperationsInput | $Enums.AnalysisStatus
+  stage?: Prisma.EnumAnalysisStageFieldUpdateOperationsInput | $Enums.AnalysisStage
+  progress?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumAnalysisModeFieldUpdateOperationsInput | $Enums.AnalysisMode
+  analyzerVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  commitSha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  files?: Prisma.FileUncheckedUpdateManyWithoutAnalysisNestedInput
+  findings?: Prisma.FindingUncheckedUpdateManyWithoutAnalysisNestedInput
+  metrics?: Prisma.MetricUncheckedUpdateManyWithoutAnalysisNestedInput
+  dependencies?: Prisma.DependencyUncheckedUpdateManyWithoutAnalysisNestedInput
+  nodes?: Prisma.ArchitectureNodeUncheckedUpdateManyWithoutAnalysisNestedInput
+  edges?: Prisma.ArchitectureEdgeUncheckedUpdateManyWithoutAnalysisNestedInput
+  gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
+  recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
+}
+
+export type AnalysisCreateWithoutFileDependenciesInput = {
+  id?: string
+  status?: $Enums.AnalysisStatus
+  stage?: $Enums.AnalysisStage
+  progress?: number
+  mode?: $Enums.AnalysisMode
+  analyzerVersion: string
+  commitSha?: string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: string | null
+  createdAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  repository: Prisma.RepositoryCreateNestedOneWithoutAnalysesInput
+  files?: Prisma.FileCreateNestedManyWithoutAnalysisInput
+  findings?: Prisma.FindingCreateNestedManyWithoutAnalysisInput
+  metrics?: Prisma.MetricCreateNestedManyWithoutAnalysisInput
+  dependencies?: Prisma.DependencyCreateNestedManyWithoutAnalysisInput
+  nodes?: Prisma.ArchitectureNodeCreateNestedManyWithoutAnalysisInput
+  edges?: Prisma.ArchitectureEdgeCreateNestedManyWithoutAnalysisInput
+  gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
+  recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
+  reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+}
+
+export type AnalysisUncheckedCreateWithoutFileDependenciesInput = {
+  id?: string
+  repositoryId: string
+  status?: $Enums.AnalysisStatus
+  stage?: $Enums.AnalysisStage
+  progress?: number
+  mode?: $Enums.AnalysisMode
+  analyzerVersion: string
+  commitSha?: string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: string | null
+  createdAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  files?: Prisma.FileUncheckedCreateNestedManyWithoutAnalysisInput
+  findings?: Prisma.FindingUncheckedCreateNestedManyWithoutAnalysisInput
+  metrics?: Prisma.MetricUncheckedCreateNestedManyWithoutAnalysisInput
+  dependencies?: Prisma.DependencyUncheckedCreateNestedManyWithoutAnalysisInput
+  nodes?: Prisma.ArchitectureNodeUncheckedCreateNestedManyWithoutAnalysisInput
+  edges?: Prisma.ArchitectureEdgeUncheckedCreateNestedManyWithoutAnalysisInput
+  gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
+  recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+}
+
+export type AnalysisCreateOrConnectWithoutFileDependenciesInput = {
+  where: Prisma.AnalysisWhereUniqueInput
+  create: Prisma.XOR<Prisma.AnalysisCreateWithoutFileDependenciesInput, Prisma.AnalysisUncheckedCreateWithoutFileDependenciesInput>
+}
+
+export type AnalysisUpsertWithoutFileDependenciesInput = {
+  update: Prisma.XOR<Prisma.AnalysisUpdateWithoutFileDependenciesInput, Prisma.AnalysisUncheckedUpdateWithoutFileDependenciesInput>
+  create: Prisma.XOR<Prisma.AnalysisCreateWithoutFileDependenciesInput, Prisma.AnalysisUncheckedCreateWithoutFileDependenciesInput>
+  where?: Prisma.AnalysisWhereInput
+}
+
+export type AnalysisUpdateToOneWithWhereWithoutFileDependenciesInput = {
+  where?: Prisma.AnalysisWhereInput
+  data: Prisma.XOR<Prisma.AnalysisUpdateWithoutFileDependenciesInput, Prisma.AnalysisUncheckedUpdateWithoutFileDependenciesInput>
+}
+
+export type AnalysisUpdateWithoutFileDependenciesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAnalysisStatusFieldUpdateOperationsInput | $Enums.AnalysisStatus
+  stage?: Prisma.EnumAnalysisStageFieldUpdateOperationsInput | $Enums.AnalysisStage
+  progress?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumAnalysisModeFieldUpdateOperationsInput | $Enums.AnalysisMode
+  analyzerVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  commitSha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  repository?: Prisma.RepositoryUpdateOneRequiredWithoutAnalysesNestedInput
+  files?: Prisma.FileUpdateManyWithoutAnalysisNestedInput
+  findings?: Prisma.FindingUpdateManyWithoutAnalysisNestedInput
+  metrics?: Prisma.MetricUpdateManyWithoutAnalysisNestedInput
+  dependencies?: Prisma.DependencyUpdateManyWithoutAnalysisNestedInput
+  nodes?: Prisma.ArchitectureNodeUpdateManyWithoutAnalysisNestedInput
+  edges?: Prisma.ArchitectureEdgeUpdateManyWithoutAnalysisNestedInput
+  gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
+  recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+}
+
+export type AnalysisUncheckedUpdateWithoutFileDependenciesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumAnalysisStatusFieldUpdateOperationsInput | $Enums.AnalysisStatus
+  stage?: Prisma.EnumAnalysisStageFieldUpdateOperationsInput | $Enums.AnalysisStage
+  progress?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumAnalysisModeFieldUpdateOperationsInput | $Enums.AnalysisMode
+  analyzerVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  commitSha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  healthScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  scoreBreakdown?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  weightsUsed?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  files?: Prisma.FileUncheckedUpdateManyWithoutAnalysisNestedInput
+  findings?: Prisma.FindingUncheckedUpdateManyWithoutAnalysisNestedInput
+  metrics?: Prisma.MetricUncheckedUpdateManyWithoutAnalysisNestedInput
+  dependencies?: Prisma.DependencyUncheckedUpdateManyWithoutAnalysisNestedInput
+  nodes?: Prisma.ArchitectureNodeUncheckedUpdateManyWithoutAnalysisNestedInput
+  edges?: Prisma.ArchitectureEdgeUncheckedUpdateManyWithoutAnalysisNestedInput
+  gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
+  recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateWithoutGitInsightsInput = {
@@ -1730,6 +2279,9 @@ export type AnalysisCreateWithoutGitInsightsInput = {
   edges?: Prisma.ArchitectureEdgeCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutGitInsightsInput = {
@@ -1757,6 +2309,9 @@ export type AnalysisUncheckedCreateWithoutGitInsightsInput = {
   edges?: Prisma.ArchitectureEdgeUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutGitInsightsInput = {
@@ -1800,6 +2355,9 @@ export type AnalysisUpdateWithoutGitInsightsInput = {
   edges?: Prisma.ArchitectureEdgeUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutGitInsightsInput = {
@@ -1827,6 +2385,9 @@ export type AnalysisUncheckedUpdateWithoutGitInsightsInput = {
   edges?: Prisma.ArchitectureEdgeUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateWithoutRecommendationsInput = {
@@ -1854,6 +2415,9 @@ export type AnalysisCreateWithoutRecommendationsInput = {
   edges?: Prisma.ArchitectureEdgeCreateNestedManyWithoutAnalysisInput
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutRecommendationsInput = {
@@ -1881,6 +2445,9 @@ export type AnalysisUncheckedCreateWithoutRecommendationsInput = {
   edges?: Prisma.ArchitectureEdgeUncheckedCreateNestedManyWithoutAnalysisInput
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   reports?: Prisma.ReportUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutRecommendationsInput = {
@@ -1924,6 +2491,9 @@ export type AnalysisUpdateWithoutRecommendationsInput = {
   edges?: Prisma.ArchitectureEdgeUpdateManyWithoutAnalysisNestedInput
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutRecommendationsInput = {
@@ -1951,6 +2521,9 @@ export type AnalysisUncheckedUpdateWithoutRecommendationsInput = {
   edges?: Prisma.ArchitectureEdgeUncheckedUpdateManyWithoutAnalysisNestedInput
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateWithoutReportsInput = {
@@ -1978,6 +2551,9 @@ export type AnalysisCreateWithoutReportsInput = {
   edges?: Prisma.ArchitectureEdgeCreateNestedManyWithoutAnalysisInput
   gitInsights?: Prisma.GitInsightCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisUncheckedCreateWithoutReportsInput = {
@@ -2005,6 +2581,9 @@ export type AnalysisUncheckedCreateWithoutReportsInput = {
   edges?: Prisma.ArchitectureEdgeUncheckedCreateNestedManyWithoutAnalysisInput
   gitInsights?: Prisma.GitInsightUncheckedCreateNestedManyWithoutAnalysisInput
   recommendations?: Prisma.RecommendationUncheckedCreateNestedManyWithoutAnalysisInput
+  symbols?: Prisma.CodeSymbolUncheckedCreateNestedManyWithoutAnalysisInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedCreateNestedManyWithoutAnalysisInput
+  fileDependencies?: Prisma.FileDependencyUncheckedCreateNestedManyWithoutAnalysisInput
 }
 
 export type AnalysisCreateOrConnectWithoutReportsInput = {
@@ -2048,6 +2627,9 @@ export type AnalysisUpdateWithoutReportsInput = {
   edges?: Prisma.ArchitectureEdgeUpdateManyWithoutAnalysisNestedInput
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutReportsInput = {
@@ -2075,6 +2657,9 @@ export type AnalysisUncheckedUpdateWithoutReportsInput = {
   edges?: Prisma.ArchitectureEdgeUncheckedUpdateManyWithoutAnalysisNestedInput
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisCreateManyRepositoryInput = {
@@ -2120,6 +2705,9 @@ export type AnalysisUpdateWithoutRepositoryInput = {
   gitInsights?: Prisma.GitInsightUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateWithoutRepositoryInput = {
@@ -2147,6 +2735,9 @@ export type AnalysisUncheckedUpdateWithoutRepositoryInput = {
   gitInsights?: Prisma.GitInsightUncheckedUpdateManyWithoutAnalysisNestedInput
   recommendations?: Prisma.RecommendationUncheckedUpdateManyWithoutAnalysisNestedInput
   reports?: Prisma.ReportUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbols?: Prisma.CodeSymbolUncheckedUpdateManyWithoutAnalysisNestedInput
+  symbolReferences?: Prisma.SymbolReferenceUncheckedUpdateManyWithoutAnalysisNestedInput
+  fileDependencies?: Prisma.FileDependencyUncheckedUpdateManyWithoutAnalysisNestedInput
 }
 
 export type AnalysisUncheckedUpdateManyWithoutRepositoryInput = {
@@ -2182,6 +2773,9 @@ export type AnalysisCountOutputType = {
   gitInsights: number
   recommendations: number
   reports: number
+  symbols: number
+  symbolReferences: number
+  fileDependencies: number
 }
 
 export type AnalysisCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2194,6 +2788,9 @@ export type AnalysisCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   gitInsights?: boolean | AnalysisCountOutputTypeCountGitInsightsArgs
   recommendations?: boolean | AnalysisCountOutputTypeCountRecommendationsArgs
   reports?: boolean | AnalysisCountOutputTypeCountReportsArgs
+  symbols?: boolean | AnalysisCountOutputTypeCountSymbolsArgs
+  symbolReferences?: boolean | AnalysisCountOutputTypeCountSymbolReferencesArgs
+  fileDependencies?: boolean | AnalysisCountOutputTypeCountFileDependenciesArgs
 }
 
 /**
@@ -2269,6 +2866,27 @@ export type AnalysisCountOutputTypeCountReportsArgs<ExtArgs extends runtime.Type
   where?: Prisma.ReportWhereInput
 }
 
+/**
+ * AnalysisCountOutputType without action
+ */
+export type AnalysisCountOutputTypeCountSymbolsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CodeSymbolWhereInput
+}
+
+/**
+ * AnalysisCountOutputType without action
+ */
+export type AnalysisCountOutputTypeCountSymbolReferencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SymbolReferenceWhereInput
+}
+
+/**
+ * AnalysisCountOutputType without action
+ */
+export type AnalysisCountOutputTypeCountFileDependenciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FileDependencyWhereInput
+}
+
 
 export type AnalysisSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2297,6 +2915,9 @@ export type AnalysisSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   gitInsights?: boolean | Prisma.Analysis$gitInsightsArgs<ExtArgs>
   recommendations?: boolean | Prisma.Analysis$recommendationsArgs<ExtArgs>
   reports?: boolean | Prisma.Analysis$reportsArgs<ExtArgs>
+  symbols?: boolean | Prisma.Analysis$symbolsArgs<ExtArgs>
+  symbolReferences?: boolean | Prisma.Analysis$symbolReferencesArgs<ExtArgs>
+  fileDependencies?: boolean | Prisma.Analysis$fileDependenciesArgs<ExtArgs>
   _count?: boolean | Prisma.AnalysisCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["analysis"]>
 
@@ -2371,6 +2992,9 @@ export type AnalysisInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   gitInsights?: boolean | Prisma.Analysis$gitInsightsArgs<ExtArgs>
   recommendations?: boolean | Prisma.Analysis$recommendationsArgs<ExtArgs>
   reports?: boolean | Prisma.Analysis$reportsArgs<ExtArgs>
+  symbols?: boolean | Prisma.Analysis$symbolsArgs<ExtArgs>
+  symbolReferences?: boolean | Prisma.Analysis$symbolReferencesArgs<ExtArgs>
+  fileDependencies?: boolean | Prisma.Analysis$fileDependenciesArgs<ExtArgs>
   _count?: boolean | Prisma.AnalysisCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AnalysisIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2393,6 +3017,9 @@ export type $AnalysisPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     gitInsights: Prisma.$GitInsightPayload<ExtArgs>[]
     recommendations: Prisma.$RecommendationPayload<ExtArgs>[]
     reports: Prisma.$ReportPayload<ExtArgs>[]
+    symbols: Prisma.$CodeSymbolPayload<ExtArgs>[]
+    symbolReferences: Prisma.$SymbolReferencePayload<ExtArgs>[]
+    fileDependencies: Prisma.$FileDependencyPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2821,6 +3448,9 @@ export interface Prisma__AnalysisClient<T, Null = never, ExtArgs extends runtime
   gitInsights<T extends Prisma.Analysis$gitInsightsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Analysis$gitInsightsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GitInsightPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recommendations<T extends Prisma.Analysis$recommendationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Analysis$recommendationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecommendationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reports<T extends Prisma.Analysis$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Analysis$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  symbols<T extends Prisma.Analysis$symbolsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Analysis$symbolsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CodeSymbolPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  symbolReferences<T extends Prisma.Analysis$symbolReferencesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Analysis$symbolReferencesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SymbolReferencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  fileDependencies<T extends Prisma.Analysis$fileDependenciesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Analysis$fileDependenciesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FileDependencyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3480,6 +4110,78 @@ export type Analysis$reportsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.ReportScalarFieldEnum | Prisma.ReportScalarFieldEnum[]
+}
+
+/**
+ * Analysis.symbols
+ */
+export type Analysis$symbolsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CodeSymbol
+   */
+  select?: Prisma.CodeSymbolSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CodeSymbol
+   */
+  omit?: Prisma.CodeSymbolOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CodeSymbolInclude<ExtArgs> | null
+  where?: Prisma.CodeSymbolWhereInput
+  orderBy?: Prisma.CodeSymbolOrderByWithRelationInput | Prisma.CodeSymbolOrderByWithRelationInput[]
+  cursor?: Prisma.CodeSymbolWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CodeSymbolScalarFieldEnum | Prisma.CodeSymbolScalarFieldEnum[]
+}
+
+/**
+ * Analysis.symbolReferences
+ */
+export type Analysis$symbolReferencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SymbolReference
+   */
+  select?: Prisma.SymbolReferenceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SymbolReference
+   */
+  omit?: Prisma.SymbolReferenceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SymbolReferenceInclude<ExtArgs> | null
+  where?: Prisma.SymbolReferenceWhereInput
+  orderBy?: Prisma.SymbolReferenceOrderByWithRelationInput | Prisma.SymbolReferenceOrderByWithRelationInput[]
+  cursor?: Prisma.SymbolReferenceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SymbolReferenceScalarFieldEnum | Prisma.SymbolReferenceScalarFieldEnum[]
+}
+
+/**
+ * Analysis.fileDependencies
+ */
+export type Analysis$fileDependenciesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FileDependency
+   */
+  select?: Prisma.FileDependencySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FileDependency
+   */
+  omit?: Prisma.FileDependencyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FileDependencyInclude<ExtArgs> | null
+  where?: Prisma.FileDependencyWhereInput
+  orderBy?: Prisma.FileDependencyOrderByWithRelationInput | Prisma.FileDependencyOrderByWithRelationInput[]
+  cursor?: Prisma.FileDependencyWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FileDependencyScalarFieldEnum | Prisma.FileDependencyScalarFieldEnum[]
 }
 
 /**
