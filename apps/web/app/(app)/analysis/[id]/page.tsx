@@ -31,6 +31,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ id: s
       commitSha: analysis.commitSha,
       error: analysis.error,
       summary: analysis.summary,
+      scoreBreakdown: analysis.scoreBreakdown,
       createdAt: analysis.createdAt,
       startedAt: analysis.startedAt,
       finishedAt: analysis.finishedAt,

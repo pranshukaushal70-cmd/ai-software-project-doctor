@@ -113,6 +113,8 @@ enum AnalysisStage {
   SECURITY
   DEPENDENCIES
   ARCHITECTURE
+  /// API, database, testing and documentation analysis (Phase 5).
+  PRACTICES
   GIT
   AI
   REPORT

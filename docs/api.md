@@ -29,7 +29,8 @@ Error codes: `VALIDATION_ERROR` 400, `UNAUTHENTICATED` 401, `FORBIDDEN` 403, `NO
 |---|---|---|
 | GET | `/api/repositories` | The user's repositories with their latest analysis |
 | POST | `/api/analysis` | JSON `{ url, mode }` **or** multipart `file=<zip>, mode`. Returns 202 `{ analysisId, status: "queued" }` |
-| GET | `/api/analysis/:id` | Status, stage, progress, scan summary, repository |
+| POST | `/api/analysis/demo` | No body. Analyses the bundled demo project ([demo/README.md](../demo/README.md)) in a `DEMO` repository the user gets once; rate limited like other analyses. Returns 202 `{ analysisId, status: "queued" }` |
+| GET | `/api/analysis/:id` | Status, stage, progress, scan summary (including `summary.practices` from analyzer 0.5.0 on), repository, `healthScore` (0–100) and `scoreBreakdown` (grade, weighted score, cap, every dimension with its weight, score and deductions, caveats). Both are `null` before analyzer 0.5.0 or until the analysis completes |
 | GET | `/api/analysis/:id/files` | `?page=&pageSize=&kind=&sort=path|loc|complexity|duplication` paginated list with per-file metrics, or `?view=tree` for the nested tree |
 | GET | `/api/analysis/:id/findings` | `?severity=HIGH,MEDIUM&category=&type=&path=&triage=all\|untriaged\|triaged&page=&pageSize=`. Most severe first; includes `facets` (counts by severity and type, scoped by `category`/`path`/`triage` but not by the severity/type filters). Each finding has `triage: { status, reason, updatedAt } \| null`; `triage` defaults to `all`, so triaged findings are listed unless `untriaged` is requested |
 | PUT | `/api/analysis/:id/findings/:findingId/triage` | JSON `{ status: "EXPECTED" \| "IGNORED", reason? }` (reason ≤ 500 chars). Stores the decision for the analysis's repository and the finding's fingerprint; returns `{ triage }`. 404 if the analysis is not yours or the finding is not in it |

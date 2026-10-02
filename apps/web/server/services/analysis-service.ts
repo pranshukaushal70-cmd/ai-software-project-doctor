@@ -44,6 +44,19 @@ export async function createAnalysisFromUrl(userId: string, url: string, mode: A
   return createAndEnqueue(repo.id, mode);
 }
 
+/** Name of the user's demo repository; the worker analyses the bundled demo project for it. */
+export const DEMO_REPOSITORY_NAME = "storefront-demo";
+
+/** Analyse the bundled demo project. Each user has one demo repository, so re-runs and triage decisions stay together. */
+export async function createDemoAnalysis(userId: string, mode: AnalysisMode) {
+  const prisma = getPrisma();
+  const existing = await prisma.repository.findFirst({ where: { userId, source: "DEMO" }, select: { id: true } });
+  const repo = existing
+    ? await prisma.repository.update({ where: { id: existing.id }, data: { updatedAt: new Date() }, select: { id: true } })
+    : await prisma.repository.create({ data: { userId, source: "DEMO", name: DEMO_REPOSITORY_NAME }, select: { id: true } });
+  return createAndEnqueue(repo.id, mode);
+}
+
 /** Store the uploaded archive under a random key; extraction happens in the worker. */
 export async function createAnalysisFromZip(userId: string, file: File, mode: AnalysisMode) {
   const limits = loadLimits();

@@ -22,6 +22,8 @@ The analyzer processes **untrusted repositories** on behalf of **authenticated u
 | Local services exposed on the network | `docker-compose.yml` publishes PostgreSQL and Redis on `127.0.0.1` only (Redis has no password); the database password comes from `.env` (`POSTGRES_PASSWORD`, required, no default) and `scripts/setup-env.mjs` generates a random one | `docker-compose.yml`, `.env.example` |
 | Tokens in `.npmrc` / `.yarnrc.yml` | Read only to find registry URLs; just the `registry` / `npmRegistryServer` lines are parsed, so auth tokens are never stored or shown. Files over 64 KB are skipped | `dependencies/npm.ts` (`parseNpmRegistryConfig`) |
 | Untrusted OSV.dev responses | Fixed HTTPS endpoint, redirects refused, per-request timeout, overall time budget, 32 MB response cap; advisory ids validated (`[\w.:-]{1,100}`), summaries flattened to one line, backticks removed and truncated to 240 characters; withdrawn advisories ignored; malformed responses mark the lookup `failed` instead of failing the analysis | `dependencies/osv.ts` |
+| Hostile files read by the practices analyzers (Phase 5) | Text is matched with regular expressions and small parsers with bounded loops (no YAML/XML library); nothing is executed or connected to. Files are read one at a time from the scanner's list (no symlinks, size limit applies). Committed coverage reports under `coverage/`, a directory the scanner skips, are read only when both the directory and the file are real (`lstat`, not symlinks) and at most 20 MB, so a crafted repository cannot point the read outside its tree. Environment-variable findings record variable names only, never values | `analyzer/src/practices/` |
+| Demo project | `demo/storefront` contains deliberate vulnerabilities and a made-up password. It is never run, built or installed: the worker copies it into the analysis workspace and analyses the copy. Its manifests are stored as `*.demo` so dependency scanners do not raise alerts for it in this repository | `demo/`, `worker/src/pipeline.ts` |
 | Hostile import specifiers | Import resolution is a pure string operation over the scanned file list; a specifier that normalises outside the repository root (`../../..`) is unresolved; only `tsconfig.json`/`jsconfig.json`/`package.json` files up to 512 KB are read, and `extends` chains are followed at most 5 levels and only inside the repository | `analyzer/src/architecture/resolve.ts` |
 
 ## Outbound network: OSV.dev
@@ -116,5 +118,8 @@ CSP, `X-Frame-Options: DENY`, `nosniff`, strict referrer policy, permissions pol
 - Nested `.gitignore` files are not yet honoured by the scanner (only the root one).
 - Private-registry detection for the OSV.dev lookup cannot cover PyPI, Maven or Go, nor npm registries configured
   outside the repository (see above); use `OSV_ENABLED=false` for such code.
+- The API checks (`api/unauthenticated-mutation`, `api/missing-input-validation`) only see authentication and validation
+  declared in the repository's own source; protection added by a gateway or a wrapper defined elsewhere is not recognised,
+  so these findings are reported as LOW and say what was not seen.
 - Vulnerability results are only as complete as OSV.dev and the lockfile: packages without an exact version are listed as
   "not checked", and a listed advisory means the version is affected, not that the vulnerable code is reachable.

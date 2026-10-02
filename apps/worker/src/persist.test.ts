@@ -4,6 +4,8 @@ import { scanRepository, type RepositoryScan } from "@pd/analyzer";
 import { analyzeArchitecture, type ArchitectureAnalysis } from "@pd/analyzer/architecture";
 import { analyzeDependencies, type DependencyAnalysis } from "@pd/analyzer/dependencies";
 import { analyzeCode, type CodeAnalysis } from "@pd/analyzer/metrics";
+import { analyzePractices, type PracticesAnalysis } from "@pd/analyzer/practices";
+import { computeHealthScore } from "@pd/analyzer/scoring";
 import { createSecurityScanner, type SecurityAnalysis } from "@pd/analyzer/security";
 import {
   buildArchitectureEdgeRows,
@@ -13,7 +15,9 @@ import {
   buildDependencyRows,
   buildFileRows,
   buildFindingRows,
+  buildPracticeMetricRows,
   buildRepositoryMetricRows,
+  buildScoreMetricRows,
   buildSecurityMetricRows,
 } from "./persist";
 import { summarizeScan } from "./summary";
@@ -25,6 +29,7 @@ let code: CodeAnalysis;
 let sec: SecurityAnalysis;
 let dep: DependencyAnalysis;
 let arch: ArchitectureAnalysis;
+let practices: PracticesAnalysis;
 
 beforeAll(async () => {
   scan = await scanRepository(FIXTURE, { maxFileBytes: 1024 * 1024 });
@@ -34,6 +39,7 @@ beforeAll(async () => {
   const imports = code.files.map((f) => ({ path: f.path, language: f.language, imports: f.metrics.imports, codeLines: f.metrics.codeLines }));
   dep = await analyzeDependencies(scan.files, { imports });
   arch = await analyzeArchitecture(scan.files, imports, new Map(scan.files.map((f) => [f.path, f.kind])));
+  practices = await analyzePractices(scan, code);
 });
 
 describe("buildFileRows", () => {
@@ -179,13 +185,31 @@ describe("buildDependencyMetricRows / buildArchitectureMetricRows", () => {
 
 describe("summarizeScan", () => {
   it("records every module that ran and its summary", () => {
-    const summary = summarizeScan(scan, { source: "ZIP" }, code.summary, sec.summary, dep.summary, arch.summary);
-    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics", "security", "dependencies", "architecture"]);
+    const summary = summarizeScan(scan, { source: "ZIP" }, code.summary, sec.summary, dep.summary, arch.summary, practices.summary);
+    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics", "security", "dependencies", "architecture", "practices", "health-score"]);
+    expect(summary.practices.analyzer).toBe("practices");
     expect(summary.security.analyzer).toBe("security");
     expect(summary.dependencies.analyzer).toBe("dependencies");
     expect(summary.architecture.analyzer).toBe("architecture");
     expect(summary.codeMetrics.totals.filesAnalyzed).toBe(11);
     // Must be JSON-serialisable for the Analysis.summary column.
     expect(JSON.parse(JSON.stringify(summary)).codeMetrics.thresholds.complexity.medium).toBe(10);
+  });
+});
+
+describe("buildPracticeMetricRows / buildScoreMetricRows", () => {
+  it("stores API, database, testing and documentation aggregates", () => {
+    const m = Object.fromEntries(buildPracticeMetricRows("a1", practices).map((r) => [r.key, r.value]));
+    expect(m).toMatchObject({ "testing.test_files": 1, "api.endpoints": 0, "database.models": 0, "findings.testing": practices.summary.findings.byCategory.TESTING });
+    expect(m["testing.test_ratio"]).toBeGreaterThan(0);
+    expect(m).not.toHaveProperty("testing.coverage_lines");
+    expect(Object.values(m).every(Number.isFinite)).toBe(true);
+  });
+
+  it("stores the overall score and only the dimensions that apply", () => {
+    const health = computeHealthScore({ findings: [], productionCodeLines: 100, present: { code: true, dependencies: true, architecture: true, api: false, database: false } });
+    const m = Object.fromEntries(buildScoreMetricRows("a1", health).map((r) => [r.key, r.value]));
+    expect(m).toMatchObject({ "score.overall": 100, "score.security": 100, "score.testing": 100 });
+    expect(m).not.toHaveProperty("score.api");
   });
 });

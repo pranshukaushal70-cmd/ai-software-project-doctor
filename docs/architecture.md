@@ -6,8 +6,8 @@
 2. **Evidence everywhere.** Every detection carries the file/key it came from (`Detection.evidence`), and every
    finding (from Phase 2 on) stores redacted evidence and a stable fingerprint.
 3. **Untrusted input.** Repositories are never executed. See [security.md](security.md).
-4. **Reproducible.** Each `Analysis` row stores `analyzerVersion` and `commitSha`; scoring weights will be stored
-   alongside the score.
+4. **Reproducible.** Each `Analysis` row stores `analyzerVersion` and `commitSha`, and the scoring weights
+   (`weightsUsed`) next to the score.
 5. **Pure engine.** `packages/analyzer` has no database or HTTP dependencies, so it can be unit-tested and run
    from a CLI for the evaluation benchmark.
 
@@ -18,21 +18,22 @@ POST /api/analysis ──► validate (zod + URL allowlist) ──► Repository
         │                                                        │
         └──► 202 { analysisId, status: "queued" }                └──► BullMQ job (jobId = analysisId)
 
-Worker: RUNNING → CLONING → SCANNING → PARSING → SECURITY → DEPENDENCIES → ARCHITECTURE → COMPLETED | FAILED
+Worker: RUNNING → CLONING → SCANNING → PARSING → SECURITY → DEPENDENCIES → ARCHITECTURE → PRACTICES → COMPLETED | FAILED
 UI:     polls GET /api/analysis/:id every 2 s, renders stage progress, then the results
 ```
 
 Using the analysis id as the BullMQ `jobId` makes enqueueing idempotent. Before starting, the worker deletes the rows a
 previous partial attempt may have left (`ArchitectureEdge`, `ArchitectureNode`, `Dependency`, `Finding`, `Metric`,
-`File`), so a retried job cannot duplicate data. Later stages (`GIT`, `AI`, `REPORT`) exist in the schema but do not
-run yet; `summary.modulesRun` lists what actually ran.
+`File`), so a retried job cannot duplicate data. The health score is computed at the end of `PRACTICES`, from every
+module's findings. Later stages (`GIT`, `AI`, `REPORT`) exist in the schema but do not run yet; `summary.modulesRun`
+lists what actually ran.
 
 ## Workspaces
 
 | Package | Depends on | Notes |
 |---|---|---|
 | `@pd/shared` | zod, pino | `constants` subpath is browser-safe; `logger` is server-only |
-| `@pd/analyzer` | shared, yauzl, ignore, web-tree-sitter | ingest (`clone`, `zip`, `workspace`), `scanner`; subpaths `metrics`, `security`, `dependencies`, `architecture` |
+| `@pd/analyzer` | shared, yauzl, ignore, web-tree-sitter | ingest (`clone`, `zip`, `workspace`), `scanner`; subpaths `metrics`, `security`, `dependencies`, `architecture`, `practices`, `scoring` |
 | `@pd/db` | Prisma 7 + `@prisma/adapter-pg` | generated client in `src/generated`, committed; regenerate (`npm run db:generate`) and commit it with every `schema.prisma` change |
 | `@pd/worker` | analyzer, db, shared, bullmq | `pipeline.ts` orchestrates stages; `persist.ts` maps analyzer output to rows; supplies `fetch` for OSV.dev |
 | `@pd/web` | analyzer, db, shared, bullmq | route handlers are thin; logic lives in `server/services` |
@@ -202,6 +203,127 @@ The worker runs this in the `ARCHITECTURE` stage and stores `ArchitectureNode` r
 `module` between modules, with weight and `inCycle`), `ARCHITECTURE` findings, `architecture.*` metrics and
 `summary.architecture` (totals, modules, module edges, cycles, hubs, layers, top external packages, resolution info).
 
+## API, database, testing and documentation analysis (Phase 5)
+
+`@pd/analyzer/practices` reads every source, test, documentation and configuration file (plus `.sql` and `.prisma`
+files) once and runs four deterministic analyzers over the text. Nothing is executed or connected to. Findings use the
+existing `API`, `DATABASE`, `TESTING` and `DOCUMENTATION` categories, analyzer `practices`, and the same fingerprint
+scheme (rule, path, stable key) as the other modules, so triage follows them across re-analyses. Repository-level
+findings (no README, no tests) have an empty path and no file. At most 2,000 are stored, most severe first; thresholds
+are stored in `summary.practices.thresholds`.
+
+**API.** Endpoints are found from their declaration syntax: Express-style `app.get("/path")` / `router.post(…)` calls
+(only in files importing a server framework, or on objects named like a server or router, so HTTP-client calls such as
+`axios.get("/x")` are not routes), `.route("/x").get().post()` chains, NestJS decorators with the controller prefix,
+Next.js route handlers (`app/**/route.ts` exports, route groups removed) and `pages/api`, Flask/FastAPI decorators,
+Django `urls.py` and DRF routers, and Spring `@…Mapping` annotations with the class-level prefix. Each endpoint records
+whether an authentication marker (middleware, guard, decorator or user check) is visible in the route, its file or the
+application set-up (Next.js middleware, Spring Security, global guards, `app.use(auth)`), and whether the body is read
+and validated. The API rules report what was not seen; authentication applied where the analysis cannot look (an API
+gateway, a wrapper in another package) is not recognised.
+
+| Rule | Severity |
+|---|---|
+| `api/permissive-cors` (CWE-942): `cors()`, `origin: "*"`/`true`, reflected `Access-Control-Allow-Origin`, Flask-CORS/FastAPI/django-cors-headers allow-all, Spring `@CrossOrigin`/`allowedOriginPatterns("*")` | HIGH when any origin is reflected with credentials, else LOW |
+| `api/error-details-exposed` (CWE-209): stack traces in responses | MEDIUM |
+| `api/unauthenticated-mutation` (CWE-306): POST/PUT/PATCH/DELETE without a visible auth check; public paths (login, webhooks, health …) exempt | LOW (heuristic) |
+| `api/missing-input-validation` (CWE-20): body read with no schema validation visible | LOW |
+| `api/auth-without-rate-limit` (CWE-307): a login endpoint, and no rate-limiting library or configuration anywhere | LOW |
+| `api/no-specification`: ≥ 5 endpoints, no OpenAPI/Swagger file, no generator (FastAPI counts) and no `docs/api*.md` | LOW |
+
+**Database.** Prisma schemas are parsed per model (fields, `@id`/`@unique`, `@@index`/`@@unique`/`@@id`,
+`@relation(fields:)`). SQL files (schemas and migrations, comments stripped) are parsed for `CREATE TABLE` bodies, inline
+and table-level keys, `CREATE INDEX` and `ALTER TABLE … FOREIGN KEY`. SQLAlchemy, Django, TypeORM, Sequelize, Mongoose and
+JPA models are counted from their declarations. Migration tools are recognised by path (Prisma Migrate, Django, Alembic,
+Flyway, Liquibase, Rails, JavaScript and SQL migration directories).
+
+| Rule | Severity |
+|---|---|
+| `database/unindexed-foreign-key`: no index, primary key or unique constraint starts with the foreign-key columns (Prisma, SQL, SQLAlchemy without `index=True`). Skipped for MySQL, which indexes foreign keys itself, and for SQL generated from a Prisma schema | LOW |
+| `database/table-without-primary-key` (non-temporary SQL tables) | MEDIUM |
+| `database/auto-schema-sync`: TypeORM `synchronize: true`, Sequelize `sync({ force/alter })`, Hibernate `ddl-auto`/`hbm2ddl.auto` = update/create/create-drop (test configuration exempt) | MEDIUM |
+| `database/no-migrations`: models declared and no migration files at all | LOW |
+
+**Testing.** Test files come from the scanner's classification. Test cases are counted per language (`it`/`test`
+including `.each`/`xit`/`fit`, `def test_`, `@Test`, gtest `TEST`, Go `func Test`). The test-to-code ratio uses code lines
+from the metrics pass (physical lines for languages without a parser). A production file counts as referenced when a test
+imports a module of the same name or is named after it; this is a proxy, not coverage. Coverage is read only from
+committed reports (lcov, Istanbul `coverage-summary.json`, coverage.py JSON, Cobertura, JaCoCo), including `coverage/`,
+which the scanner skips: there, the directory and the file must be real (not symlinks) and at most 20 MB. CI files are
+searched for a test command.
+
+| Rule | Severity |
+|---|---|
+| `testing/no-tests` (≥ 200 production code lines) | MEDIUM, HIGH from 2,000 lines |
+| `testing/low-test-ratio` (< 0.2) | LOW, MEDIUM below 0.05 |
+| `testing/low-coverage` (committed report below 70 %) | LOW, MEDIUM below 50 % |
+| `testing/focused-test` (`.only`, `fit`) | LOW |
+| `testing/skipped-test` (`.skip`, `xit`, `@pytest.mark.skip`, `@Disabled`, `@Ignore`) | INFO |
+| `testing/tests-not-in-ci` (no CI, or CI without a test command) | LOW |
+| `testing/no-test-script` (JS/TS repository whose `scripts.test` is missing or npm's placeholder) | LOW |
+| `testing/untested-file` (≥ 150 code lines, referenced by no test; the 20 largest) | INFO |
+
+**Documentation.** The README is checked for length (≥ 150 words) and for installation and usage instructions (headings,
+or the commands they would contain such as `npm install` or `npm start`). Environment variables read by production code
+(`process.env`, `import.meta.env`, `os.environ`/`getenv`, `System.getenv`, C `getenv`; runtime variables such as
+`NODE_ENV` excluded) must appear in a committed `.env` template, a documentation file or configuration. Only names are
+recorded, never values. Relative Markdown links outside code blocks must point at a file or directory of the repository.
+
+| Rule | Severity |
+|---|---|
+| `documentation/missing-readme` | MEDIUM |
+| `documentation/incomplete-readme` | LOW |
+| `documentation/missing-license` (a manifest `license` field is mentioned but does not replace the license text) | LOW |
+| `documentation/undocumented-env-vars` | LOW |
+| `documentation/broken-link` (at most 50) | LOW |
+
+The worker runs this in the `PRACTICES` stage and stores the findings, `api.*`, `database.*`, `testing.*` and
+`documentation.*` metrics, and `summary.practices`. The **Practices** tab shows the four areas and their findings.
+
+## Health score (Phase 5)
+
+`@pd/analyzer/scoring` (`computeHealthScore`, scoring version 1.0) turns the findings into a 0–100 score that can be
+explained line by line:
+
+| Dimension | Weight | Finding categories |
+|---|---|---|
+| Security | 25 | `SECRET`, `SECURITY` |
+| Code quality | 15 | `CODE_QUALITY` (per 1,000 production code lines) |
+| Dependencies | 15 | `DEPENDENCY` |
+| Testing | 15 | `TESTING` |
+| Architecture | 10 | `ARCHITECTURE` (per 1,000 production code lines) |
+| Documentation | 10 | `DOCUMENTATION` |
+| API | 5 | `API` |
+| Database | 5 | `DATABASE` |
+
+1. Each dimension starts at 100. Findings cost CRITICAL 30, HIGH 15, MEDIUM 6, LOW 2 and INFO 0 points, capped per
+   severity at 60/45/30/15. Code-quality and architecture findings grow with code size, so they count per 1,000
+   production code lines. `testing/no-tests` (80) and `documentation/missing-readme` (40) have fixed penalties instead.
+   Duplicated code above 5 % costs 1 point per percent, at most 15. Every deduction is stored as a factor with how it was
+   computed.
+2. Dimensions with nothing to measure (no endpoints, no database, no manifests, no source code) and no findings are left
+   out, and the remaining weights are rescaled.
+3. The overall score is the rounded weighted mean. While critical (or high) `SECRET`/`SECURITY` findings are open it is
+   capped at 49 (or 69): a weighted mean would otherwise let good tests and documentation hide an exploitable problem.
+   Both the weighted score and the cap are stored.
+4. Findings the user triaged as Expected or Ignored for the repository (matched by fingerprint) do not count; they are
+   still reported. The score is stored with the analysis, so triage changes take effect in the next analysis.
+5. Grades: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F below. Caveats record what the score could not consider: a disabled, failed
+   or partial vulnerability lookup, a missing coverage report, triaged findings.
+
+The worker stores the score in `Analysis.healthScore`, the breakdown in `scoreBreakdown`, the parameters (weights,
+penalties, caps, grades) in `weightsUsed`, and `score.*` metrics. The **Health** tab shows every dimension and deduction,
+the Overview the score and the weakest dimensions, and the dashboard the latest score of each repository.
+
+## Demo project (Phase 5)
+
+`demo/storefront` is a small, deliberately flawed Express + Prisma shop; [demo/README.md](../demo/README.md) lists the
+planted issues. `POST /api/analysis/demo` creates one `DEMO` repository per user (so re-runs and triage stay together) and
+queues an analysis. The worker copies the project into the analysis workspace (`PipelineDeps.demoDir`, by default
+`demo/storefront` in this repository) and renames `package.json.demo` and `package-lock.json.demo` back. The manifests
+carry that suffix so that dependency scanners (GitHub's dependency graph, Dependabot) do not report the demo's
+intentionally outdated packages against this repository.
+
 ## Web API and UI (Phase 4)
 
 `GET /api/analysis/:id/dependencies` and `GET /api/analysis/:id/architecture` ([api.md](api.md)) follow the findings
@@ -229,6 +351,8 @@ See `packages/db/prisma/schema.prisma`. Results hang off `Analysis` and cascade 
 `Report`. Phase 1 populates `Analysis.summary` and `File`; Phase 2 adds file metrics, `Finding` and `Metric`; Phase 3 adds
 `SECRET`/`SECURITY` findings and `summary.security`; Phase 4 fills `Dependency`, `ArchitectureNode` and `ArchitectureEdge`
 and adds `DEPENDENCY`/`ARCHITECTURE` findings and `summary.dependencies`/`summary.architecture`. Phases 3 and 4 needed no
-schema change: the tables, categories and stages already existed. `FindingTriage` (migration `20261002120000_finding_triage`)
+schema change: the tables, categories and stages already existed. Phase 5 adds `API`/`DATABASE`/`TESTING`/`DOCUMENTATION`
+findings and `summary.practices`, and fills `healthScore`, `scoreBreakdown` and `weightsUsed`; its only schema change is
+the `PRACTICES` value of `AnalysisStage` (migration `20261003120000_practices_stage`). `FindingTriage` (migration `20261002120000_finding_triage`)
 stores Expected/Ignored decisions per repository and finding fingerprint; it is the only table that outlives an
 analysis's findings, and it is deleted with its repository. Later phases fill the rest.

@@ -25,6 +25,7 @@ export const ANALYSIS_STAGES = [
   { id: "SECURITY", label: "Security analysis" },
   { id: "DEPENDENCIES", label: "Dependency analysis" },
   { id: "ARCHITECTURE", label: "Architecture analysis" },
+  { id: "PRACTICES", label: "API, database, tests & docs" },
   { id: "GIT", label: "Git analysis" },
   { id: "AI", label: "AI reasoning" },
   { id: "REPORT", label: "Report generation" },

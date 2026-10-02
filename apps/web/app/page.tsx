@@ -58,8 +58,9 @@ export default async function LandingPage() {
                 Analyze My Repository <ArrowRight />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" disabled title="The demo project ships with the scoring engine">
-              Explore Demo · soon
+            <Button asChild size="lg" variant="outline">
+              {/* Signed-in users start the demo from the New analysis page; others sign up first. */}
+              <Link href={user ? "/new#demo" : "/signup"}>Explore Demo</Link>
             </Button>
           </div>
 

@@ -8,8 +8,8 @@ architecture graphs) comes first; an LLM is used only afterwards, over structure
 explain, prioritise and recommend, and it must cite the evidence it uses.
 
 **Status: Phase 1 (foundation) complete. Phases 2 (code metrics & static analysis), 3 (secret & insecure-pattern
-detection) and 4 (dependency & architecture analysis) are implemented and unit-tested; end-to-end testing against
-PostgreSQL and Redis is pending until Docker is available.** See [Roadmap](#roadmap) and
+detection), 4 (dependency & architecture analysis) and 5 (API, database, testing and documentation analysis, an
+explainable health score and a demo project) are implemented and tested.** See [Roadmap](#roadmap) and
 [Verification status](#verification-status). Nothing described as "planned" below is implemented yet.
 
 ## Problem statement
@@ -30,7 +30,8 @@ Browser ─► Next.js (UI + /api) ─► PostgreSQL
              Redis ◄── BullMQ ──► Worker ┘
                                    │
           ingest (hardened clone / safe ZIP) → scan → code metrics → security → dependencies (+ OSV.dev)
-          → architecture → [git → scoring → redaction → AI reasoning → report]   (bracketed: planned)
+          → architecture → API / database / tests / docs → health score
+          → [git → redaction → AI reasoning → report]   (bracketed: planned)
 ```
 
 | Path | Purpose |
@@ -54,10 +55,15 @@ Each completed analysis has one tab per module:
 | Security | Secrets & insecure patterns (Phase 3) | Masked secret findings, CWE/OWASP-mapped insecure calls |
 | Dependencies | Dependency analysis (Phase 4) | npm, PyPI, Maven/Gradle, Go and Cargo manifests and lockfiles; direct vs transitive packages; known vulnerabilities from OSV.dev with fixed versions; missing lockfiles, unpinned, git/URL and unused dependencies |
 | Architecture | Import graph (Phase 4) | File and module import graph (SVG), import cycles, module coupling and instability, inferred layers and violations, hubs, high fan-out |
+| Practices | API, database, testing & documentation (Phase 5) | HTTP endpoints (Express, Fastify, Koa, Hono, NestJS, Next.js, Flask, FastAPI, Django, Spring) with auth/validation checks, permissive CORS, leaked stack traces, unthrottled login; Prisma/SQL/ORM schemas with unindexed foreign keys, missing primary keys, missing migrations and automatic schema sync; test files, test cases, test-to-code ratio, committed coverage reports, CI test runs, focused/skipped tests; README completeness, license, undocumented environment variables, broken links |
+| Health | Explainable health score (Phase 5) | 0–100 score and grade from eight weighted dimensions, with every deduction listed; triaged findings excluded; capped while critical/high security findings are open |
 | All findings | — | Every finding with evidence, impact and recommendation, filterable by severity and type |
 
 The same data is available from the API, including `GET /api/analysis/:id/dependencies` and
 `GET /api/analysis/:id/architecture` ([docs/api.md](docs/api.md)).
+
+**Demo project.** Signed-in users can analyse a bundled, deliberately flawed sample application from **New analysis →
+Try the demo project** (`POST /api/analysis/demo`). Its planted issues are listed in [demo/README.md](demo/README.md).
 
 ## Tech stack
 
@@ -128,7 +134,7 @@ outside the repository cannot be seen, so set `OSV_ENABLED=false` when analysing
 | 2 | Tree-sitter adapters (JS/TS/Python/Java/C/C++), LOC, complexity, smells | Implemented; E2E pending |
 | 3 | Secret detection, insecure-pattern rules, security dashboard | Implemented; E2E pending |
 | 4 | Dependencies + OSV.dev, import graph, cycles, architecture view (API + Dependencies/Architecture tabs) | Implemented and unit-tested; E2E pending |
-| 5 | API/DB/test/docs analyzers, explainable health score, demo project | Planned |
+| 5 | API/DB/test/docs analyzers, explainable health score, demo project (Practices and Health tabs) | Implemented and tested |
 | 6 | Git history insights | Planned |
 | 7 | LLM provider layer (Anthropic default), evidence-cited recommendations, fix suggestions | Planned |
 | 8 | Reports (PDF/JSON/Markdown/HTML) | Planned |
@@ -136,23 +142,23 @@ outside the repository cannot be seen, so set `OSV_ENABLED=false` when analysing
 
 ## Verification status
 
-Verified without Docker, on unit and component level (Vitest, run one file at a time) and with `tsc`:
+`npm test` (Vitest, all workspaces): **502 tests in 27 files, all passing**; `npm run typecheck` is clean for all five
+workspaces and `npm run build` succeeds.
 
 | Area | Tests |
 |---|---|
-| Analyzer: dependencies (all parsers, CVSS, OSV client with a fake `fetch`, private-registry withholding, end-to-end on temporary repositories) | 53 passing |
-| Analyzer: architecture (graph algorithms, resolver for all languages, cycles, layers, coupling, modules, parsed real files) | 32 passing |
-| Analyzer: metrics, security, scanner, ZIP (regression) | 31, 142, 18, 23 passing |
-| Worker: pipeline (fake Prisma, fake OSV.dev: vulnerable package, import cycle, OSV outage, OSV disabled, retry clean-up) and row mapping | 7 + 12 passing |
-| Web API: `/dependencies` and `/architecture` route handlers (mocked session and Prisma; auth, ownership 404, validation, filters) and their services | 13 + 7 + 6 passing |
-| Web UI: Dependencies and Architecture panels, graph layout, tabs, overview notice (server-rendered markup) | 8 + 6 + 6 + 6 passing |
-| Shared and existing web tests | 17 + 19 passing |
-| Typecheck `@pd/analyzer`, `@pd/shared`, `@pd/worker`, `@pd/web` | clean |
+| Analyzer: practices (API endpoints for every supported framework, auth/validation/CORS/stack-trace/rate-limit rules, Prisma/SQL/SQLAlchemy schemas, auto schema sync, test counting, coverage reports incl. `coverage/`, CI, README/license/env vars/links, fingerprints) | 24 |
+| Analyzer: scoring (penalties and caps, per-1,000-line dimensions, fixed penalties, duplication, applicability, security cap, triage exclusion, caveats, grades, weights) | 13 |
+| Analyzer: dependencies, architecture, metrics, security, scanner, ZIP, clone | 53, 32, 31, 155, 18, 23, 7 |
+| Worker: pipeline (fake Prisma and OSV.dev: ZIP upload, stages incl. `PRACTICES`, persisted score, OSV outage/disabled, demo project end to end, missing demo, triaged findings excluded from the score, retry clean-up) and row mapping | 10 + 14 |
+| Web API: analysis modules, triage, demo endpoint (auth, Origin check, rate limit, one demo repository per user, `scoreBreakdown` owner-only), services, HTTP helpers, session tokens | 13 + 7 + 4 + 20 + 7 + 7 |
+| Web UI (server-rendered markup): tabs incl. Practices and Health, Health and Practices panels, security, dependencies and architecture panels, graph layout | 10 + 7 + 8 + 8 + 6 + 6 |
+| Shared: URL validation, schemas | 15 + 4 |
 
-**Pending until Docker is available:**
-
-- End-to-end runs against **PostgreSQL and Redis**: real migrations, worker and web app together, a real queue, and
-  persisted `Dependency`/`ArchitectureNode`/`ArchitectureEdge` rows read back through the API. This applies to Phases 2–4.
-- Checking the new tabs in a browser (graph rendering, dark mode, narrow screens, interactive filters).
-- A live OSV.dev lookup (all tests use a fake; no test calls the network).
-- `next build` (not run on the development machine because of memory limits) and `test/clone.test.ts` (needs git and network).
+**End to end (Phase 5, on 2026-10-03)** against PostgreSQL 17 and Redis 7 in Docker with the production build and the
+worker: the `20261003120000_practices_stage` migration applied with no schema drift (`prisma migrate diff`); the demo
+project analysed through `POST /api/analysis/demo` passed every stage including `PRACTICES` and found the planted issues in
+every category (with a live OSV.dev lookup); the score, breakdown and weights were persisted and served; triaging the open
+high security findings excluded them from the next run's score; a ZIP upload, every analysis endpoint and cross-user
+isolation (404) still worked; and the Overview, Practices and Health tabs, the dashboard score and the demo entry points
+rendered in headless Chromium without console errors, in dark mode and at 390 px width without horizontal scrolling.

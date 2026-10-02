@@ -2,10 +2,12 @@ import type { RepositoryScan } from "@pd/analyzer";
 import type { ArchitectureAnalysis, ArchitectureEdgeRecord, ArchitectureFinding, ArchitectureNodeRecord } from "@pd/analyzer/architecture";
 import type { AnalyzedDependency, DependencyAnalysis, DependencyFinding } from "@pd/analyzer/dependencies";
 import type { CodeAnalysis, CodeFinding } from "@pd/analyzer/metrics";
+import type { PracticeFinding, PracticesAnalysis } from "@pd/analyzer/practices";
+import type { HealthScore } from "@pd/analyzer/scoring";
 import type { SecurityAnalysis, SecurityFinding } from "@pd/analyzer/security";
 import type { Prisma } from "@pd/db";
 
-export type AnyFinding = CodeFinding | SecurityFinding | DependencyFinding | ArchitectureFinding;
+export type AnyFinding = CodeFinding | SecurityFinding | DependencyFinding | ArchitectureFinding | PracticeFinding;
 
 /** File rows: scanner inventory merged with code metrics where the file was analysed. */
 export function buildFileRows(analysisId: string, scan: RepositoryScan, code: CodeAnalysis): Prisma.FileCreateManyInput[] {
@@ -189,4 +191,42 @@ export function buildArchitectureMetricRows(analysisId: string, arch: Architectu
     "findings.architecture": arch.summary.findings.total,
   };
   return Object.entries(values).map(([key, value]) => ({ analysisId, key, value }));
+}
+
+/** Repository-level API, database, testing and documentation metrics, stored for trends and scoring. */
+export function buildPracticeMetricRows(analysisId: string, practices: PracticesAnalysis): Prisma.MetricCreateManyInput[] {
+  const { api, database, testing, documentation, findings } = practices.summary;
+  const values: Record<string, number> = {
+    "api.endpoints": api.endpoints,
+    "api.mutating": api.mutating,
+    "api.mutating_without_auth": api.mutatingWithoutAuth,
+    "api.body_without_validation": api.bodyWithoutValidation,
+    "database.models": database.models,
+    "database.tables": database.tables,
+    "database.relations": database.relations,
+    "database.migrations": database.migrations.files,
+    "database.unindexed_foreign_keys": database.unindexedForeignKeys,
+    "testing.test_files": testing.testFiles,
+    "testing.test_cases": testing.testCases,
+    "testing.test_code_lines": testing.testCodeLines,
+    "testing.source_code_lines": testing.sourceCodeLines,
+    "testing.skipped": testing.skipped,
+    "testing.focused": testing.focused,
+    "documentation.readme_words": documentation.readme?.words ?? 0,
+    "documentation.env_vars_used": documentation.envVars.used,
+    "documentation.env_vars_undocumented": documentation.envVars.undocumented.length,
+    "documentation.broken_links": documentation.links.broken,
+  };
+  if (testing.testRatio !== null) values["testing.test_ratio"] = testing.testRatio;
+  if (testing.coverage) values["testing.coverage_lines"] = testing.coverage.linePercent;
+  for (const [category, n] of Object.entries(findings.byCategory)) values[`findings.${category.toLowerCase()}`] = n;
+  return Object.entries(values).map(([key, value]) => ({ analysisId, key, value }));
+}
+
+/** The overall health score and each applicable dimension's score. */
+export function buildScoreMetricRows(analysisId: string, health: HealthScore): Prisma.MetricCreateManyInput[] {
+  return [
+    { analysisId, key: "score.overall", value: health.score },
+    ...health.dimensions.filter((d) => d.score !== null).map((d) => ({ analysisId, key: `score.${d.id}`, value: d.score! })),
+  ];
 }

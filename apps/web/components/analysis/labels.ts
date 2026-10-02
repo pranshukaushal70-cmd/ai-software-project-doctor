@@ -70,6 +70,33 @@ export const FINDING_TYPE_LABEL: Record<string, string> = {
   "circular-dependency": "Circular import",
   "layer-violation": "Layer violation",
   "high-fan-out": "High fan-out",
+  // API
+  "permissive-cors": "Permissive CORS",
+  "error-details-exposed": "Stack trace exposed",
+  "unauthenticated-mutation": "No visible auth check",
+  "missing-input-validation": "Unvalidated request body",
+  "auth-without-rate-limit": "Login without rate limit",
+  "no-api-specification": "No API specification",
+  // database
+  "unindexed-foreign-key": "Unindexed foreign key",
+  "table-without-primary-key": "No primary key",
+  "auto-schema-sync": "Automatic schema sync",
+  "no-migrations": "No migrations",
+  // testing
+  "no-tests": "No tests",
+  "low-test-ratio": "Little test code",
+  "low-coverage": "Low coverage",
+  "focused-test": "Focused test",
+  "skipped-test": "Skipped test",
+  "tests-not-in-ci": "Tests not in CI",
+  "no-test-script": "No test script",
+  "untested-file": "Untested file",
+  // documentation
+  "missing-readme": "No README",
+  "incomplete-readme": "Incomplete README",
+  "missing-license": "No license",
+  "undocumented-env-vars": "Undocumented env vars",
+  "broken-link": "Broken link",
 };
 
 export const CATEGORY_LABEL: Record<string, string> = {
@@ -78,7 +105,14 @@ export const CATEGORY_LABEL: Record<string, string> = {
   SECRET: "Secret",
   DEPENDENCY: "Dependency",
   ARCHITECTURE: "Architecture",
+  API: "API",
+  DATABASE: "Database",
+  TESTING: "Testing",
+  DOCUMENTATION: "Documentation",
 };
+
+/** Grade colours follow the severity scale: A/B healthy, C medium, D high, F critical. */
+export const GRADE_TONE = { A: "ok", B: "ok", C: "medium", D: "high", F: "critical" } as const;
 
 /** Where a secret was found (summary.security.totals.secretsByContext / finding.data.context). Production contexts get no badge. */
 export const SECRET_CONTEXT_BADGE: Record<string, string> = {
