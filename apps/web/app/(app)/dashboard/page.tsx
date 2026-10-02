@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FileArchive, FolderGit2, Plus } from "lucide-react";
+import { FileArchive, FlaskConical, FolderGit2, Plus } from "lucide-react";
+import { gradeFor } from "@pd/analyzer/scoring";
+import { GRADE_TONE } from "@/components/analysis/labels";
 import { StatusBadge } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
@@ -10,7 +13,7 @@ import { listRepositories } from "@/server/services/analysis-service";
 
 export const metadata: Metadata = { title: "Repositories" };
 
-const SOURCE_ICON = { GITHUB: FolderGit2, GITLAB: FolderGit2, ZIP: FileArchive, DEMO: FileArchive } as const;
+const SOURCE_ICON = { GITHUB: FolderGit2, GITLAB: FolderGit2, ZIP: FileArchive, DEMO: FlaskConical } as const;
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -56,6 +59,11 @@ export default async function DashboardPage() {
                     {latest ? `Last analysed ${formatDate(latest.createdAt)}` : "Never analysed"}
                   </div>
                 </div>
+                {latest?.healthScore != null && (
+                  <Badge tone={GRADE_TONE[gradeFor(latest.healthScore)]} title="Health score of the latest analysis">
+                    {latest.healthScore} · {gradeFor(latest.healthScore)}
+                  </Badge>
+                )}
                 {latest && <StatusBadge status={latest.status} />}
               </div>
             );

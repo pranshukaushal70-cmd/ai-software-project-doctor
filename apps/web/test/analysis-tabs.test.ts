@@ -4,12 +4,13 @@ import { describe, expect, it } from "vitest";
 import { CompletedAnalysis, type AnalysisDto, type TabId } from "@/components/analysis/analysis-view";
 import { ModulesNotice, ScanOverview } from "@/components/analysis/scan-overview";
 import type { CodeMetricsDto, ScanSummaryDto } from "@/components/analysis/types";
-import { architectureSummary, dependencySummary, scanSummary } from "./ui-fixtures";
+import type { HealthScoreDto } from "@/components/analysis/types";
+import { architectureSummary, dependencySummary, healthScore, practicesSummary, scanSummary } from "./ui-fixtures";
 
 /** Only the finding counts of code metrics are read by the tab bar. */
 const codeMetrics = { findings: { stored: 5 } } as unknown as CodeMetricsDto;
 
-const analysis = (summary: ScanSummaryDto, analyzerVersion = "0.4.0"): AnalysisDto => ({
+const analysis = (summary: ScanSummaryDto, analyzerVersion = "0.4.0", scoreBreakdown: HealthScoreDto | null = null): AnalysisDto => ({
   id: "a1",
   status: "COMPLETED",
   stage: "COMPLETED",
@@ -19,14 +20,15 @@ const analysis = (summary: ScanSummaryDto, analyzerVersion = "0.4.0"): AnalysisD
   commitSha: null,
   error: null,
   summary,
+  scoreBreakdown,
   createdAt: "2026-10-01T00:00:00Z",
   startedAt: null,
   finishedAt: null,
   repository: { id: "r1", name: "shop", owner: null, url: null, source: "ZIP", branch: null },
 });
 
-const render = (summary: ScanSummaryDto, initialTab: TabId, version?: string) =>
-  renderToStaticMarkup(createElement(CompletedAnalysis, { analysis: analysis(summary, version), initialTab }));
+const render = (summary: ScanSummaryDto, initialTab: TabId, version?: string, health: HealthScoreDto | null = null) =>
+  renderToStaticMarkup(createElement(CompletedAnalysis, { analysis: analysis(summary, version, health), initialTab }));
 
 const full = scanSummary({ codeMetrics, dependencies: dependencySummary(), architecture: architectureSummary() });
 
@@ -59,20 +61,54 @@ describe("ModulesNotice", () => {
     const html = notice(full.modulesRun);
     expect(html).toContain("<strong>dependency analysis</strong>");
     expect(html).toContain("<strong>architecture analysis</strong>");
-    expect(html).toContain("Dependencies and Architecture tabs");
+    expect(html).toContain("Dependencies, Architecture, Practices and Health tabs");
     expect(html).not.toContain("upcoming");
     expect(html).not.toContain("earlier analyzer version");
-    expect(html).toContain("Git history insights and an overall health score are added in later analyzer versions");
+    expect(html).toContain("Git history insights and AI recommendations are added in later analyzer versions");
   });
 
   it("names the modules an older analysis did not run", () => {
     const html = notice(["repository-scan", "code-metrics"]);
-    expect(html).toContain("without security analysis, dependency analysis and architecture analysis");
+    expect(html).toContain("without security analysis, dependency analysis, architecture analysis, API, database, testing &amp; documentation analysis and health scoring");
+  });
+
+  it("lists the Phase 5 modules and their tabs when they ran", () => {
+    const html = notice(full.modulesRun);
+    expect(html).toContain("<strong>health scoring</strong>");
+    expect(html).toContain("Practices and Health tabs");
+    expect(html).not.toContain("earlier analyzer version");
   });
 
   it("is what the overview shows", () => {
     const html = renderToStaticMarkup(createElement(ScanOverview, { analysisId: "a1", summary: full }));
     expect(html).toContain("<strong>architecture analysis</strong>");
     expect(html).not.toContain("upcoming analyzer versions");
+  });
+});
+
+describe("Practices and Health tabs", () => {
+  const v5 = { ...full, practices: practicesSummary() };
+
+  it("shows the score on the Health tab and as a card on the overview", () => {
+    const overview = render(v5, "overview", "0.5.0", healthScore());
+    expect(overview).toMatch(/id="tab-health"[^>]*>Health<span[^>]*>62<\/span>/);
+    expect(overview).toContain("Health score");
+    expect(overview).toContain("See how the score is calculated");
+    // The weakest dimensions are listed first on the card.
+    const card = overview.slice(overview.indexOf("Health score"));
+    expect(card.indexOf("Testing")).toBeLessThan(card.indexOf("Security"));
+    expect(render(v5, "health", "0.5.0", healthScore())).toContain("Score by dimension");
+  });
+
+  it("counts practice findings in All findings and renders the Practices panel", () => {
+    // 5 code + 2 dependency + 1 architecture + 9 practices.
+    expect(render(v5, "overview", "0.5.0", healthScore())).toMatch(/id="tab-findings"[^>]*>All findings<span[^>]*>17<\/span>/);
+    expect(render(v5, "practices", "0.5.0", healthScore())).toContain("API, database, testing and documentation findings");
+  });
+
+  it("explains that analyses before v0.5.0 have no practices or score", () => {
+    expect(render(full, "practices", "0.4.1")).toContain("before API, database, testing and documentation analysis existed");
+    expect(render(full, "health", "0.4.1")).toContain("before the health score existed");
+    expect(render(full, "overview", "0.4.1")).not.toContain("Health score");
   });
 });

@@ -18,6 +18,7 @@ export const GET = route<{ id: string }>(async (_req, { params }) => {
     error: a.error,
     summary: a.summary,
     healthScore: a.healthScore,
+    scoreBreakdown: a.scoreBreakdown,
     createdAt: a.createdAt,
     startedAt: a.startedAt,
     finishedAt: a.finishedAt,

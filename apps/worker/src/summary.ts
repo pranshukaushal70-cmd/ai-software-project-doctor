@@ -2,6 +2,7 @@ import type { RepositoryScan } from "@pd/analyzer";
 import type { ArchitectureSummary } from "@pd/analyzer/architecture";
 import type { DependencySummary } from "@pd/analyzer/dependencies";
 import type { CodeMetricsSummary } from "@pd/analyzer/metrics";
+import type { PracticesSummary } from "@pd/analyzer/practices";
 import type { SecuritySummary } from "@pd/analyzer/security";
 
 export interface IngestInfo {
@@ -10,10 +11,12 @@ export interface IngestInfo {
   extractedFiles?: number;
   skippedEntries?: number;
   oversizedEntries?: number;
+  /** Name of the bundled demo project (DEMO sources only). */
+  demo?: string;
 }
 
 /** Analysis modules that exist in this analyzer version; the UI lists only what actually ran. */
-export const MODULES_RUN = ["repository-scan", "code-metrics", "security", "dependencies", "architecture"] as const;
+export const MODULES_RUN = ["repository-scan", "code-metrics", "security", "dependencies", "architecture", "practices", "health-score"] as const;
 
 const MAX_IGNORED_DIRS = 200;
 
@@ -28,6 +31,7 @@ export function summarizeScan(
   security: SecuritySummary,
   dependencies: DependencySummary,
   architecture: ArchitectureSummary,
+  practices: PracticesSummary,
 ) {
   return {
     modulesRun: [...MODULES_RUN],
@@ -53,6 +57,7 @@ export function summarizeScan(
     security,
     dependencies,
     architecture,
+    practices,
   };
 }
 

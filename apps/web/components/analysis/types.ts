@@ -29,6 +29,109 @@ export interface ScanSummaryDto {
   dependencies?: DependencySummaryDto;
   /** Present from analyzer v0.4.0 on. */
   architecture?: ArchitectureSummaryDto;
+  /** Present from analyzer v0.5.0 on. */
+  practices?: PracticesSummaryDto;
+}
+
+/** Shape of summary.practices (packages/analyzer/src/practices/index.ts PracticesSummary). */
+export interface PracticesSummaryDto {
+  analyzer: string;
+  analyzerVersion: string;
+  thresholds: {
+    apiSpecEndpoints: number;
+    noTestsHighLoc: number;
+    noTestsMinLoc: number;
+    testRatio: { medium: number; low: number };
+    coverage: { medium: number; low: number };
+    untestedFileLoc: number;
+    readmeMinWords: number;
+  };
+  api: {
+    endpoints: number;
+    byMethod: Record<string, number>;
+    frameworks: Array<{ name: string; endpoints: number }>;
+    list: Array<{ method: string; path: string; file: string; line: number; framework: string; auth: boolean; readsBody: boolean; validated: boolean }>;
+    listTruncated: boolean;
+    mutating: number;
+    mutatingWithoutAuth: number;
+    bodyWithoutValidation: number;
+    globalAuth: string | null;
+    rateLimiting: string | null;
+    specFiles: string[];
+    specTooling: string | null;
+  };
+  database: {
+    detected: boolean;
+    technologies: Array<{ name: string; evidence: string }>;
+    schemaFiles: string[];
+    models: number;
+    tables: number;
+    relations: number;
+    migrations: { tools: string[]; files: number };
+    unindexedForeignKeys: number;
+    tablesWithoutPrimaryKey: number;
+    autoSchemaSync: string[];
+  };
+  testing: {
+    testFiles: number;
+    testCases: number;
+    sourceFiles: number;
+    testCodeLines: number;
+    sourceCodeLines: number;
+    testRatio: number | null;
+    frameworks: Array<{ name: string; evidence: string }>;
+    testScript: string | null;
+    ci: { configured: boolean; runsTests: boolean; evidence: string | null };
+    coverage: { path: string; format: string; linePercent: number } | null;
+    focused: number;
+    skipped: number;
+    referencedSourceFiles: number;
+    untested: Array<{ path: string; codeLines: number }>;
+  };
+  documentation: {
+    readme: { path: string; words: number; headings: number; sections: Record<"installation" | "usage" | "configuration" | "testing", boolean> } | null;
+    license: string | null;
+    licenseDeclared: string | null;
+    contributing: string | null;
+    changelog: string | null;
+    docsDir: boolean;
+    markdownFiles: number;
+    envVars: { used: number; documented: number; undocumented: string[]; templates: string[] };
+    links: { checked: number; broken: number };
+  };
+  findings: {
+    total: number;
+    stored: number;
+    truncated: boolean;
+    bySeverity: Record<SeverityDto, number>;
+    byCategory: Record<"API" | "DATABASE" | "TESTING" | "DOCUMENTATION", number>;
+    byType: Record<string, number>;
+  };
+  errors: number;
+  durationMs: number;
+}
+
+/** Shape of Analysis.scoreBreakdown (packages/analyzer/src/scoring/index.ts HealthScore). */
+export interface HealthScoreDto {
+  version: string;
+  score: number;
+  grade: "A" | "B" | "C" | "D" | "F";
+  weightedScore: number;
+  cap: { max: number; reason: string } | null;
+  dimensions: Array<{
+    id: string;
+    label: string;
+    weight: number;
+    applicable: boolean;
+    score: number | null;
+    effectiveWeight: number;
+    factors: Array<{ label: string; points: number; detail: string }>;
+    findings: number;
+    excluded: number;
+    note: string | null;
+  }>;
+  caveats: string[];
+  excludedFindings: number;
 }
 
 /** Shape of summary.security (packages/analyzer/src/security/index.ts SecuritySummary). */

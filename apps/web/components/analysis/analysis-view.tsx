@@ -11,10 +11,12 @@ import { ArchitecturePanel } from "./architecture-panel";
 import { CodeMetrics } from "./code-metrics";
 import { DependenciesPanel } from "./dependencies-panel";
 import { FindingsList } from "./findings-list";
+import { HealthPanel, HealthScoreCard } from "./health-panel";
+import { PracticesPanel } from "./practices-panel";
 import { ProgressPanel } from "./progress-panel";
 import { ScanOverview } from "./scan-overview";
 import { SecurityPanel } from "./security-panel";
-import type { ScanSummaryDto } from "./types";
+import type { HealthScoreDto, ScanSummaryDto } from "./types";
 
 export interface AnalysisDto {
   id: string;
@@ -26,6 +28,8 @@ export interface AnalysisDto {
   commitSha: string | null;
   error: string | null;
   summary: ScanSummaryDto | null;
+  /** Explainable health score; present from analyzer v0.5.0 on. */
+  scoreBreakdown?: HealthScoreDto | null;
   createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
@@ -40,6 +44,8 @@ const TABS = [
   { id: "security", label: "Security" },
   { id: "dependencies", label: "Dependencies" },
   { id: "architecture", label: "Architecture" },
+  { id: "practices", label: "Practices" },
+  { id: "health", label: "Health" },
   { id: "findings", label: "All findings" },
 ] as const;
 export type TabId = (typeof TABS)[number]["id"];
@@ -81,8 +87,10 @@ export function CompletedAnalysis({ analysis, initialTab = "overview" }: { analy
   const security = summary.security;
   const dependencies = summary.dependencies;
   const architecture = summary.architecture;
+  const practices = summary.practices;
+  const health = analysis.scoreBreakdown ?? null;
   const findingCount = code
-    ? code.findings.stored + (security?.findings.stored ?? 0) + (dependencies?.findings.stored ?? 0) + (architecture?.findings.stored ?? 0)
+    ? code.findings.stored + (security?.findings.stored ?? 0) + (dependencies?.findings.stored ?? 0) + (architecture?.findings.stored ?? 0) + (practices?.findings.stored ?? 0)
     : undefined;
   const securityCount = security?.totals.findings;
   const vulnerableCount = dependencies?.totals.vulnerable;
@@ -90,7 +98,8 @@ export function CompletedAnalysis({ analysis, initialTab = "overview" }: { analy
 
   return (
     <div className="flex flex-col gap-6">
-      <div role="tablist" aria-label="Analysis sections" className="flex gap-1 border-b">
+      {/* Scrolls on its own on narrow screens instead of widening the page. */}
+      <div role="tablist" aria-label="Analysis sections" className="flex gap-1 overflow-x-auto border-b">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -101,7 +110,7 @@ export function CompletedAnalysis({ analysis, initialTab = "overview" }: { analy
             aria-controls={`panel-${t.id}`}
             onClick={() => select(t.id)}
             className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              "-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors",
               tab === t.id ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
@@ -114,11 +123,17 @@ export function CompletedAnalysis({ analysis, initialTab = "overview" }: { analy
               <TabCount value={vulnerableCount} alert={dependencies!.totals.bySeverity.CRITICAL + dependencies!.totals.bySeverity.HIGH > 0} />
             )}
             {t.id === "architecture" && cycleCount !== undefined && cycleCount > 0 && <TabCount value={cycleCount} />}
+            {t.id === "health" && health && <TabCount value={health.score} alert={health.grade === "D" || health.grade === "F"} />}
           </button>
         ))}
       </div>
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === "overview" && <ScanOverview analysisId={analysis.id} summary={summary} />}
+        {tab === "overview" && (
+          <div className="flex flex-col gap-6">
+            {health && <HealthScoreCard health={health} onDetails={() => select("health")} />}
+            <ScanOverview analysisId={analysis.id} summary={summary} />
+          </div>
+        )}
         {tab !== "overview" && !code && (
           <OlderAnalyzerNotice version={analysis.analyzerVersion} module="code metrics" action="see code quality and findings" />
         )}
@@ -135,6 +150,14 @@ export function CompletedAnalysis({ analysis, initialTab = "overview" }: { analy
           <OlderAnalyzerNotice version={analysis.analyzerVersion} module="architecture analysis" action="map its import graph and find cycles" />
         )}
         {tab === "architecture" && architecture && <ArchitecturePanel analysisId={analysis.id} summary={architecture} />}
+        {tab === "practices" && code && !practices && (
+          <OlderAnalyzerNotice version={analysis.analyzerVersion} module="API, database, testing and documentation analysis" action="check its API, database, tests and documentation" />
+        )}
+        {tab === "practices" && practices && <PracticesPanel analysisId={analysis.id} summary={practices} />}
+        {tab === "health" && code && !health && (
+          <OlderAnalyzerNotice version={analysis.analyzerVersion} module="the health score" action="get an explainable health score" />
+        )}
+        {tab === "health" && health && <HealthPanel health={health} analyzerVersion={analysis.analyzerVersion} />}
         {tab === "findings" && code && <FindingsList analysisId={analysis.id} />}
       </div>
     </div>

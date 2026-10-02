@@ -8,7 +8,7 @@ import type { PrismaClient } from "@pd/db";
 import { loadLimits, type AnalyzerLimits } from "@pd/shared";
 import type { Logger } from "@pd/shared/logger";
 import { buildZip } from "../../../packages/analyzer/test/zip-builder";
-import { runAnalysis } from "./pipeline";
+import { DEFAULT_DEMO_DIR, runAnalysis } from "./pipeline";
 
 const FIXTURE = path.resolve(import.meta.dirname, "../../../packages/analyzer/test/fixtures/polyglot");
 const FIXTURE_FILES = ["package.json", "README.md", "src/orders.ts", "src/format.ts", "src/utils/csv.js", "app/pipeline.py", "tests/orders.test.ts"];
@@ -16,7 +16,7 @@ const FIXTURE_FILES = ["package.json", "README.md", "src/orders.ts", "src/format
 type Row = Record<string, unknown>;
 
 /** In-memory stand-in for the handful of Prisma calls the pipeline makes. */
-function fakePrisma(analysis: Row, opts: { failOn?: string } = {}) {
+function fakePrisma(analysis: Row, opts: { failOn?: string; triages?: Row[] } = {}) {
   const tables = {
     file: [] as Row[],
     finding: [] as Row[],
@@ -60,6 +60,9 @@ function fakePrisma(analysis: Row, opts: { failOn?: string } = {}) {
     dependency: table("dependency"),
     architectureNode: table("architectureNode"),
     architectureEdge: table("architectureEdge"),
+    findingTriage: {
+      findMany: async ({ where }: { where: { repositoryId: string } }) => (opts.triages ?? []).filter((t) => t.repositoryId === where.repositoryId),
+    },
   };
   return { prisma: prisma as unknown as PrismaClient, tables, updates };
 }
@@ -166,6 +169,7 @@ describe("runAnalysis", () => {
       "SECURITY",
       "DEPENDENCIES",
       "ARCHITECTURE",
+      "PRACTICES",
       "COMPLETED",
     ]);
 
@@ -174,7 +178,8 @@ describe("runAnalysis", () => {
     expect(tables.finding.some((f) => f.id === "stale")).toBe(false);
     expect(tables.finding.length).toBeGreaterThan(0);
     const fileIds = new Set(tables.file.map((f) => f.id));
-    expect(tables.finding.every((f) => fileIds.has(f.fileId as string))).toBe(true);
+    // Every finding links to its file, except repository-level ones (no README, no license …), which have no file.
+    expect(tables.finding.every((f) => (f.fileId === null ? f.analyzer === "practices" : fileIds.has(f.fileId as string)))).toBe(true);
     expect(tables.metric.find((m) => m.key === "code.files")?.value).toBe(5);
 
     // Security findings are persisted next to code-quality findings, linked to their file.
@@ -209,7 +214,19 @@ describe("runAnalysis", () => {
       dependencies: { vulnerabilityScan: Row; totals: Row };
       architecture: { totals: Row };
     };
-    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics", "security", "dependencies", "architecture"]);
+    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics", "security", "dependencies", "architecture", "practices", "health-score"]);
+
+    // Phase 5: practices findings and an explainable health score.
+    const practices = (analysis.summary as { practices: { testing: Row; findings: { byCategory: Row } } }).practices;
+    expect(practices.testing).toMatchObject({ testFiles: 1, testCases: expect.any(Number) });
+    expect(tables.finding.some((f) => f.ruleId === "documentation/missing-license" && f.fileId === null && f.analyzer === "practices")).toBe(true);
+    const breakdown = analysis.scoreBreakdown as { score: number; grade: string; dimensions: Array<{ id: string; score: number | null; factors: unknown[] }> };
+    expect(analysis.healthScore).toBe(breakdown.score);
+    expect(breakdown.grade).toMatch(/^[ABCDF]$/);
+    expect(breakdown.dimensions.find((d) => d.id === "security")!.factors.length).toBeGreaterThan(0);
+    expect(breakdown.dimensions.find((d) => d.id === "api")!.score).toBeNull();
+    expect(analysis.weightsUsed).toMatchObject({ version: "1.0" });
+    expect(tables.metric.find((m) => m.key === "score.overall")?.value).toBe(analysis.healthScore);
     expect(summary.dependencies.vulnerabilityScan).toMatchObject({ status: "skipped", queried: 0 });
     expect(summary.architecture.totals).toMatchObject({ cycles: 0 });
     expect(summary.ingest).toMatchObject({ source: "ZIP", extractedFiles: ALL_FILES.length });
@@ -299,5 +316,73 @@ describe("runAnalysis", () => {
     const { prisma, updates } = fakePrisma(analysis);
     await runAnalysis("an1", { prisma, limits, log: silentLog });
     expect(updates).toEqual([]);
+  });
+  it("analyses the bundled demo project without touching it", async () => {
+    const analysis: Row = { id: "an1", status: "QUEUED", repository: { id: "demo1", source: "DEMO", url: null, branch: null, uploadKey: null } };
+    const { prisma, tables } = fakePrisma(analysis);
+    await runAnalysis("an1", { prisma, limits, log: silentLog, fetch: fakeOsv().fetch });
+
+    expect(analysis).toMatchObject({ status: "COMPLETED", error: null });
+    expect((analysis.summary as { ingest: Row }).ingest).toEqual({ source: "DEMO", demo: "storefront" });
+    // Manifests get their real names in the workspace copy only.
+    expect(tables.file.map((f) => f.path)).toEqual(expect.arrayContaining(["package.json", "package-lock.json"]));
+    expect(tables.file.some((f) => String(f.path).endsWith(".demo"))).toBe(false);
+    expect(await readdir(DEFAULT_DEMO_DIR)).toEqual(expect.arrayContaining(["package.json.demo", "package-lock.json.demo"]));
+    expect(await readdir(DEFAULT_DEMO_DIR)).not.toContain("package.json");
+
+    // Every module finds the issues planted in the demo (see demo/README.md).
+    const ruleIds = new Set(tables.finding.map((f) => f.ruleId));
+    for (const id of [
+      "secret/hardcoded-credential",
+      "injection/sql",
+      "crypto/weak-hash",
+      "dependency/known-vulnerability",
+      "architecture/circular-dependency",
+      "complexity/high-cyclomatic",
+      "api/permissive-cors",
+      "api/unauthenticated-mutation",
+      "api/missing-input-validation",
+      "api/error-details-exposed",
+      "api/auth-without-rate-limit",
+      "database/unindexed-foreign-key",
+      "database/no-migrations",
+      "testing/skipped-test",
+      "testing/tests-not-in-ci",
+      "documentation/incomplete-readme",
+      "documentation/broken-link",
+      "documentation/missing-license",
+      "documentation/undocumented-env-vars",
+    ]) {
+      expect(ruleIds, id).toContain(id);
+    }
+    expect(JSON.stringify(tables.finding)).not.toContain("Sup3r-Secret-Admin-Pw");
+    expect(analysis.healthScore).toBeLessThan(75);
+    expect(await readdir(path.join(workspaceDir, "runs"))).toEqual([]);
+  });
+
+  it("fails with a clear message when the demo project is missing", async () => {
+    const analysis: Row = { id: "an1", status: "QUEUED", repository: { id: "demo1", source: "DEMO", url: null, branch: null, uploadKey: null } };
+    const { prisma } = fakePrisma(analysis);
+    await runAnalysis("an1", { prisma, limits, log: silentLog, demoDir: path.join(workspaceDir, "no-such-demo") });
+    expect(analysis).toMatchObject({ status: "FAILED", error: "The demo project is not available on this server" });
+  });
+
+  it("leaves findings triaged for the repository out of the health score", async () => {
+    const first = zipAnalysis(await stageUpload());
+    const run1 = fakePrisma(first);
+    await runAnalysis("an1", { prisma: run1.prisma, limits, log: silentLog });
+    const secret = run1.tables.finding.find((f) => f.ruleId === "secret/hardcoded-credential")!;
+
+    const second = zipAnalysis(await stageUpload());
+    const triages = [{ repositoryId: "repo1", fingerprint: secret.fingerprint, status: "EXPECTED" }, { repositoryId: "other", fingerprint: "x", status: "IGNORED" }];
+    const run2 = fakePrisma(second, { triages });
+    await runAnalysis("an1", { prisma: run2.prisma, limits, log: silentLog });
+
+    const breakdown = second.scoreBreakdown as { excludedFindings: number; caveats: string[] };
+    expect(breakdown.excludedFindings).toBe(1);
+    expect(breakdown.caveats).toContain("1 finding triaged as Expected or Ignored was not counted.");
+    expect(second.healthScore as number).toBeGreaterThan(first.healthScore as number);
+    // The triaged finding is still reported.
+    expect(run2.tables.finding.some((f) => f.fingerprint === secret.fingerprint)).toBe(true);
   });
 });

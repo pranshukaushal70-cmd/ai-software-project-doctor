@@ -8,7 +8,9 @@
     "./metrics": "./src/metrics/index.ts",
     "./security": "./src/security/index.ts",
     "./dependencies": "./src/dependencies/index.ts",
-    "./architecture": "./src/architecture/index.ts"
+    "./architecture": "./src/architecture/index.ts",
+    "./practices": "./src/practices/index.ts",
+    "./scoring": "./src/scoring/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

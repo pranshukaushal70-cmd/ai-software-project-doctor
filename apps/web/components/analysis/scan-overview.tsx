@@ -58,6 +58,8 @@ const MODULES = [
   { id: "security", label: "security analysis", tab: "Security" },
   { id: "dependencies", label: "dependency analysis", tab: "Dependencies" },
   { id: "architecture", label: "architecture analysis", tab: "Architecture" },
+  { id: "practices", label: "API, database, testing & documentation analysis", tab: "Practices" },
+  { id: "health-score", label: "health scoring", tab: "Health" },
 ] as const;
 
 const joinList = (items: string[]) => (items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`);
@@ -79,7 +81,7 @@ export function ModulesNotice({ modulesRun }: { modulesRun: string[] }) {
         ))}
         {ran.length > 1 && <> (see the {joinList(ran.map((m) => m.tab))} tabs)</>}.{" "}
         {missing.length > 0 && <>It was made by an earlier analyzer version without {joinList(missing.map((m) => m.label))}; run a new analysis to include them. </>}
-        Git history insights and an overall health score are added in later analyzer versions.
+        Git history insights and AI recommendations are added in later analyzer versions.
       </p>
     </div>
   );
@@ -223,7 +225,7 @@ export function ScanOverview({ analysisId, summary }: { analysisId: string; summ
         <Card>
           <CardHeader>
             <CardTitle>Documentation files</CardTitle>
-            <CardDescription>Presence only; content quality is assessed in a later module.</CardDescription>
+            <CardDescription>Presence only; README content, license and links are checked in the Practices tab.</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="flex flex-col gap-2">

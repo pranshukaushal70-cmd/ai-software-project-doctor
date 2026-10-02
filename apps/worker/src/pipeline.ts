@@ -1,4 +1,4 @@
-import { rm } from "node:fs/promises";
+import { cp, rename, rm } from "node:fs/promises";
 import path from "node:path";
 import {
   ANALYZER_VERSION,
@@ -12,6 +12,8 @@ import {
 import { analyzeArchitecture } from "@pd/analyzer/architecture";
 import { analyzeDependencies } from "@pd/analyzer/dependencies";
 import { analyzeCode } from "@pd/analyzer/metrics";
+import { analyzePractices } from "@pd/analyzer/practices";
+import { computeHealthScore, scoringWeights } from "@pd/analyzer/scoring";
 import { createSecurityScanner } from "@pd/analyzer/security";
 import type { AnalysisStage, Prisma, PrismaClient } from "@pd/db";
 import { AppError, stageProgress, type AnalyzerLimits } from "@pd/shared";
@@ -24,7 +26,9 @@ import {
   buildDependencyRows,
   buildFileRows,
   buildFindingRows,
+  buildPracticeMetricRows,
   buildRepositoryMetricRows,
+  buildScoreMetricRows,
   buildSecurityMetricRows,
 } from "./persist";
 import { summarizeScan, type IngestInfo } from "./summary";
@@ -35,7 +39,20 @@ export interface PipelineDeps {
   log: Logger;
   /** HTTP client for the OSV.dev lookup; defaults to the global fetch. Tests inject a fake so they never touch the network. */
   fetch?: typeof fetch;
+  /** The bundled demo project analysed for DEMO repositories; defaults to `demo/storefront` in this repository. */
+  demoDir?: string;
 }
+
+export const DEFAULT_DEMO_DIR = path.resolve(import.meta.dirname, "../../../demo/storefront");
+/**
+ * The demo stores its manifests under these names so that dependency scanners (GitHub's
+ * dependency graph, Dependabot) do not report its deliberately outdated packages against
+ * this repository. They get their real names back in the analysis workspace.
+ */
+const DEMO_RENAMES: ReadonlyArray<[string, string]> = [
+  ["package.json.demo", "package.json"],
+  ["package-lock.json.demo", "package-lock.json"],
+];
 
 const INSERT_BATCH = 1000;
 /** Minimum interval between progress writes while parsing. */
@@ -111,8 +128,16 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
         skippedEntries: extracted.skippedEntries,
         oversizedEntries: extracted.oversizedEntries,
       });
+    } else if (repo.source === "DEMO") {
+      // A copy, so nothing the analysis does can touch the bundled project.
+      root = path.join(workspace.dir, "src");
+      await cp(deps.demoDir ?? DEFAULT_DEMO_DIR, root, { recursive: true, verbatimSymlinks: true }).catch(() => {
+        throw new AppError("ANALYSIS_FAILED", "The demo project is not available on this server");
+      });
+      for (const [from, to] of DEMO_RENAMES) await rename(path.join(root, from), path.join(root, to)).catch(() => undefined);
+      ingest.demo = path.basename(deps.demoDir ?? DEFAULT_DEMO_DIR);
     } else {
-      throw new AppError("ANALYSIS_FAILED", "The demo project is not available in this version yet");
+      throw new AppError("VALIDATION_ERROR", "Unsupported repository source");
     }
 
     await setStage("SCANNING");
@@ -173,11 +198,43 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
       "architecture analysis complete",
     );
 
+    await setStage("PRACTICES");
+    const practices = await analyzePractices(scan, code, { root });
+    log.info(
+      {
+        endpoints: practices.summary.api.endpoints,
+        testFiles: practices.summary.testing.testFiles,
+        findings: practices.summary.findings.total,
+        ms: practices.summary.durationMs,
+      },
+      "API, database, testing and documentation analysis complete",
+    );
+
+    // Findings the user already marked Expected or Ignored for this repository do not lower the score.
+    const allFindings = [...code.findings, ...sec.findings, ...dep.findings, ...arch.findings, ...practices.findings];
+    const triaged = await prisma.findingTriage.findMany({ where: { repositoryId: repo.id }, select: { fingerprint: true } });
+    const health = computeHealthScore({
+      findings: allFindings,
+      excludedFingerprints: new Set(triaged.map((t) => t.fingerprint)),
+      productionCodeLines: practices.summary.testing.sourceCodeLines,
+      duplicationPercent: code.summary.totals.duplicationPercent,
+      present: {
+        code: code.summary.totals.sourceFiles > 0,
+        dependencies: dep.summary.manifests.length > 0,
+        architecture: arch.summary.totals.files > 0,
+        api: practices.summary.api.endpoints > 0,
+        database: practices.summary.database.detected,
+      },
+      vulnerabilityScan: dep.summary.vulnerabilityScan,
+      coverageMeasured: practices.summary.testing.coverage !== null,
+    });
+    log.info({ score: health.score, grade: health.grade, excluded: health.excludedFindings }, "health score computed");
+
     await insertInBatches(buildFileRows(analysisId, scan, code), (data) => prisma.file.createMany({ data }));
     const fileIds = new Map(
       (await prisma.file.findMany({ where: { analysisId }, select: { id: true, path: true } })).map((f) => [f.path, f.id]),
     );
-    const findingRows = buildFindingRows(analysisId, [...code.findings, ...sec.findings, ...dep.findings, ...arch.findings], fileIds);
+    const findingRows = buildFindingRows(analysisId, allFindings, fileIds);
     await insertInBatches(findingRows, (data) => prisma.finding.createMany({ data }));
     await prisma.metric.createMany({
       data: [
@@ -185,6 +242,8 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
         ...buildSecurityMetricRows(analysisId, sec),
         ...buildDependencyMetricRows(analysisId, dep),
         ...buildArchitectureMetricRows(analysisId, arch),
+        ...buildPracticeMetricRows(analysisId, practices),
+        ...buildScoreMetricRows(analysisId, health),
       ],
     });
     await insertInBatches(buildDependencyRows(analysisId, dep.dependencies), (data) => prisma.dependency.createMany({ data }));
@@ -200,7 +259,10 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
         status: "COMPLETED",
         stage: "COMPLETED",
         progress: 100,
-        summary: summarizeScan(scan, ingest, code.summary, sec.summary, dep.summary, arch.summary) as unknown as Prisma.InputJsonObject,
+        summary: summarizeScan(scan, ingest, code.summary, sec.summary, dep.summary, arch.summary, practices.summary) as unknown as Prisma.InputJsonObject,
+        healthScore: health.score,
+        scoreBreakdown: health as unknown as Prisma.InputJsonObject,
+        weightsUsed: scoringWeights() as unknown as Prisma.InputJsonObject,
         finishedAt: new Date(),
       },
     });

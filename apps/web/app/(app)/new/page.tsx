@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { loadLimits } from "@pd/shared";
+import { DemoAnalysisCard } from "@/components/demo-analysis-card";
 import { NewAnalysisForm } from "@/components/new-analysis-form";
 
 export const metadata: Metadata = { title: "New analysis" };
@@ -13,6 +14,7 @@ export default function NewAnalysisPage() {
         Point the doctor at a repository. Code is analysed statically and is never executed.
       </p>
       <NewAnalysisForm maxUploadMb={maxUploadMb} />
+      <DemoAnalysisCard />
     </div>
   );
 }
