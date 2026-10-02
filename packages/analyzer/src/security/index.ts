@@ -5,7 +5,7 @@ import type { RepositoryScan } from "../scanner";
 import { ANALYZER_VERSION } from "../version";
 import { inspectTree } from "./patterns";
 import { SECURITY_RULES, type SecurityRuleKey } from "./rules";
-import { envFileFinding, scanTextForSecrets } from "./secrets";
+import { envFileFinding, scanTextForSecrets, SECRET_CONTEXTS, type SecretContext } from "./secrets";
 import { severityRank, type RawSecurityFinding } from "./types";
 
 export const SECURITY_ANALYZER_ID = "security";
@@ -27,6 +27,8 @@ export interface SecuritySummary {
     sourceFilesInspected: number;
     filesWithFindings: number;
     bySeverity: Record<Severity, number>;
+    /** Secret findings by where they were found (production source, configuration, tests, docs …). */
+    secretsByContext: Record<SecretContext, number>;
   };
   /** Every rule that matched, most severe first, with its classification. */
   rules: Array<{
@@ -150,6 +152,11 @@ function build(
   });
 
   const bySeverity = Object.fromEntries(SEVERITIES.map((s) => [s, 0])) as Record<Severity, number>;
+  const secretsByContext = Object.fromEntries(SECRET_CONTEXTS.map((c) => [c, 0])) as Record<SecretContext, number>;
+  for (const { finding } of raw) {
+    const context = finding.data?.context as SecretContext | undefined;
+    if (context && context in secretsByContext) secretsByContext[context]++;
+  }
   const byRule = new Map<SecurityRuleKey, { count: number; maxSeverity: Severity }>();
   const byFile = new Map<string, { findings: number; maxSeverity: Severity }>();
   const worse = (a: Severity, b: Severity) => (severityRank(a) <= severityRank(b) ? a : b);
@@ -179,6 +186,7 @@ function build(
         sourceFilesInspected: ctx.sourceFilesInspected,
         filesWithFindings: byFile.size,
         bySeverity,
+        secretsByContext,
       },
       rules: [...byRule.entries()]
         .map(([key, r]) => {
@@ -199,5 +207,5 @@ function build(
 }
 
 export { SECURITY_RULES } from "./rules";
-export { scanTextForSecrets, maskSecret } from "./secrets";
+export { scanTextForSecrets, maskSecret, secretContextOf, SECRET_CONTEXTS, type SecretContext } from "./secrets";
 export { inspectTree } from "./patterns";

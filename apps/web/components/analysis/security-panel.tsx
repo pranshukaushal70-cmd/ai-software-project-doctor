@@ -28,6 +28,9 @@ export function SecurityPanel({ analysisId, security }: { analysisId: string; se
   const t = security.totals;
   const urgent = t.bySeverity.CRITICAL + t.bySeverity.HIGH;
   const secretRules = security.rules.filter((r) => r.category === "SECRET");
+  // From analyzer v0.4.1 on, secrets in tests and docs are classified; older analyses treat all secrets alike.
+  const fixtureSecrets = t.secretsByContext ? t.secretsByContext.test + t.secretsByContext.documentation : 0;
+  const productionSecrets = t.secrets - fixtureSecrets;
 
   return (
     <div className="flex flex-col gap-6">
@@ -44,18 +47,35 @@ export function SecurityPanel({ analysisId, security }: { analysisId: string; se
             </div>
           </CardContent>
         </Card>
+      ) : productionSecrets > 0 ? (
+        <Card className="border-sev-critical/30">
+          <CardContent className="flex items-start gap-3 pt-5">
+            <KeyRound className="mt-0.5 size-5 shrink-0 text-sev-critical" aria-hidden />
+            <div>
+              <div className="font-medium">
+                {formatNumber(productionSecrets)} possible {productionSecrets === 1 ? "secret" : "secrets"} committed to the repository
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Treat real credentials as compromised: revoke and rotate them first, then remove them from the code and from git history.
+                Deleting them in a new commit does not revoke them.
+                {fixtureSecrets > 0 &&
+                  ` ${formatNumber(fixtureSecrets)} more ${fixtureSecrets === 1 ? "value was" : "values were"} found in tests or documentation and ${fixtureSecrets === 1 ? "looks" : "look"} like fixtures or examples.`}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
-        t.secrets > 0 && (
-          <Card className="border-sev-critical/30">
+        fixtureSecrets > 0 && (
+          <Card>
             <CardContent className="flex items-start gap-3 pt-5">
-              <KeyRound className="mt-0.5 size-5 shrink-0 text-sev-critical" aria-hidden />
+              <Info className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
               <div>
                 <div className="font-medium">
-                  {formatNumber(t.secrets)} possible {t.secrets === 1 ? "secret" : "secrets"} committed to the repository
+                  {formatNumber(fixtureSecrets)} secret-like {fixtureSecrets === 1 ? "value" : "values"} found only in tests or documentation
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Treat real credentials as compromised: revoke and rotate them first, then remove them from the code and from git history.
-                  Deleting them in a new commit does not revoke them.
+                  They look like test fixtures or documentation examples and are reported as Info. Confirm that none is a real credential:
+                  a real key in a test file is still a leaked key.
                 </p>
               </div>
             </CardContent>
@@ -64,7 +84,12 @@ export function SecurityPanel({ analysisId, security }: { analysisId: string; se
       )}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Secrets" value={formatNumber(t.secrets)} hint={`${secretRules.length} ${secretRules.length === 1 ? "kind" : "kinds"}`} tone={t.secrets > 0 ? "alert" : undefined} />
+        <Stat
+          label="Secrets"
+          value={formatNumber(t.secrets)}
+          hint={`${secretRules.length} ${secretRules.length === 1 ? "kind" : "kinds"}${fixtureSecrets > 0 ? ` · ${formatNumber(fixtureSecrets)} in tests/docs` : ""}`}
+          tone={productionSecrets > 0 ? "alert" : undefined}
+        />
         <Stat label="Critical + high" value={formatNumber(urgent)} hint={`${formatNumber(t.bySeverity.MEDIUM)} medium · ${formatNumber(t.bySeverity.LOW)} low`} />
         <Stat label="Insecure patterns" value={formatNumber(t.insecurePatterns)} hint={`in ${formatNumber(t.sourceFilesInspected)} source files checked`} />
         <Stat label="Files affected" value={formatNumber(t.filesWithFindings)} hint={`of ${formatNumber(t.filesScanned)} files scanned`} />

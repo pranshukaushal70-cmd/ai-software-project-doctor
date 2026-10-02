@@ -64,12 +64,15 @@ describe("route wrapper", () => {
   });
 
   it("hides internal error details", async () => {
+    // Obviously fake test fixture (.invalid host, self-describing password); it stands in for a real DATABASE_URL.
+    const FAKE_DB_URL = "postgres://test-user:not-a-real-password@db.invalid/app";
     const res = await route(async () => {
-      throw new Error("connection string postgres://user:pw@db leaked");
+      throw new Error(`connection string ${FAKE_DB_URL} leaked`);
     })(request("GET"), ctx);
     expect(res.status).toBe(500);
     const text = await res.text();
     expect(text).not.toContain("postgres://");
+    expect(text).not.toContain("not-a-real-password");
     expect(JSON.parse(text).error).toMatchObject({ code: "INTERNAL_ERROR", message: "An unexpected error occurred" });
   });
 

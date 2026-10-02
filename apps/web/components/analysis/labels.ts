@@ -80,6 +80,13 @@ export const CATEGORY_LABEL: Record<string, string> = {
   ARCHITECTURE: "Architecture",
 };
 
+/** Where a secret was found (summary.security.totals.secretsByContext / finding.data.context). Production contexts get no badge. */
+export const SECRET_CONTEXT_BADGE: Record<string, string> = {
+  test: "Test fixture",
+  documentation: "Docs example",
+  template: "Template",
+};
+
 export const ECOSYSTEM_LABEL: Record<string, string> = {
   npm: "npm",
   PyPI: "PyPI",

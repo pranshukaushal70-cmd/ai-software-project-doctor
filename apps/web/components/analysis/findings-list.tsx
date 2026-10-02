@@ -9,8 +9,8 @@ import { Skeleton } from "../ui/skeleton";
 import { api } from "@/lib/api-client";
 import { cn, formatNumber } from "@/lib/utils";
 import { EvidenceText } from "./evidence-text";
-import { CATEGORY_LABEL, SEVERITY_LABEL, SEVERITY_TONE, typeLabel } from "./labels";
-import type { FindingDto, FindingsPageDto, SeverityDto } from "./types";
+import { CATEGORY_LABEL, SECRET_CONTEXT_BADGE, SEVERITY_LABEL, SEVERITY_TONE, typeLabel } from "./labels";
+import type { FindingDto, FindingsPageDto, SeverityDto, TriageDto } from "./types";
 
 const PAGE_SIZE = 50;
 
@@ -20,8 +20,71 @@ function location(f: FindingDto): string {
   return f.endLine && f.endLine !== f.line ? `${f.path}:${f.line}–${f.endLine}` : `${f.path}:${f.line}`;
 }
 
-function FindingRow({ finding }: { finding: FindingDto }) {
+const TRIAGE_LABEL: Record<TriageDto["status"], string> = { EXPECTED: "Expected", IGNORED: "Ignored" };
+
+/**
+ * Mark one finding as Expected or Ignored. The decision is stored for this repository
+ * and the finding's fingerprint, so it is shown again on re-analysis but never hides
+ * any other finding.
+ */
+function TriageControls({ analysisId, findingId, triage, onChange }: { analysisId: string; findingId: string; triage: TriageDto | null; onChange: (t: TriageDto | null) => void }) {
+  const [reason, setReason] = useState(triage?.reason ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const url = `/api/analysis/${analysisId}/findings/${findingId}/triage`;
+  const run = async (fn: () => Promise<TriageDto | null>) => {
+    setBusy(true);
+    setError(null);
+    try {
+      onChange(await fn());
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const mark = (status: TriageDto["status"]) =>
+    run(async () => (await api<{ triage: TriageDto }>(url, { method: "PUT", body: JSON.stringify({ status, reason }) })).triage);
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border bg-muted/30 p-3 md:col-span-2">
+      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Triage</div>
+      <p className="text-xs text-muted-foreground">
+        Applies to this exact finding in this repository, including future analyses. It stays listed with a label; other findings are never
+        hidden.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          maxLength={500}
+          placeholder="Reason (optional), e.g. fake key in a test fixture"
+          aria-label="Triage reason"
+          className="h-8 min-w-[220px] flex-1 rounded-md border bg-card px-2.5 text-sm"
+        />
+        <Button size="sm" variant={triage?.status === "EXPECTED" ? "default" : "outline"} disabled={busy} onClick={() => mark("EXPECTED")}>
+          Mark expected
+        </Button>
+        <Button size="sm" variant={triage?.status === "IGNORED" ? "default" : "outline"} disabled={busy} onClick={() => mark("IGNORED")}>
+          Ignore
+        </Button>
+        {triage && (
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(async () => (await api(url, { method: "DELETE" }), null))}>
+            Clear
+          </Button>
+        )}
+      </div>
+      {error && <p className="text-xs text-sev-critical">{error}</p>}
+    </div>
+  );
+}
+
+/** Exported for tests. Triage controls are shown when `analysisId` is given. */
+export function FindingRow({ finding, analysisId }: { finding: FindingDto; analysisId?: string }) {
   const [open, setOpen] = useState(false);
+  const [triage, setTriage] = useState<TriageDto | null>(finding.triage ?? null);
+  const context = typeof finding.data?.context === "string" ? SECRET_CONTEXT_BADGE[finding.data.context] : undefined;
   return (
     <li className="border-t first:border-t-0">
       <button
@@ -35,6 +98,13 @@ function FindingRow({ finding }: { finding: FindingDto }) {
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={SEVERITY_TONE[finding.severity]}>{SEVERITY_LABEL[finding.severity]}</Badge>
             {finding.category !== "CODE_QUALITY" && <Badge tone="neutral">{CATEGORY_LABEL[finding.category] ?? finding.category}</Badge>}
+            {context && <Badge tone="neutral">{context}</Badge>}
+            {finding.data?.likelyIntentional === true && <Badge tone="ok">Likely intentional</Badge>}
+            {triage && (
+              <Badge tone="primary" title={triage.reason ?? undefined}>
+                {TRIAGE_LABEL[triage.status]}
+              </Badge>
+            )}
             <span className="font-medium">{finding.title}</span>
           </div>
           <div className="mt-1 flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
@@ -82,6 +152,7 @@ function FindingRow({ finding }: { finding: FindingDto }) {
               fingerprint <span className="font-mono">{finding.fingerprint.slice(0, 12)}</span>
             </span>
           </div>
+          {analysisId && <TriageControls analysisId={analysisId} findingId={finding.id} triage={triage} onChange={setTriage} />}
         </div>
       )}
     </li>
@@ -116,6 +187,7 @@ export function FindingsList({
 }) {
   const [severity, setSeverity] = useState<SeverityDto | null>(null);
   const [type, setType] = useState<string | null>(null);
+  const [hideTriaged, setHideTriaged] = useState(false);
   const [data, setData] = useState<FindingsPageDto | null>(null);
   const [items, setItems] = useState<FindingDto[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -129,9 +201,10 @@ export function FindingsList({
       if (categories) params.set("category", categories);
       if (severity) params.set("severity", severity);
       if (type) params.set("type", type);
+      if (hideTriaged) params.set("triage", "untriaged");
       return api<FindingsPageDto>(`/api/analysis/${analysisId}/findings?${params}`);
     },
-    [analysisId, categories, severity, type],
+    [analysisId, categories, severity, type, hideTriaged],
   );
 
   useEffect(() => {
@@ -181,6 +254,10 @@ export function FindingsList({
               {SEVERITY_LABEL[s.value]} <span className="tabular-nums opacity-70">{formatNumber(s.count)}</span>
             </FilterChip>
           ))}
+          <span className="mx-1 h-4 w-px bg-border" aria-hidden />
+          <FilterChip active={hideTriaged} onClick={() => setHideTriaged((h) => !h)}>
+            Hide expected &amp; ignored
+          </FilterChip>
         </div>
         {data && data.facets.type.length > 1 && (
           <label className="flex items-center gap-2 text-sm">
@@ -217,7 +294,7 @@ export function FindingsList({
         ) : (
           <ul aria-label="Findings">
             {items.map((f) => (
-              <FindingRow key={f.id} finding={f} />
+              <FindingRow key={f.id} finding={f} analysisId={analysisId} />
             ))}
           </ul>
         )}

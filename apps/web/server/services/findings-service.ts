@@ -2,19 +2,27 @@ import "server-only";
 import { getPrisma, type Prisma, type Severity } from "@pd/db";
 import { SEVERITIES, type FindingsQuery } from "@pd/shared";
 
-export function buildFindingsWhere(analysisId: string, q: Omit<FindingsQuery, "page" | "pageSize">): Prisma.FindingWhereInput {
+type FindingFilters = Omit<FindingsQuery, "page" | "pageSize" | "triage"> & { triage?: FindingsQuery["triage"] };
+
+/**
+ * @param triagedFingerprints fingerprints marked Expected/Ignored in this analysis's repository;
+ *   only used by the `triage` filter, which defaults to showing everything.
+ */
+export function buildFindingsWhere(analysisId: string, q: FindingFilters, triagedFingerprints: readonly string[] = []): Prisma.FindingWhereInput {
   return {
     analysisId,
     ...(q.severity?.length ? { severity: { in: q.severity } } : {}),
     ...(q.category?.length ? { category: { in: q.category } } : {}),
     ...(q.type?.length ? { type: { in: q.type } } : {}),
     ...(q.path ? { file: { path: q.path } } : {}),
+    ...(q.triage === "untriaged" && triagedFingerprints.length ? { fingerprint: { notIn: [...triagedFingerprints] } } : {}),
+    ...(q.triage === "triaged" ? { fingerprint: { in: [...triagedFingerprints] } } : {}),
   };
 }
 
 /** Scope for facet counts: the filters that are not themselves facets. */
-export function buildFacetWhere(analysisId: string, q: Omit<FindingsQuery, "page" | "pageSize">): Prisma.FindingWhereInput {
-  return buildFindingsWhere(analysisId, { category: q.category, path: q.path });
+export function buildFacetWhere(analysisId: string, q: FindingFilters, triagedFingerprints: readonly string[] = []): Prisma.FindingWhereInput {
+  return buildFindingsWhere(analysisId, { category: q.category, path: q.path, triage: q.triage }, triagedFingerprints);
 }
 
 const SEVERITY_RANK = Object.fromEntries(SEVERITIES.map((s, i) => [s, i])) as Record<Severity, number>;
@@ -25,10 +33,17 @@ const SEVERITY_RANK = Object.fromEntries(SEVERITIES.map((s, i) => [s, i])) as Re
  * Facet counts ignore the severity/type filters (so the UI can show totals for
  * every chip) but respect the category/path scope.
  */
-export async function listFindings(analysisId: string, q: FindingsQuery) {
+export async function listFindings(analysisId: string, repositoryId: string, q: FindingsQuery) {
   const prisma = getPrisma();
-  const where = buildFindingsWhere(analysisId, q);
-  const facetWhere = buildFacetWhere(analysisId, q);
+  // Triage decisions belong to the repository and match findings by fingerprint.
+  const triages = await prisma.findingTriage.findMany({
+    where: { repositoryId },
+    select: { fingerprint: true, status: true, reason: true, updatedAt: true },
+  });
+  const triageByFingerprint = new Map(triages.map(({ fingerprint, ...t }) => [fingerprint, t]));
+  const triaged = [...triageByFingerprint.keys()];
+  const where = buildFindingsWhere(analysisId, q, triaged);
+  const facetWhere = buildFacetWhere(analysisId, q, triaged);
   const [total, findings, bySeverity, byType] = await Promise.all([
     prisma.finding.count({ where }),
     prisma.finding.findMany({
@@ -60,7 +75,12 @@ export async function listFindings(analysisId: string, q: FindingsQuery) {
   ]);
 
   return {
-    findings: findings.map(({ file, ...f }) => ({ ...f, path: file?.path ?? null, language: file?.language ?? null })),
+    findings: findings.map(({ file, ...f }) => ({
+      ...f,
+      path: file?.path ?? null,
+      language: file?.language ?? null,
+      triage: triageByFingerprint.get(f.fingerprint) ?? null,
+    })),
     page: q.page,
     pageSize: q.pageSize,
     total,

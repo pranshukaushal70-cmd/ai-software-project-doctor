@@ -74,7 +74,7 @@ argon2id (`@node-rs/argon2`) · zod 4 · pino · Vitest 5.
 
 ```bash
 npm install                 # also generates the Prisma client
-node scripts/setup-env.mjs  # creates .env with a random JWT_SECRET
+node scripts/setup-env.mjs  # creates .env with a random JWT_SECRET and database password
 npm run services:up         # starts postgres + redis via docker compose
 npm run db:deploy           # applies migrations
 npm run dev                 # web app on http://localhost:3000
@@ -87,7 +87,8 @@ See [.env.example](.env.example). The important ones:
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
+| `DATABASE_URL` | PostgreSQL connection string (its credentials must match `POSTGRES_*`) |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Used by `docker-compose.yml` to create the database. `POSTGRES_PASSWORD` is required (no default); it only takes effect when the database volume is first created. PostgreSQL and Redis are published on `127.0.0.1` only |
 | `REDIS_URL` | Redis for the job queue and rate limiting |
 | `JWT_SECRET` | ≥32-char secret used to HMAC session tokens before storage |
 | `ANTHROPIC_API_KEY` | Optional. Enables AI mode (Phase 6). Never sent to the browser |

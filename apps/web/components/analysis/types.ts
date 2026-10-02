@@ -43,6 +43,8 @@ export interface SecuritySummaryDto {
     sourceFilesInspected: number;
     filesWithFindings: number;
     bySeverity: Record<SeverityDto, number>;
+    /** Present from analyzer v0.4.1 on. */
+    secretsByContext?: Record<"source" | "configuration" | "template" | "test" | "documentation", number>;
   };
   rules: Array<{
     id: string;
@@ -146,6 +148,14 @@ export interface FindingDto {
   data: Record<string, unknown> | null;
   analyzer: string;
   analyzerVersion: string;
+  /** The repository owner's decision about this finding, matched by fingerprint. */
+  triage?: TriageDto | null;
+}
+
+export interface TriageDto {
+  status: "EXPECTED" | "IGNORED";
+  reason: string | null;
+  updatedAt: string;
 }
 
 export interface FindingsPageDto {

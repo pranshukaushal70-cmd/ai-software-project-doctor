@@ -400,6 +400,7 @@ export const ModelName = {
   User: 'User',
   Session: 'Session',
   Repository: 'Repository',
+  FindingTriage: 'FindingTriage',
   Analysis: 'Analysis',
   File: 'File',
   Finding: 'Finding',
@@ -426,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "repository" | "analysis" | "file" | "finding" | "metric" | "dependency" | "architectureNode" | "architectureEdge" | "gitInsight" | "recommendation" | "fixSuggestion" | "report"
+    modelProps: "user" | "session" | "repository" | "findingTriage" | "analysis" | "file" | "finding" | "metric" | "dependency" | "architectureNode" | "architectureEdge" | "gitInsight" | "recommendation" | "fixSuggestion" | "report"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -649,6 +650,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.RepositoryCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.RepositoryCountAggregateOutputType> | number
+        }
+      }
+    }
+    FindingTriage: {
+      payload: Prisma.$FindingTriagePayload<ExtArgs>
+      fields: Prisma.FindingTriageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FindingTriageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FindingTriageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload>
+        }
+        findFirst: {
+          args: Prisma.FindingTriageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FindingTriageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload>
+        }
+        findMany: {
+          args: Prisma.FindingTriageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload>[]
+        }
+        create: {
+          args: Prisma.FindingTriageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload>
+        }
+        createMany: {
+          args: Prisma.FindingTriageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FindingTriageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload>[]
+        }
+        delete: {
+          args: Prisma.FindingTriageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload>
+        }
+        update: {
+          args: Prisma.FindingTriageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload>
+        }
+        deleteMany: {
+          args: Prisma.FindingTriageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FindingTriageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FindingTriageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload>[]
+        }
+        upsert: {
+          args: Prisma.FindingTriageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FindingTriagePayload>
+        }
+        aggregate: {
+          args: Prisma.FindingTriageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFindingTriage>
+        }
+        groupBy: {
+          args: Prisma.FindingTriageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FindingTriageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FindingTriageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FindingTriageCountAggregateOutputType> | number
         }
       }
     }
@@ -1547,6 +1622,22 @@ export const RepositoryScalarFieldEnum = {
 export type RepositoryScalarFieldEnum = (typeof RepositoryScalarFieldEnum)[keyof typeof RepositoryScalarFieldEnum]
 
 
+export const FindingTriageScalarFieldEnum = {
+  id: 'id',
+  repositoryId: 'repositoryId',
+  fingerprint: 'fingerprint',
+  ruleId: 'ruleId',
+  path: 'path',
+  status: 'status',
+  reason: 'reason',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FindingTriageScalarFieldEnum = (typeof FindingTriageScalarFieldEnum)[keyof typeof FindingTriageScalarFieldEnum]
+
+
 export const AnalysisScalarFieldEnum = {
   id: 'id',
   repositoryId: 'repositoryId',
@@ -1819,6 +1910,20 @@ export type EnumRepositorySourceFieldRefInput<$PrismaModel> = FieldRefInputType<
  * Reference to a field of type 'RepositorySource[]'
  */
 export type ListEnumRepositorySourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RepositorySource[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TriageStatus'
+ */
+export type EnumTriageStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TriageStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'TriageStatus[]'
+ */
+export type ListEnumTriageStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TriageStatus[]'>
     
 
 
@@ -2164,6 +2269,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   session?: Prisma.SessionOmit
   repository?: Prisma.RepositoryOmit
+  findingTriage?: Prisma.FindingTriageOmit
   analysis?: Prisma.AnalysisOmit
   file?: Prisma.FileOmit
   finding?: Prisma.FindingOmit

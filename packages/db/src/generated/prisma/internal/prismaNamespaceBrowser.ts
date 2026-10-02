@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Session: 'Session',
   Repository: 'Repository',
+  FindingTriage: 'FindingTriage',
   Analysis: 'Analysis',
   File: 'File',
   Finding: 'Finding',
@@ -123,6 +124,22 @@ export const RepositoryScalarFieldEnum = {
 } as const
 
 export type RepositoryScalarFieldEnum = (typeof RepositoryScalarFieldEnum)[keyof typeof RepositoryScalarFieldEnum]
+
+
+export const FindingTriageScalarFieldEnum = {
+  id: 'id',
+  repositoryId: 'repositoryId',
+  fingerprint: 'fingerprint',
+  ruleId: 'ruleId',
+  path: 'path',
+  status: 'status',
+  reason: 'reason',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FindingTriageScalarFieldEnum = (typeof FindingTriageScalarFieldEnum)[keyof typeof FindingTriageScalarFieldEnum]
 
 
 export const AnalysisScalarFieldEnum = {

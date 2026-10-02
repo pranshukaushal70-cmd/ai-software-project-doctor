@@ -49,8 +49,25 @@ export const findingsQuerySchema = paginationSchema.extend({
   category: commaList(z.enum(FINDING_CATEGORIES)).optional(),
   type: commaList(z.string().regex(/^[a-z0-9-]{1,64}$/)).optional(),
   path: z.string().trim().min(1).max(1000).optional(),
+  /** `untriaged` hides findings marked Expected or Ignored; `triaged` shows only those. Default: everything. */
+  triage: z.enum(["all", "untriaged", "triaged"]).default("all"),
 });
 export type FindingsQuery = z.infer<typeof findingsQuerySchema>;
+
+export const TRIAGE_STATUSES = ["EXPECTED", "IGNORED"] as const;
+export type TriageStatus = (typeof TRIAGE_STATUSES)[number];
+
+/** PUT /api/analysis/:id/findings/:findingId/triage body. */
+export const triageInputSchema = z.object({
+  status: z.enum(TRIAGE_STATUSES),
+  reason: z
+    .string()
+    .trim()
+    .max(500)
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+});
+export type TriageInput = z.infer<typeof triageInputSchema>;
 
 /** `true` / `false` query flag; absent means "no filter". */
 const queryFlag = z.enum(["true", "false"]).transform((v) => v === "true");

@@ -8,7 +8,7 @@ import { listFindings } from "@/server/services/findings-service";
 export const GET = route<{ id: string }>(async (req, { params }) => {
   const user = await requireApiUser();
   const id = idSchema.parse((await params).id);
-  await getOwnedAnalysis(user.id, id);
+  const analysis = await getOwnedAnalysis(user.id, id);
   const q = findingsQuerySchema.parse(Object.fromEntries(req.nextUrl.searchParams));
-  return ok(await listFindings(id, q));
+  return ok(await listFindings(id, analysis.repositoryId, q));
 });
