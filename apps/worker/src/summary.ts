@@ -1,4 +1,6 @@
 import type { RepositoryScan } from "@pd/analyzer";
+import type { ArchitectureSummary } from "@pd/analyzer/architecture";
+import type { DependencySummary } from "@pd/analyzer/dependencies";
 import type { CodeMetricsSummary } from "@pd/analyzer/metrics";
 import type { SecuritySummary } from "@pd/analyzer/security";
 
@@ -11,7 +13,7 @@ export interface IngestInfo {
 }
 
 /** Analysis modules that exist in this analyzer version; the UI lists only what actually ran. */
-export const MODULES_RUN = ["repository-scan", "code-metrics", "security"] as const;
+export const MODULES_RUN = ["repository-scan", "code-metrics", "security", "dependencies", "architecture"] as const;
 
 const MAX_IGNORED_DIRS = 200;
 
@@ -19,7 +21,14 @@ const MAX_IGNORED_DIRS = 200;
  * JSON-safe summary persisted on the Analysis row. Excludes per-file data
  * (stored as File rows) and absolute paths (they reveal worker filesystem layout).
  */
-export function summarizeScan(scan: RepositoryScan, ingest: IngestInfo, codeMetrics: CodeMetricsSummary, security: SecuritySummary) {
+export function summarizeScan(
+  scan: RepositoryScan,
+  ingest: IngestInfo,
+  codeMetrics: CodeMetricsSummary,
+  security: SecuritySummary,
+  dependencies: DependencySummary,
+  architecture: ArchitectureSummary,
+) {
   return {
     modulesRun: [...MODULES_RUN],
     ingest,
@@ -42,6 +51,8 @@ export function summarizeScan(scan: RepositoryScan, ingest: IngestInfo, codeMetr
     oversizedFiles: scan.files.filter((f) => f.oversized).map((f) => f.path),
     codeMetrics,
     security,
+    dependencies,
+    architecture,
   };
 }
 

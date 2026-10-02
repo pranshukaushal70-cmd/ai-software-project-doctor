@@ -18,21 +18,23 @@ POST /api/analysis ──► validate (zod + URL allowlist) ──► Repository
         │                                                        │
         └──► 202 { analysisId, status: "queued" }                └──► BullMQ job (jobId = analysisId)
 
-Worker: RUNNING → CLONING → SCANNING → … → COMPLETED | FAILED
+Worker: RUNNING → CLONING → SCANNING → PARSING → SECURITY → DEPENDENCIES → ARCHITECTURE → COMPLETED | FAILED
 UI:     polls GET /api/analysis/:id every 2 s, renders stage progress, then the results
 ```
 
-Using the analysis id as the BullMQ `jobId` makes enqueueing idempotent. The worker deletes partial `File` rows
-before starting, so a retried job cannot duplicate data.
+Using the analysis id as the BullMQ `jobId` makes enqueueing idempotent. Before starting, the worker deletes the rows a
+previous partial attempt may have left (`ArchitectureEdge`, `ArchitectureNode`, `Dependency`, `Finding`, `Metric`,
+`File`), so a retried job cannot duplicate data. Later stages (`GIT`, `AI`, `REPORT`) exist in the schema but do not
+run yet; `summary.modulesRun` lists what actually ran.
 
 ## Workspaces
 
 | Package | Depends on | Notes |
 |---|---|---|
 | `@pd/shared` | zod, pino | `constants` subpath is browser-safe; `logger` is server-only |
-| `@pd/analyzer` | shared, yauzl, ignore | ingest (`clone`, `zip`, `workspace`), `scanner` |
+| `@pd/analyzer` | shared, yauzl, ignore, web-tree-sitter | ingest (`clone`, `zip`, `workspace`), `scanner`; subpaths `metrics`, `security`, `dependencies`, `architecture` |
 | `@pd/db` | Prisma 7 + `@prisma/adapter-pg` | generated client in `src/generated` (gitignored) |
-| `@pd/worker` | analyzer, db, shared, bullmq | `pipeline.ts` orchestrates stages |
+| `@pd/worker` | analyzer, db, shared, bullmq | `pipeline.ts` orchestrates stages; `persist.ts` maps analyzer output to rows; supplies `fetch` for OSV.dev |
 | `@pd/web` | analyzer, db, shared, bullmq | route handlers are thin; logic lives in `server/services` |
 
 Packages are consumed as TypeScript source (`exports` → `src/index.ts`), transpiled by Next.js
@@ -66,7 +68,7 @@ One cursor-based pass per file (no recursion, so deeply nested input cannot over
 | functions / classes | function, method and lambda-style function nodes; classes, interfaces, enums, records (C: struct/union definitions) |
 | cyclomatic complexity | 1 + decision tokens (`if`, `elif`, loops, `case`, `catch`/`except`, `&&`, `||`, `??`, `and`, `or`, ternaries). Nested functions are measured separately. |
 | nesting depth | control-flow constructs inside a function; `else if` chains stay at one level |
-| imports / exports | module specifiers and exported names, stored per file for the Phase 4 dependency graph |
+| imports / exports | module specifiers and exported names, stored per file; the Phase 4 import graph is built from them. Python `from . import a, b` is recorded as `.a`, `.b` (the bare `.` would point every such import at `__init__.py`) |
 | duplication | exact clones (whitespace/comments ignored) of ≥ 50 tokens and ≥ 6 lines across production files, via a verified rolling hash |
 
 Rules (`packages/analyzer/src/metrics/rules.ts`, limits stored in `summary.codeMetrics.thresholds`): high complexity, deep
@@ -128,9 +130,100 @@ stage, stores findings (category `SECRET` or `SECURITY`, analyzer `security`) ne
 `security.*` rows on `Metric`, and `summary.security` (totals, per-rule counts, most affected files, committed env files).
 At most 2,000 security findings are stored (most severe first).
 
+## Dependency analysis (Phase 4)
+
+`@pd/analyzer/dependencies` reads manifests and lockfiles as data (nothing is installed or executed):
+
+| Ecosystem | Manifests | Lockfiles (exact versions, transitive packages) |
+|---|---|---|
+| npm | `package.json` (dependencies, optional, peer, dev) | `package-lock.json` / `npm-shrinkwrap.json` v1–3, `yarn.lock` (classic and Berry), `pnpm-lock.yaml` v5–9, `bun.lock`; `bun.lockb` is binary: recognised (no "missing lockfile") but not read |
+| PyPI | `requirements*.txt`, `pyproject.toml` (PEP 621, PEP 735 groups, Poetry, uv), `Pipfile` | `poetry.lock`, `uv.lock`, `pdm.lock`, `Pipfile.lock` |
+| Maven | `pom.xml` (`${properties}`, `dependencyManagement`; parent POMs are not fetched), `build.gradle(.kts)` string notation | none (exact versions come from the manifest) |
+| Go | `go.mod` (`// indirect` = transitive; local `replace` = path dependency) | none (`go.mod` versions are exact) |
+| Cargo | `Cargo.toml` (incl. `[dependencies.x]` tables, renames, target-specific tables) | `Cargo.lock` |
+
+Each manifest is paired with the nearest lockfile in its directory or a parent (monorepos and workspaces), and
+workspace-internal packages are recognised and excluded from registry checks. Every dependency records whether it is
+**direct** (declared in a manifest) or **transitive** (only in a lockfile), dev-only, its declared spec and resolved
+version, the manifest or lockfile it comes from, and its source (`registry`, `git`, `url`, `path`, `workspace`). The
+analyzer does not reconstruct which package requires which; the relationship stored is direct vs transitive and where it
+is declared or locked.
+
+**Vulnerabilities.** Exact registry versions are looked up on OSV.dev ([security.md](security.md#outbound-network-osvdev)
+explains what is sent and how private packages are handled). Severity comes from the CVSS v3 base score computed from the
+advisory's vector, else from the advisory database's own rating, else MEDIUM; dev-only packages are rated one level
+lower. The suggested fix is the lowest version that fixes every advisory affecting the installed version (none when an
+advisory has no fix).
+
+| Rule | Severity |
+|---|---|
+| `dependency/known-vulnerability` | from the advisories (see above) |
+| `dependency/missing-lockfile` | MEDIUM with runtime dependencies, LOW for dev-only or a `Pipfile` |
+| `dependency/unpinned-version` (`*`, `latest`, empty, Maven `LATEST`/`1.+`) | LOW, INFO for dev |
+| `dependency/non-registry-source` (git or URL) | LOW |
+| `dependency/unused-candidate` (npm runtime dependency that no JS/TS file of the package imports and that package scripts and config files do not mention) | INFO |
+
+The worker runs this in the `DEPENDENCIES` stage and stores one `Dependency` row per package (with `vulnIds` and
+`dataSource`), `DEPENDENCY` findings, `dependencies.*` metrics and `summary.dependencies` (totals, per-ecosystem counts,
+manifests, lookup status, and the 100 most severe vulnerable packages with advisory details). `Dependency` has no
+columns for the declaration line or source, so the line is only kept where a finding refers to the dependency.
+
+## Architecture analysis (Phase 4)
+
+`@pd/analyzer/architecture` builds the import graph of production source files (tests, generated code and assets are
+not nodes) from the imports recorded by the code-metrics pass. Resolution is static and conservative, linking an import
+only when the language's lookup rules point at exactly one file:
+
+- **JavaScript/TypeScript:** relative paths with extension and `index` lookup, `.js` specifiers that refer to `.ts`
+  sources, `tsconfig`/`jsconfig` `paths` and `baseUrl` (following relative `extends`), and workspace packages through
+  `package.json` `exports`/`main`. Node built-ins and third-party packages are counted separately.
+- **Python:** relative imports and absolute imports from detected package roots (`src/` and the parents of top-level
+  packages); standard-library modules are recognised.
+- **Java:** class, nested-class, static and wildcard imports by package path.
+- **C/C++:** `#include` next to the file, from the root, from `include`/`inc`/`src` directories, or by a unique path suffix.
+
+On the file graph it finds **import cycles** (Tarjan's strongly connected components; each is reported with its shortest
+loop), computes fan-in/fan-out, and groups files into **modules** by directory, choosing the deepest level (≤ 8) that
+gives at most 30 modules. Each module gets fan-in, fan-out and instability = fan-out ÷ (fan-in + fan-out). **Layers**
+(interface → service → data → shared) are inferred from directory and file names and checked only when at least two are
+present.
+
+| Rule | Severity |
+|---|---|
+| `architecture/circular-dependency` | MEDIUM when JavaScript, TypeScript or Python is involved (cycles cause partially initialised modules at runtime), LOW for compiled languages; one level higher at ≥ 10 files |
+| `architecture/layer-violation` (a lower layer imports a higher one) | LOW |
+| `architecture/high-fan-out` (> 20 internal files imported; barrel files such as `index.ts` exempt) | LOW, MEDIUM above 40 |
+
+The worker runs this in the `ARCHITECTURE` stage and stores `ArchitectureNode` rows (`FILE` and `MODULE`, at most
+10,000 file nodes, the most connected first) with their metrics, `ArchitectureEdge` rows (`import` between files,
+`module` between modules, with weight and `inCycle`), `ARCHITECTURE` findings, `architecture.*` metrics and
+`summary.architecture` (totals, modules, module edges, cycles, hubs, layers, top external packages, resolution info).
+
+## Web API and UI (Phase 4)
+
+`GET /api/analysis/:id/dependencies` and `GET /api/analysis/:id/architecture` ([api.md](api.md)) follow the findings
+route: authenticated, ownership-checked through `getOwnedAnalysis`, zod-validated queries
+(`dependenciesQuerySchema`/`architectureQuerySchema` in `@pd/shared`), with the query logic in
+`web/server/services/{dependency,architecture}-service.ts`.
+
+The analysis page has **Dependencies** and **Architecture** tabs:
+
+- *Dependencies*: lookup status (explains partial, failed, disabled and skipped lookups instead of showing zero
+  vulnerabilities), headline counts, vulnerable packages with relationship, fixed version and advisory links,
+  ecosystems, manifests and lockfiles, a filterable and paginated table of every dependency (direct/transitive, dev,
+  ecosystem, vulnerable only, name search), and dependency findings.
+- *Architecture*: headline counts, import cycles shown as paths, an SVG import graph (module view, or file view filtered
+  by module or to cycle members; layered left to right by longest import chain, cycle edges highlighted, at most 60
+  modules or 80 files with a note when truncated), a module table with instability, most imported and most importing
+  files, layers, top external packages, and architecture findings.
+
+Analyses made by earlier analyzer versions show a notice in these tabs instead of empty results.
+
 ## Data model
 
 See `packages/db/prisma/schema.prisma`. Results hang off `Analysis` and cascade on delete:
 `File`, `Finding`, `Metric`, `Dependency`, `ArchitectureNode`/`ArchitectureEdge`, `GitInsight`, `Recommendation`,
 `Report`. Phase 1 populates `Analysis.summary` and `File`; Phase 2 adds file metrics, `Finding` and `Metric`; Phase 3 adds
-`SECRET`/`SECURITY` findings and `summary.security` (no schema change: the categories already existed); later phases fill the rest.
+`SECRET`/`SECURITY` findings and `summary.security`; Phase 4 fills `Dependency`, `ArchitectureNode` and `ArchitectureEdge`
+and adds `DEPENDENCY`/`ARCHITECTURE` findings and `summary.dependencies`/`summary.architecture`. Phases 3 and 4 needed no
+schema change: the tables, categories and stages already existed. Later phases fill the rest.

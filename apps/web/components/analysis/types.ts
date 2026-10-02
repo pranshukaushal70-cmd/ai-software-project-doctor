@@ -25,6 +25,10 @@ export interface ScanSummaryDto {
   codeMetrics?: CodeMetricsDto;
   /** Present from analyzer v0.3.0 on. */
   security?: SecuritySummaryDto;
+  /** Present from analyzer v0.4.0 on. */
+  dependencies?: DependencySummaryDto;
+  /** Present from analyzer v0.4.0 on. */
+  architecture?: ArchitectureSummaryDto;
 }
 
 /** Shape of summary.security (packages/analyzer/src/security/index.ts SecuritySummary). */
@@ -180,4 +184,162 @@ export interface TreeNode {
   size: number;
   fileCount: number;
   children?: TreeNode[];
+}
+
+export type EcosystemDto = "npm" | "PyPI" | "Maven" | "Go" | "crates.io";
+
+export interface AdvisoryDto {
+  id: string;
+  aliases: string[];
+  summary: string;
+  severity: SeverityDto;
+  score: number | null;
+  url: string;
+}
+
+/** Shape of summary.dependencies (packages/analyzer/src/dependencies/index.ts DependencySummary). */
+export interface DependencySummaryDto {
+  analyzer: string;
+  analyzerVersion: string;
+  manifests: Array<{ path: string; ecosystem: EcosystemDto; kind: "manifest" | "lockfile"; dependencies: number }>;
+  totals: {
+    dependencies: number;
+    direct: number;
+    transitive: number;
+    dev: number;
+    resolved: number;
+    vulnerable: number;
+    vulnerableDirect: number;
+    advisories: number;
+    bySeverity: Record<SeverityDto, number>;
+    unpinned: number;
+    nonRegistry: number;
+    unusedCandidates: number;
+  };
+  byEcosystem: Array<{ ecosystem: EcosystemDto; dependencies: number; direct: number; vulnerable: number }>;
+  vulnerabilityScan: {
+    status: "completed" | "partial" | "failed" | "disabled" | "skipped";
+    source: string;
+    queried: number;
+    notChecked: number;
+    error: string | null;
+    durationMs: number;
+  };
+  vulnerable: Array<{
+    ecosystem: EcosystemDto;
+    name: string;
+    version: string;
+    direct: boolean;
+    dev: boolean;
+    manifestPath: string;
+    severity: SeverityDto;
+    fixedVersion: string | null;
+    advisories: AdvisoryDto[];
+  }>;
+  unusedCandidates: Array<{ name: string; manifestPath: string }>;
+  dependencies: { total: number; stored: number; truncated: boolean };
+  findings: { total: number; stored: number; truncated: boolean; bySeverity: Record<SeverityDto, number>; byType: Record<string, number> };
+  errors: number;
+  durationMs: number;
+}
+
+/** One row of GET /api/analysis/:id/dependencies. */
+export interface DependencyDto {
+  id: string;
+  ecosystem: EcosystemDto;
+  name: string;
+  versionSpec: string | null;
+  resolvedVersion: string | null;
+  direct: boolean;
+  dev: boolean;
+  manifestPath: string;
+  vulnIds: string[];
+  dataSource: string | null;
+  unusedCandidate: boolean;
+  /** Advisory details; present for the most severe vulnerable packages only. */
+  vulnerability: { severity: SeverityDto; fixedVersion: string | null; advisories: AdvisoryDto[] } | null;
+}
+
+export interface DependenciesPageDto {
+  summary: DependencySummaryDto | null;
+  dependencies: DependencyDto[];
+  page: number;
+  pageSize: number;
+  total: number;
+  facets: { ecosystem: Array<{ value: EcosystemDto; count: number }> };
+}
+
+export type LayerIdDto = "interface" | "service" | "data" | "shared";
+
+/** Shape of summary.architecture (packages/analyzer/src/architecture/index.ts ArchitectureSummary). */
+export interface ArchitectureSummaryDto {
+  analyzer: string;
+  analyzerVersion: string;
+  thresholds: { fanOut: { low: number; medium: number }; largeCycleFiles: number; maxModules: number };
+  totals: {
+    files: number;
+    edges: number;
+    internalImports: number;
+    externalImports: number;
+    builtinImports: number;
+    unresolvedImports: number;
+    cycles: number;
+    filesInCycles: number;
+    modules: number;
+    moduleEdges: number;
+    layerViolations: number;
+    isolatedFiles: number;
+    maxFanIn: number;
+    maxFanOut: number;
+    avgFanOut: number;
+  };
+  byLanguage: Array<{ language: string; files: number; edges: number; unresolved: number }>;
+  moduleDepth: number;
+  modules: Array<{
+    key: string;
+    label: string;
+    files: number;
+    loc: number;
+    fanIn: number;
+    fanOut: number;
+    instability: number;
+    layer: LayerIdDto | null;
+    inCycle: boolean;
+  }>;
+  moduleEdges: Array<{ from: string; to: string; weight: number; inCycle: boolean }>;
+  cycles: Array<{ files: string[]; size: number; path: string[]; severity: SeverityDto }>;
+  hubs: Array<{ path: string; fanIn: number; fanOut: number }>;
+  mostDependent: Array<{ path: string; fanIn: number; fanOut: number }>;
+  layers: { applied: boolean; order: Array<{ id: LayerIdDto; label: string; files: number }>; violations: number };
+  topExternal: Array<{ name: string; language: string; files: number }>;
+  resolution: { tsconfigs: number; pathAliases: number; workspacePackages: number; pythonRoots: string[] };
+  nodes: { total: number; stored: number; truncated: boolean };
+  findings: { total: number; stored: number; truncated: boolean; bySeverity: Record<SeverityDto, number>; byType: Record<string, number> };
+  durationMs: number;
+}
+
+export interface GraphNodeDto {
+  key: string;
+  kind: "FILE" | "MODULE";
+  label: string;
+  layer: string | null;
+  metrics: Record<string, unknown> | null;
+}
+
+export interface GraphEdgeDto {
+  from: string;
+  to: string;
+  kind: string;
+  weight: number;
+  inCycle: boolean;
+}
+
+/** GET /api/analysis/:id/architecture. */
+export interface ArchitectureGraphDto {
+  summary: ArchitectureSummaryDto | null;
+  view: "modules" | "files";
+  nodes: GraphNodeDto[];
+  edges: GraphEdgeDto[];
+  total: number;
+  truncated: boolean;
 }

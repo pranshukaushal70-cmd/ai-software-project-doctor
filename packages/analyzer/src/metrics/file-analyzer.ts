@@ -416,9 +416,16 @@ export function analyzeTree(tree: Tree, source: string, spec: LanguageSpec, opts
     }
     // import_from_statement
     const moduleName = node.childForFieldName("module_name");
-    if (moduleName) recordImport(moduleName.text);
+    const names = node.childrenForFieldName("name");
+    if (moduleName && /^\.+$/.test(moduleName.text)) {
+      // `from . import a, b` names sibling modules: record `.a` and `.b`, as `.` alone links every such import to __init__.py.
+      for (const c of names) {
+        const name = c.type === "aliased_import" ? c.childForFieldName("name")?.text : c.type === "dotted_name" ? c.text : undefined;
+        if (name) recordImport(`${moduleName.text}${name}`);
+      }
+    } else if (moduleName) recordImport(moduleName.text);
     if (moduleName?.text === "__future__") return;
-    for (const c of node.childrenForFieldName("name")) {
+    for (const c of names) {
       if (c.type === "dotted_name") importBindings.push({ name: c.text, row, statement });
       else if (c.type === "aliased_import") {
         const alias = c.childForFieldName("alias");

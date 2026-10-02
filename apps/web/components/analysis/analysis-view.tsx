@@ -7,7 +7,9 @@ import { StatusBadge } from "../status-badge";
 import { Card, CardContent } from "../ui/card";
 import { api } from "@/lib/api-client";
 import { cn, formatDate } from "@/lib/utils";
+import { ArchitecturePanel } from "./architecture-panel";
 import { CodeMetrics } from "./code-metrics";
+import { DependenciesPanel } from "./dependencies-panel";
 import { FindingsList } from "./findings-list";
 import { ProgressPanel } from "./progress-panel";
 import { ScanOverview } from "./scan-overview";
@@ -36,9 +38,11 @@ const TABS = [
   { id: "overview", label: "Overview" },
   { id: "code", label: "Code quality" },
   { id: "security", label: "Security" },
+  { id: "dependencies", label: "Dependencies" },
+  { id: "architecture", label: "Architecture" },
   { id: "findings", label: "All findings" },
 ] as const;
-type TabId = (typeof TABS)[number]["id"];
+export type TabId = (typeof TABS)[number]["id"];
 
 function tabFromHash(): TabId {
   if (typeof window === "undefined") return "overview";
@@ -46,9 +50,28 @@ function tabFromHash(): TabId {
   return TABS.some((t) => t.id === id) ? (id as TabId) : "overview";
 }
 
-function CompletedAnalysis({ analysis }: { analysis: AnalysisDto }) {
-  const [tab, setTab] = useState<TabId>("overview");
-  useEffect(() => setTab(tabFromHash()), []);
+/** Shown on a tab whose module did not exist yet in the analyzer version that produced this analysis. */
+function OlderAnalyzerNotice({ version, module, action }: { version: string; module: string; action: string }) {
+  return (
+    <Card>
+      <CardContent className="pt-5 text-sm text-muted-foreground">
+        This analysis was produced by analyzer v{version}, before {module} existed. Run a new analysis of this repository to {action}.
+      </CardContent>
+    </Card>
+  );
+}
+
+function TabCount({ value, alert }: { value: number; alert?: boolean }) {
+  return (
+    <span className={cn("ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums", alert ? "bg-sev-critical/12 text-sev-critical" : "bg-muted")}>
+      {value}
+    </span>
+  );
+}
+
+export function CompletedAnalysis({ analysis, initialTab = "overview" }: { analysis: AnalysisDto; initialTab?: TabId }) {
+  const [tab, setTab] = useState<TabId>(initialTab);
+  useEffect(() => setTab((t) => (window.location.hash ? tabFromHash() : t)), []);
   const select = (id: TabId) => {
     setTab(id);
     window.history.replaceState(null, "", `#${id}`);
@@ -56,8 +79,14 @@ function CompletedAnalysis({ analysis }: { analysis: AnalysisDto }) {
   const summary = analysis.summary!;
   const code = summary.codeMetrics;
   const security = summary.security;
-  const findingCount = code ? code.findings.stored + (security?.findings.stored ?? 0) : undefined;
+  const dependencies = summary.dependencies;
+  const architecture = summary.architecture;
+  const findingCount = code
+    ? code.findings.stored + (security?.findings.stored ?? 0) + (dependencies?.findings.stored ?? 0) + (architecture?.findings.stored ?? 0)
+    : undefined;
   const securityCount = security?.totals.findings;
+  const vulnerableCount = dependencies?.totals.vulnerable;
+  const cycleCount = architecture?.totals.cycles;
 
   return (
     <div className="flex flex-col gap-6">
@@ -77,42 +106,35 @@ function CompletedAnalysis({ analysis }: { analysis: AnalysisDto }) {
             )}
           >
             {t.label}
-            {t.id === "findings" && findingCount !== undefined && (
-              <span className="ml-1.5 rounded-full bg-muted px-1.5 py-0.5 text-xs tabular-nums">{findingCount}</span>
-            )}
+            {t.id === "findings" && findingCount !== undefined && <TabCount value={findingCount} />}
             {t.id === "security" && securityCount !== undefined && securityCount > 0 && (
-              <span
-                className={cn(
-                  "ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums",
-                  security!.totals.secrets > 0 ? "bg-sev-critical/12 text-sev-critical" : "bg-muted",
-                )}
-              >
-                {securityCount}
-              </span>
+              <TabCount value={securityCount} alert={security!.totals.secrets > 0} />
             )}
+            {t.id === "dependencies" && vulnerableCount !== undefined && vulnerableCount > 0 && (
+              <TabCount value={vulnerableCount} alert={dependencies!.totals.bySeverity.CRITICAL + dependencies!.totals.bySeverity.HIGH > 0} />
+            )}
+            {t.id === "architecture" && cycleCount !== undefined && cycleCount > 0 && <TabCount value={cycleCount} />}
           </button>
         ))}
       </div>
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "overview" && <ScanOverview analysisId={analysis.id} summary={summary} />}
         {tab !== "overview" && !code && (
-          <Card>
-            <CardContent className="pt-5 text-sm text-muted-foreground">
-              This analysis was produced by analyzer v{analysis.analyzerVersion}, before code metrics existed. Run a new analysis of
-              this repository to see code quality and findings.
-            </CardContent>
-          </Card>
+          <OlderAnalyzerNotice version={analysis.analyzerVersion} module="code metrics" action="see code quality and findings" />
         )}
         {tab === "code" && code && <CodeMetrics analysisId={analysis.id} metrics={code} />}
         {tab === "security" && code && !security && (
-          <Card>
-            <CardContent className="pt-5 text-sm text-muted-foreground">
-              This analysis was produced by analyzer v{analysis.analyzerVersion}, before security analysis existed. Run a new analysis of this
-              repository to check it for secrets and insecure code.
-            </CardContent>
-          </Card>
+          <OlderAnalyzerNotice version={analysis.analyzerVersion} module="security analysis" action="check it for secrets and insecure code" />
         )}
         {tab === "security" && security && <SecurityPanel analysisId={analysis.id} security={security} />}
+        {tab === "dependencies" && code && !dependencies && (
+          <OlderAnalyzerNotice version={analysis.analyzerVersion} module="dependency analysis" action="check its dependencies for known vulnerabilities" />
+        )}
+        {tab === "dependencies" && dependencies && <DependenciesPanel analysisId={analysis.id} summary={dependencies} />}
+        {tab === "architecture" && code && !architecture && (
+          <OlderAnalyzerNotice version={analysis.analyzerVersion} module="architecture analysis" action="map its import graph and find cycles" />
+        )}
+        {tab === "architecture" && architecture && <ArchitecturePanel analysisId={analysis.id} summary={architecture} />}
         {tab === "findings" && code && <FindingsList analysisId={analysis.id} />}
       </div>
     </div>

@@ -37,6 +37,10 @@ export function stageProgress(stage: AnalysisStage): number {
   return Math.round((index / (ANALYSIS_STAGES.length - 1)) * 100);
 }
 
+/** Package ecosystems the dependency analyzer reads (OSV.dev ecosystem names). */
+export const DEPENDENCY_ECOSYSTEMS = ["npm", "PyPI", "Maven", "Go", "crates.io"] as const;
+export type DependencyEcosystem = (typeof DEPENDENCY_ECOSYSTEMS)[number];
+
 export const REPOSITORY_SOURCES = ["GITHUB", "GITLAB", "ZIP", "DEMO"] as const;
 export type RepositorySource = (typeof REPOSITORY_SOURCES)[number];
 

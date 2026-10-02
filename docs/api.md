@@ -32,7 +32,12 @@ Error codes: `VALIDATION_ERROR` 400, `UNAUTHENTICATED` 401, `FORBIDDEN` 403, `NO
 | GET | `/api/analysis/:id` | Status, stage, progress, scan summary, repository |
 | GET | `/api/analysis/:id/files` | `?page=&pageSize=&kind=&sort=path|loc|complexity|duplication` paginated list with per-file metrics, or `?view=tree` for the nested tree |
 | GET | `/api/analysis/:id/findings` | `?severity=HIGH,MEDIUM&category=&type=&path=&page=&pageSize=`. Most severe first; includes `facets` (counts by severity and type, scoped by `category`/`path` but not by the severity/type filters) |
+| GET | `/api/analysis/:id/dependencies` | `?ecosystem=npm,PyPI&scope=all\|direct\|transitive&dev=include\|exclude\|only&vulnerable=true\|false&unused=true\|false&q=&manifest=&sort=name\|ecosystem\|manifest&page=&pageSize=`. Returns `{ summary, dependencies, page, pageSize, total, facets: { ecosystem } }`; vulnerable rows carry `vulnerability: { severity, fixedVersion, advisories }` (from OSV.dev) when the package is among the most severe listed in `summary` |
+| GET | `/api/analysis/:id/architecture` | `?view=modules\|files&module=<dir>&cycles=true\|false&limit=1–2000` (default 300; `module` and `cycles` apply to the files view). Returns `{ summary, view, nodes, edges, total, truncated }`: most connected nodes first, edges addressed by node `key` (`file:<path>` / `module:<dir>`) with `inCycle` |
 
 `mode` is `LOCAL_ONLY` (default) or `AI` (AI mode takes effect in Phase 7).
 
-Planned: `/architecture`, `/security`, `/dependencies`, `/git`, `/recommendations`, `/report`.
+For `/dependencies` and `/architecture`, `summary` is `null` (and the lists are empty) until that analysis module has run,
+for example for analyses made by an analyzer version before 0.4.0.
+
+Planned: `/security`, `/git`, `/recommendations`, `/report`.

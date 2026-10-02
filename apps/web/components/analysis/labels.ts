@@ -60,12 +60,39 @@ export const FINDING_TYPE_LABEL: Record<string, string> = {
   "insecure-randomness": "Insecure randomness",
   "unsafe-c-function": "Unsafe C function",
   "debug-mode": "Debug mode",
+  // dependencies
+  "vulnerable-dependency": "Vulnerable dependency",
+  "missing-lockfile": "Missing lockfile",
+  "unpinned-dependency": "Unpinned version",
+  "non-registry-dependency": "Git / URL dependency",
+  "unused-dependency": "Unused dependency",
+  // architecture
+  "circular-dependency": "Circular import",
+  "layer-violation": "Layer violation",
+  "high-fan-out": "High fan-out",
 };
 
 export const CATEGORY_LABEL: Record<string, string> = {
   CODE_QUALITY: "Code quality",
   SECURITY: "Security",
   SECRET: "Secret",
+  DEPENDENCY: "Dependency",
+  ARCHITECTURE: "Architecture",
+};
+
+export const ECOSYSTEM_LABEL: Record<string, string> = {
+  npm: "npm",
+  PyPI: "PyPI",
+  Maven: "Maven",
+  Go: "Go",
+  "crates.io": "Cargo",
+};
+
+export const LAYER_LABEL: Record<string, string> = {
+  interface: "Interface",
+  service: "Service",
+  data: "Data",
+  shared: "Shared",
 };
 
 export const typeLabel = (type: string) => FINDING_TYPE_LABEL[type] ?? type;

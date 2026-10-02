@@ -88,7 +88,7 @@ function FindingRow({ finding }: { finding: FindingDto }) {
   );
 }
 
-function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+export function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"

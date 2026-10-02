@@ -9,18 +9,32 @@ import {
   uploadPath,
   type Workspace,
 } from "@pd/analyzer";
+import { analyzeArchitecture } from "@pd/analyzer/architecture";
+import { analyzeDependencies } from "@pd/analyzer/dependencies";
 import { analyzeCode } from "@pd/analyzer/metrics";
 import { createSecurityScanner } from "@pd/analyzer/security";
 import type { AnalysisStage, Prisma, PrismaClient } from "@pd/db";
 import { AppError, stageProgress, type AnalyzerLimits } from "@pd/shared";
 import type { Logger } from "@pd/shared/logger";
-import { buildFileRows, buildFindingRows, buildRepositoryMetricRows, buildSecurityMetricRows } from "./persist";
+import {
+  buildArchitectureEdgeRows,
+  buildArchitectureMetricRows,
+  buildArchitectureNodeRows,
+  buildDependencyMetricRows,
+  buildDependencyRows,
+  buildFileRows,
+  buildFindingRows,
+  buildRepositoryMetricRows,
+  buildSecurityMetricRows,
+} from "./persist";
 import { summarizeScan, type IngestInfo } from "./summary";
 
 export interface PipelineDeps {
   prisma: PrismaClient;
   limits: AnalyzerLimits;
   log: Logger;
+  /** HTTP client for the OSV.dev lookup; defaults to the global fetch. Tests inject a fake so they never touch the network. */
+  fetch?: typeof fetch;
 }
 
 const INSERT_BATCH = 1000;
@@ -59,6 +73,9 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
   // marks the analysis FAILED instead of leaving the UI polling a RUNNING row forever.
   try {
     // A retried job must not duplicate rows from a previous partial attempt.
+    await prisma.architectureEdge.deleteMany({ where: { analysisId } });
+    await prisma.architectureNode.deleteMany({ where: { analysisId } });
+    await prisma.dependency.deleteMany({ where: { analysisId } });
     await prisma.finding.deleteMany({ where: { analysisId } });
     await prisma.metric.deleteMany({ where: { analysisId } });
     await prisma.file.deleteMany({ where: { analysisId } });
@@ -131,15 +148,51 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
       "security analysis complete",
     );
 
+    const fileImports = code.files.map((f) => ({ path: f.path, language: f.language, imports: f.metrics.imports, codeLines: f.metrics.codeLines }));
+
+    await setStage("DEPENDENCIES");
+    // The OSV.dev lookup never throws: an outage is recorded in the summary and the analysis continues.
+    const dep = await analyzeDependencies(scan.files, {
+      osv: limits.osvEnabled ? { fetch: deps.fetch ?? globalThis.fetch, budgetMs: limits.osvBudgetMs } : undefined,
+      imports: fileImports,
+    });
+    log.info(
+      {
+        dependencies: dep.summary.totals.dependencies,
+        vulnerable: dep.summary.totals.vulnerable,
+        osv: dep.summary.vulnerabilityScan.status,
+        ms: dep.summary.durationMs,
+      },
+      "dependency analysis complete",
+    );
+
+    await setStage("ARCHITECTURE");
+    const arch = await analyzeArchitecture(scan.files, fileImports, new Map(scan.files.map((f) => [f.path, f.kind])));
+    log.info(
+      { files: arch.summary.totals.files, edges: arch.summary.totals.edges, cycles: arch.summary.totals.cycles, ms: arch.summary.durationMs },
+      "architecture analysis complete",
+    );
+
     await insertInBatches(buildFileRows(analysisId, scan, code), (data) => prisma.file.createMany({ data }));
     const fileIds = new Map(
       (await prisma.file.findMany({ where: { analysisId }, select: { id: true, path: true } })).map((f) => [f.path, f.id]),
     );
-    const findingRows = buildFindingRows(analysisId, [...code.findings, ...sec.findings], fileIds);
+    const findingRows = buildFindingRows(analysisId, [...code.findings, ...sec.findings, ...dep.findings, ...arch.findings], fileIds);
     await insertInBatches(findingRows, (data) => prisma.finding.createMany({ data }));
     await prisma.metric.createMany({
-      data: [...buildRepositoryMetricRows(analysisId, code), ...buildSecurityMetricRows(analysisId, sec)],
+      data: [
+        ...buildRepositoryMetricRows(analysisId, code),
+        ...buildSecurityMetricRows(analysisId, sec),
+        ...buildDependencyMetricRows(analysisId, dep),
+        ...buildArchitectureMetricRows(analysisId, arch),
+      ],
     });
+    await insertInBatches(buildDependencyRows(analysisId, dep.dependencies), (data) => prisma.dependency.createMany({ data }));
+    await insertInBatches(buildArchitectureNodeRows(analysisId, arch.nodes), (data) => prisma.architectureNode.createMany({ data }));
+    const nodeIds = new Map(
+      (await prisma.architectureNode.findMany({ where: { analysisId }, select: { id: true, key: true } })).map((n) => [n.key, n.id]),
+    );
+    await insertInBatches(buildArchitectureEdgeRows(analysisId, arch.edges, nodeIds), (data) => prisma.architectureEdge.createMany({ data }));
 
     await prisma.analysis.update({
       where: { id: analysisId },
@@ -147,7 +200,7 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
         status: "COMPLETED",
         stage: "COMPLETED",
         progress: 100,
-        summary: summarizeScan(scan, ingest, code.summary, sec.summary) as unknown as Prisma.InputJsonObject,
+        summary: summarizeScan(scan, ingest, code.summary, sec.summary, dep.summary, arch.summary) as unknown as Prisma.InputJsonObject,
         finishedAt: new Date(),
       },
     });

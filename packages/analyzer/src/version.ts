@@ -2,4 +2,4 @@
  * Bumped whenever a rule, metric or scoring change could alter results.
  * Stored on every Analysis row so reports are reproducible.
  */
-export const ANALYZER_VERSION = "0.3.0";
+export const ANALYZER_VERSION = "0.4.0";

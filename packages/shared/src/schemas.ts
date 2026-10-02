@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FINDING_CATEGORIES, SEVERITIES } from "./constants";
+import { DEPENDENCY_ECOSYSTEMS, FINDING_CATEGORIES, SEVERITIES } from "./constants";
 
 export const emailSchema = z.email().max(254).transform((v) => v.toLowerCase());
 
@@ -51,6 +51,37 @@ export const findingsQuerySchema = paginationSchema.extend({
   path: z.string().trim().min(1).max(1000).optional(),
 });
 export type FindingsQuery = z.infer<typeof findingsQuerySchema>;
+
+/** `true` / `false` query flag; absent means "no filter". */
+const queryFlag = z.enum(["true", "false"]).transform((v) => v === "true");
+
+/** GET /api/analysis/:id/dependencies query. */
+export const dependenciesQuerySchema = paginationSchema.extend({
+  ecosystem: commaList(z.enum(DEPENDENCY_ECOSYSTEMS)).optional(),
+  /** Declared in a manifest (`direct`) or only present in a lockfile (`transitive`). */
+  scope: z.enum(["all", "direct", "transitive"]).default("all"),
+  dev: z.enum(["include", "exclude", "only"]).default("include"),
+  vulnerable: queryFlag.optional(),
+  unused: queryFlag.optional(),
+  /** Case-insensitive substring of the package name. */
+  q: z.string().trim().min(1).max(200).optional(),
+  manifest: z.string().trim().min(1).max(1000).optional(),
+  sort: z.enum(["name", "ecosystem", "manifest"]).default("name"),
+});
+export type DependenciesQuery = z.infer<typeof dependenciesQuerySchema>;
+
+/** GET /api/analysis/:id/architecture query. */
+export const architectureQuerySchema = z.object({
+  /** `modules`: directory-level graph; `files`: file-level import graph. */
+  view: z.enum(["modules", "files"]).default("modules"),
+  /** Files view: only files of this module (directory key). */
+  module: z.string().trim().min(1).max(1000).optional(),
+  /** Only nodes that are part of an import cycle. */
+  cycles: queryFlag.optional(),
+  /** Most connected nodes first; the rest is reported as truncated. */
+  limit: z.coerce.number().int().min(1).max(2000).default(300),
+});
+export type ArchitectureQuery = z.infer<typeof architectureQuerySchema>;
 
 /** Payload placed on the BullMQ analysis queue. */
 export const analysisJobSchema = z.object({
