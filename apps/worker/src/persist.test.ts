@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { scanRepository, type RepositoryScan } from "@pd/analyzer";
 import { analyzeArchitecture, type ArchitectureAnalysis } from "@pd/analyzer/architecture";
 import { analyzeDependencies, type DependencyAnalysis } from "@pd/analyzer/dependencies";
+import { buildRepositoryIndex, createSymbolCollector, type RepositoryIndex } from "@pd/analyzer/intelligence";
 import { analyzeCode, type CodeAnalysis } from "@pd/analyzer/metrics";
 import { analyzePractices, type PracticesAnalysis } from "@pd/analyzer/practices";
 import { computeHealthScore } from "@pd/analyzer/scoring";
@@ -13,12 +14,16 @@ import {
   buildArchitectureNodeRows,
   buildDependencyMetricRows,
   buildDependencyRows,
+  buildFileDependencyRows,
   buildFileRows,
   buildFindingRows,
+  buildIntelligenceMetricRows,
   buildPracticeMetricRows,
+  buildReferenceRows,
   buildRepositoryMetricRows,
   buildScoreMetricRows,
   buildSecurityMetricRows,
+  buildSymbolRows,
 } from "./persist";
 import { summarizeScan } from "./summary";
 
@@ -30,16 +35,19 @@ let sec: SecurityAnalysis;
 let dep: DependencyAnalysis;
 let arch: ArchitectureAnalysis;
 let practices: PracticesAnalysis;
+let index: RepositoryIndex;
 
 beforeAll(async () => {
   scan = await scanRepository(FIXTURE, { maxFileBytes: 1024 * 1024 });
   const security = createSecurityScanner();
-  code = await analyzeCode(scan.files, { onTree: security.inspectTree });
+  const symbols = createSymbolCollector();
+  code = await analyzeCode(scan.files, { onTree: (ctx) => (security.inspectTree(ctx), symbols.inspectTree(ctx)) });
   sec = await security.finish(scan);
   const imports = code.files.map((f) => ({ path: f.path, language: f.language, imports: f.metrics.imports, codeLines: f.metrics.codeLines }));
   dep = await analyzeDependencies(scan.files, { imports });
   arch = await analyzeArchitecture(scan.files, imports, new Map(scan.files.map((f) => [f.path, f.kind])));
   practices = await analyzePractices(scan, code);
+  index = await buildRepositoryIndex(scan, code, symbols.files(), { name: "polyglot", moduleDepth: arch.summary.moduleDepth });
 });
 
 describe("buildFileRows", () => {
@@ -185,9 +193,11 @@ describe("buildDependencyMetricRows / buildArchitectureMetricRows", () => {
 
 describe("summarizeScan", () => {
   it("records every module that ran and its summary", () => {
-    const summary = summarizeScan(scan, { source: "ZIP" }, code.summary, sec.summary, dep.summary, arch.summary, practices.summary);
-    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics", "security", "dependencies", "architecture", "practices", "health-score"]);
+    const summary = summarizeScan(scan, { source: "ZIP" }, code.summary, sec.summary, dep.summary, arch.summary, practices.summary, index.summary);
+    expect(summary.modulesRun).toEqual(["repository-scan", "code-metrics", "security", "dependencies", "architecture", "practices", "health-score", "intelligence"]);
     expect(summary.practices.analyzer).toBe("practices");
+    // The manifest prefers the name in package.json over the repository name.
+    expect(summary.intelligence.manifest.name).toBe("polyglot-demo");
     expect(summary.security.analyzer).toBe("security");
     expect(summary.dependencies.analyzer).toBe("dependencies");
     expect(summary.architecture.analyzer).toBe("architecture");
@@ -211,5 +221,35 @@ describe("buildPracticeMetricRows / buildScoreMetricRows", () => {
     const m = Object.fromEntries(buildScoreMetricRows("a1", health).map((r) => [r.key, r.value]));
     expect(m).toMatchObject({ "score.overall": 100, "score.security": 100, "score.testing": 100 });
     expect(m).not.toHaveProperty("score.api");
+  });
+});
+
+describe("repository index rows", () => {
+  it("stores file content hashes", () => {
+    const rows = buildFileRows("a1", scan, code);
+    expect(rows.find((r) => r.path === "src/orders.ts")?.contentHash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("maps dependencies, symbols and references to stored ids and drops rows whose file is missing", () => {
+    const fileIds = new Map(scan.files.map((f, i) => [f.path, `file${i}`]));
+    const deps = buildFileDependencyRows("a1", index.dependencies, fileIds);
+    expect(deps).toContainEqual(expect.objectContaining({ fromFileId: fileIds.get("src/orders.ts"), toFileId: fileIds.get("src/format.ts"), kind: "INTERNAL" }));
+    expect(deps.every((d) => d.kind !== "INTERNAL" || d.toFileId)).toBe(true);
+    const withoutOrders = new Map([...fileIds].filter(([p]) => p !== "src/orders.ts"));
+    expect(buildFileDependencyRows("a1", index.dependencies, withoutOrders).some((d) => d.fromFileId === fileIds.get("src/orders.ts"))).toBe(false);
+
+    const symbols = buildSymbolRows("a1", index.symbols, fileIds);
+    expect(symbols.length).toBe(index.symbols.length);
+    expect(new Set(symbols.map((s) => s.key)).size).toBe(symbols.length);
+    const symbolIds = new Map(symbols.map((s, i) => [s.key, `sym${i}`]));
+    const refs = buildReferenceRows("a1", index.references, fileIds, symbolIds);
+    expect(refs.length).toBe(index.references.length);
+    expect(refs.filter((r) => r.targetSymbolId).length).toBe(index.references.filter((r) => r.targetKey).length);
+  });
+
+  it("stores index sizes as metrics", () => {
+    const m = Object.fromEntries(buildIntelligenceMetricRows("a1", index).map((r) => [r.key, r.value]));
+    expect(m["intelligence.symbols"]).toBe(index.summary.totals.symbols);
+    expect(Object.values(m).every(Number.isFinite)).toBe(true);
   });
 });

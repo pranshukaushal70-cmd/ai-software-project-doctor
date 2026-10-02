@@ -100,6 +100,21 @@ export type ArchitectureNode = Prisma.ArchitectureNodeModel
  */
 export type ArchitectureEdge = Prisma.ArchitectureEdgeModel
 /**
+ * Model CodeSymbol
+ * A declaration found in a source or test file (TypeScript, JavaScript, Python).
+ */
+export type CodeSymbol = Prisma.CodeSymbolModel
+/**
+ * Model SymbolReference
+ * A call site. `targetSymbolId` is set only when the call resolves unambiguously (imported or local declaration, `this`/`self` method).
+ */
+export type SymbolReference = Prisma.SymbolReferenceModel
+/**
+ * Model FileDependency
+ * One import of a source or test file, resolved statically: to a repository file (INTERNAL), a package, the standard library, or nothing.
+ */
+export type FileDependency = Prisma.FileDependencyModel
+/**
  * Model GitInsight
  * 
  */

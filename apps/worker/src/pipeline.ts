@@ -11,6 +11,7 @@ import {
 } from "@pd/analyzer";
 import { analyzeArchitecture } from "@pd/analyzer/architecture";
 import { analyzeDependencies } from "@pd/analyzer/dependencies";
+import { buildRepositoryIndex, createSymbolCollector } from "@pd/analyzer/intelligence";
 import { analyzeCode } from "@pd/analyzer/metrics";
 import { analyzePractices } from "@pd/analyzer/practices";
 import { computeHealthScore, scoringWeights } from "@pd/analyzer/scoring";
@@ -24,12 +25,16 @@ import {
   buildArchitectureNodeRows,
   buildDependencyMetricRows,
   buildDependencyRows,
+  buildFileDependencyRows,
   buildFileRows,
   buildFindingRows,
+  buildIntelligenceMetricRows,
   buildPracticeMetricRows,
+  buildReferenceRows,
   buildRepositoryMetricRows,
   buildScoreMetricRows,
   buildSecurityMetricRows,
+  buildSymbolRows,
 } from "./persist";
 import { summarizeScan, type IngestInfo } from "./summary";
 
@@ -90,6 +95,9 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
   // marks the analysis FAILED instead of leaving the UI polling a RUNNING row forever.
   try {
     // A retried job must not duplicate rows from a previous partial attempt.
+    await prisma.symbolReference.deleteMany({ where: { analysisId } });
+    await prisma.codeSymbol.deleteMany({ where: { analysisId } });
+    await prisma.fileDependency.deleteMany({ where: { analysisId } });
     await prisma.architectureEdge.deleteMany({ where: { analysisId } });
     await prisma.architectureNode.deleteMany({ where: { analysisId } });
     await prisma.dependency.deleteMany({ where: { analysisId } });
@@ -148,10 +156,19 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
     const parseStart = stageProgress("PARSING");
     const parseSpan = stageProgress("SECURITY") - parseStart - 1;
     let lastProgressAt = 0;
-    // Insecure-pattern rules run on the same syntax trees as the metrics (one parse per file).
+    // Insecure-pattern rules and symbol extraction run on the same syntax trees as the metrics (one parse per file).
     const security = createSecurityScanner();
+    const symbolCollector = createSymbolCollector();
     const code = await analyzeCode(scan.files, {
-      onTree: security.inspectTree,
+      onTree: (ctx) => {
+        security.inspectTree(ctx);
+        // A symbol-extraction failure must not cost the file its security inspection, and vice versa.
+        try {
+          symbolCollector.inspectTree(ctx);
+        } catch (err) {
+          log.warn({ err, path: ctx.path }, "symbol extraction failed");
+        }
+      },
       onProgress: async (done, total) => {
         if (Date.now() - lastProgressAt < PROGRESS_INTERVAL_MS) return;
         lastProgressAt = Date.now();
@@ -230,6 +247,13 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
     });
     log.info({ score: health.score, grade: health.grade, excluded: health.excludedFindings }, "health score computed");
 
+    await setStage("INDEXING");
+    const index = await buildRepositoryIndex(scan, code, symbolCollector.files(), { name: repo.name, moduleDepth: arch.summary.moduleDepth });
+    log.info(
+      { symbols: index.summary.totals.symbols, references: index.summary.totals.references, dependencies: index.summary.totals.dependencies, ms: index.summary.durationMs },
+      "repository index built",
+    );
+
     await insertInBatches(buildFileRows(analysisId, scan, code), (data) => prisma.file.createMany({ data }));
     const fileIds = new Map(
       (await prisma.file.findMany({ where: { analysisId }, select: { id: true, path: true } })).map((f) => [f.path, f.id]),
@@ -244,6 +268,7 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
         ...buildArchitectureMetricRows(analysisId, arch),
         ...buildPracticeMetricRows(analysisId, practices),
         ...buildScoreMetricRows(analysisId, health),
+        ...buildIntelligenceMetricRows(analysisId, index),
       ],
     });
     await insertInBatches(buildDependencyRows(analysisId, dep.dependencies), (data) => prisma.dependency.createMany({ data }));
@@ -252,6 +277,12 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
       (await prisma.architectureNode.findMany({ where: { analysisId }, select: { id: true, key: true } })).map((n) => [n.key, n.id]),
     );
     await insertInBatches(buildArchitectureEdgeRows(analysisId, arch.edges, nodeIds), (data) => prisma.architectureEdge.createMany({ data }));
+    await insertInBatches(buildFileDependencyRows(analysisId, index.dependencies, fileIds), (data) => prisma.fileDependency.createMany({ data }));
+    await insertInBatches(buildSymbolRows(analysisId, index.symbols, fileIds), (data) => prisma.codeSymbol.createMany({ data }));
+    const symbolIds = new Map(
+      (await prisma.codeSymbol.findMany({ where: { analysisId }, select: { id: true, key: true } })).map((s) => [s.key, s.id]),
+    );
+    await insertInBatches(buildReferenceRows(analysisId, index.references, fileIds, symbolIds), (data) => prisma.symbolReference.createMany({ data }));
 
     await prisma.analysis.update({
       where: { id: analysisId },
@@ -259,7 +290,7 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
         status: "COMPLETED",
         stage: "COMPLETED",
         progress: 100,
-        summary: summarizeScan(scan, ingest, code.summary, sec.summary, dep.summary, arch.summary, practices.summary) as unknown as Prisma.InputJsonObject,
+        summary: summarizeScan(scan, ingest, code.summary, sec.summary, dep.summary, arch.summary, practices.summary, index.summary) as unknown as Prisma.InputJsonObject,
         healthScore: health.score,
         scoreBreakdown: health as unknown as Prisma.InputJsonObject,
         weightsUsed: scoringWeights() as unknown as Prisma.InputJsonObject,

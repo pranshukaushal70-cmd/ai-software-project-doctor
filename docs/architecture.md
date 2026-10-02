@@ -18,13 +18,13 @@ POST /api/analysis ──► validate (zod + URL allowlist) ──► Repository
         │                                                        │
         └──► 202 { analysisId, status: "queued" }                └──► BullMQ job (jobId = analysisId)
 
-Worker: RUNNING → CLONING → SCANNING → PARSING → SECURITY → DEPENDENCIES → ARCHITECTURE → PRACTICES → COMPLETED | FAILED
+Worker: RUNNING → CLONING → SCANNING → PARSING → SECURITY → DEPENDENCIES → ARCHITECTURE → PRACTICES → INDEXING → COMPLETED | FAILED
 UI:     polls GET /api/analysis/:id every 2 s, renders stage progress, then the results
 ```
 
 Using the analysis id as the BullMQ `jobId` makes enqueueing idempotent. Before starting, the worker deletes the rows a
 previous partial attempt may have left (`ArchitectureEdge`, `ArchitectureNode`, `Dependency`, `Finding`, `Metric`,
-`File`), so a retried job cannot duplicate data. The health score is computed at the end of `PRACTICES`, from every
+`File`, and the Phase 6 `SymbolReference`, `CodeSymbol` and `FileDependency`), so a retried job cannot duplicate data. The health score is computed at the end of `PRACTICES`, from every
 module's findings. Later stages (`GIT`, `AI`, `REPORT`) exist in the schema but do not run yet; `summary.modulesRun`
 lists what actually ran.
 
@@ -33,7 +33,7 @@ lists what actually ran.
 | Package | Depends on | Notes |
 |---|---|---|
 | `@pd/shared` | zod, pino | `constants` subpath is browser-safe; `logger` is server-only |
-| `@pd/analyzer` | shared, yauzl, ignore, web-tree-sitter | ingest (`clone`, `zip`, `workspace`), `scanner`; subpaths `metrics`, `security`, `dependencies`, `architecture`, `practices`, `scoring` |
+| `@pd/analyzer` | shared, yauzl, ignore, web-tree-sitter | ingest (`clone`, `zip`, `workspace`), `scanner`; subpaths `metrics`, `security`, `dependencies`, `architecture`, `practices`, `scoring`, `intelligence` |
 | `@pd/db` | Prisma 7 + `@prisma/adapter-pg` | generated client in `src/generated`, committed; regenerate (`npm run db:generate`) and commit it with every `schema.prisma` change |
 | `@pd/worker` | analyzer, db, shared, bullmq | `pipeline.ts` orchestrates stages; `persist.ts` maps analyzer output to rows; supplies `fetch` for OSV.dev |
 | `@pd/web` | analyzer, db, shared, bullmq | route handlers are thin; logic lives in `server/services` |
@@ -324,6 +324,26 @@ queues an analysis. The worker copies the project into the analysis workspace (`
 carry that suffix so that dependency scanners (GitHub's dependency graph, Dependabot) do not report the demo's
 intentionally outdated packages against this repository.
 
+## Repository intelligence (Phase 6)
+
+`@pd/analyzer/intelligence` builds a queryable representation of the repository for later AI agents; the full design,
+including what is exact and what is approximate, is in [repository-intelligence.md](repository-intelligence.md).
+
+- **Symbols** (functions, classes, methods, interfaces, types, enums, constants), **import bindings** and **call sites**
+  are extracted from the syntax trees the metrics pass already parses (`onTree` hook; TypeScript, JavaScript, Python).
+- In the `INDEXING` stage every import of a source or test file is resolved with the architecture resolver into
+  `FileDependency` rows (`INTERNAL`, `EXTERNAL`, `BUILTIN`, `UNRESOLVED`); calls are linked to the called symbol when
+  imports make that unambiguous (`SymbolReference.targetSymbolId`), else kept by name when the name is defined in the
+  repository; calls of library code are not stored.
+- A **manifest** (languages, frameworks, runtimes, manifests, lockfiles, Docker, CI, infrastructure, directories, file
+  roles) and module, ranking (PageRank), cycle and package statistics go into `summary.intelligence`.
+- The scanner stores a SHA-256 `contentHash` per readable file.
+- `RepositoryGraph` answers importers/imports, callers, related tests, BFS traversals, impact analysis and keyword search
+  deterministically; the web tier caches it per completed analysis.
+
+The **Intelligence** tab shows the manifest, index totals, symbol search with callers, impact analysis (drawn with the
+architecture graph component), modules, most depended-upon files, external packages, unresolved imports and the tree.
+
 ## Web API and UI (Phase 4)
 
 `GET /api/analysis/:id/dependencies` and `GET /api/analysis/:id/architecture` ([api.md](api.md)) follow the findings
@@ -353,6 +373,8 @@ See `packages/db/prisma/schema.prisma`. Results hang off `Analysis` and cascade 
 and adds `DEPENDENCY`/`ARCHITECTURE` findings and `summary.dependencies`/`summary.architecture`. Phases 3 and 4 needed no
 schema change: the tables, categories and stages already existed. Phase 5 adds `API`/`DATABASE`/`TESTING`/`DOCUMENTATION`
 findings and `summary.practices`, and fills `healthScore`, `scoreBreakdown` and `weightsUsed`; its only schema change is
-the `PRACTICES` value of `AnalysisStage` (migration `20261003120000_practices_stage`). `FindingTriage` (migration `20261002120000_finding_triage`)
+the `PRACTICES` value of `AnalysisStage` (migration `20261003120000_practices_stage`). Phase 6 adds `CodeSymbol`,
+`SymbolReference`, `FileDependency`, `File.contentHash`, the `SymbolKind` and `DependencyKind` enums and the `INDEXING`
+stage (migration `20261004120000_repository_intelligence`), and `summary.intelligence`. `FindingTriage` (migration `20261002120000_finding_triage`)
 stores Expected/Ignored decisions per repository and finding fingerprint; it is the only table that outlives an
 analysis's findings, and it is deleted with its repository. Later phases fill the rest.

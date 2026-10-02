@@ -31,6 +31,98 @@ export interface ScanSummaryDto {
   architecture?: ArchitectureSummaryDto;
   /** Present from analyzer v0.5.0 on. */
   practices?: PracticesSummaryDto;
+  /** Present from analyzer v0.6.0 on. */
+  intelligence?: IntelligenceSummaryDto;
+}
+
+export interface DetectionDto {
+  name: string;
+  category: string;
+  evidence: string;
+}
+
+/** Shape of summary.intelligence (packages/analyzer/src/intelligence/index.ts IntelligenceSummary). */
+export interface IntelligenceSummaryDto {
+  analyzer: string;
+  analyzerVersion: string;
+  manifest: {
+    name: string;
+    primaryLanguage: string | null;
+    languages: Array<{ language: string; files: number; lines: number; share: number }>;
+    frameworks: DetectionDto[];
+    testFrameworks: DetectionDto[];
+    packageManagers: DetectionDto[];
+    buildSystems: DetectionDto[];
+    runtimes: Array<{ name: string; version: string; evidence: string }>;
+    manifests: Array<{ path: string; ecosystem: string }>;
+    lockfiles: string[];
+    docker: { dockerfiles: string[]; compose: string[] };
+    ci: DetectionDto[];
+    infrastructure: string[];
+    entryPoints: DetectionDto[];
+    sourceDirs: Array<{ path: string; files: number }>;
+    testDirs: Array<{ path: string; files: number }>;
+    documentation: string[];
+    configFiles: string[];
+    secretFiles: string[];
+    roles: Record<string, number>;
+  };
+  symbolLanguages: string[];
+  moduleDepth: number;
+  totals: {
+    files: number;
+    indexedFiles: number;
+    symbols: number;
+    exportedSymbols: number;
+    symbolsByKind: Record<string, number>;
+    references: number;
+    resolvedReferences: number;
+    dependencies: number;
+    internalDependencies: number;
+    externalDependencies: number;
+    builtinDependencies: number;
+    unresolvedDependencies: number;
+    externalPackages: number;
+    cycles: number;
+    modules: number;
+  };
+  modules: Array<{ key: string; files: number; sourceFiles: number; testFiles: number; symbols: number; exported: number }>;
+  topFiles: Array<{ path: string; fanIn: number; fanOut: number; rank: number }>;
+  cycles: Array<{ files: string[] }>;
+  externalPackages: Array<{ name: string; files: number }>;
+  unresolvedImports: Array<{ path: string; specifier: string }>;
+  truncated: { symbols: boolean; references: boolean; dependencies: boolean; filesWithTooManySymbols: number };
+  durationMs: number;
+}
+
+/** A row of GET /api/analysis/:id/symbols. */
+export interface SymbolDto {
+  id: string;
+  name: string;
+  kind: string;
+  parent: string | null;
+  exported: boolean;
+  isDefault: boolean;
+  line: number;
+  endLine: number;
+  signature: string | null;
+  path: string;
+  callers: number;
+}
+
+/** GET /api/analysis/:id/impact `impact`. */
+export interface ImpactDto {
+  target: { type: "file" | "symbol" | "module"; value: string; files: string[]; symbols: Array<{ id: string; name: string; kind: string; path: string; line: number }>; found: boolean };
+  dependencies: string[];
+  directDependents: string[];
+  transitiveDependents: Array<{ path: string; depth: number }>;
+  callers: Array<{ path: string; line: number; caller: string | null; resolved: boolean }>;
+  relatedTests: Array<{ path: string; reason: "imports" | "name"; depth: number | null }>;
+  relatedRoutes: Array<{ method: string; path: string; file: string; line: number; framework: string }>;
+  relatedConfig: Array<{ path: string; reason: string }>;
+  affectedModules: Array<{ module: string; files: number }>;
+  truncated: boolean;
+  graph: Omit<ArchitectureGraphDto, "summary">;
 }
 
 /** Shape of summary.practices (packages/analyzer/src/practices/index.ts PracticesSummary). */

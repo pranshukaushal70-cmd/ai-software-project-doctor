@@ -26,6 +26,7 @@ export const ANALYSIS_STAGES = [
   { id: "DEPENDENCIES", label: "Dependency analysis" },
   { id: "ARCHITECTURE", label: "Architecture analysis" },
   { id: "PRACTICES", label: "API, database, tests & docs" },
+  { id: "INDEXING", label: "Repository index" },
   { id: "GIT", label: "Git analysis" },
   { id: "AI", label: "AI reasoning" },
   { id: "REPORT", label: "Report generation" },
@@ -41,6 +42,10 @@ export function stageProgress(stage: AnalysisStage): number {
 /** Package ecosystems the dependency analyzer reads (OSV.dev ecosystem names). */
 export const DEPENDENCY_ECOSYSTEMS = ["npm", "PyPI", "Maven", "Go", "crates.io"] as const;
 export type DependencyEcosystem = (typeof DEPENDENCY_ECOSYSTEMS)[number];
+
+/** Declaration kinds in the repository index (Prisma enum SymbolKind). */
+export const SYMBOL_KINDS = ["FUNCTION", "CLASS", "METHOD", "INTERFACE", "TYPE", "ENUM", "CONSTANT", "VARIABLE"] as const;
+export type SymbolKindName = (typeof SYMBOL_KINDS)[number];
 
 export const REPOSITORY_SOURCES = ["GITHUB", "GITLAB", "ZIP", "DEMO"] as const;
 export type RepositorySource = (typeof REPOSITORY_SOURCES)[number];

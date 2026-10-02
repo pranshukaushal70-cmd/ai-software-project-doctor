@@ -61,7 +61,7 @@ describe("ModulesNotice", () => {
     const html = notice(full.modulesRun);
     expect(html).toContain("<strong>dependency analysis</strong>");
     expect(html).toContain("<strong>architecture analysis</strong>");
-    expect(html).toContain("Dependencies, Architecture, Practices and Health tabs");
+    expect(html).toContain("Dependencies, Architecture, Practices, Health and Intelligence tabs");
     expect(html).not.toContain("upcoming");
     expect(html).not.toContain("earlier analyzer version");
     expect(html).toContain("Git history insights and AI recommendations are added in later analyzer versions");
@@ -69,13 +69,13 @@ describe("ModulesNotice", () => {
 
   it("names the modules an older analysis did not run", () => {
     const html = notice(["repository-scan", "code-metrics"]);
-    expect(html).toContain("without security analysis, dependency analysis, architecture analysis, API, database, testing &amp; documentation analysis and health scoring");
+    expect(html).toContain("without security analysis, dependency analysis, architecture analysis, API, database, testing &amp; documentation analysis, health scoring and repository indexing");
   });
 
   it("lists the Phase 5 modules and their tabs when they ran", () => {
     const html = notice(full.modulesRun);
     expect(html).toContain("<strong>health scoring</strong>");
-    expect(html).toContain("Practices and Health tabs");
+    expect(html).toContain("Practices, Health and Intelligence tabs");
     expect(html).not.toContain("earlier analyzer version");
   });
 

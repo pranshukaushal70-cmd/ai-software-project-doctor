@@ -1,6 +1,7 @@
 import type { RepositoryScan } from "@pd/analyzer";
 import type { ArchitectureAnalysis, ArchitectureEdgeRecord, ArchitectureFinding, ArchitectureNodeRecord } from "@pd/analyzer/architecture";
 import type { AnalyzedDependency, DependencyAnalysis, DependencyFinding } from "@pd/analyzer/dependencies";
+import type { FileDependencyRecord, ReferenceRecord, RepositoryIndex, SymbolRecord } from "@pd/analyzer/intelligence";
 import type { CodeAnalysis, CodeFinding } from "@pd/analyzer/metrics";
 import type { PracticeFinding, PracticesAnalysis } from "@pd/analyzer/practices";
 import type { HealthScore } from "@pd/analyzer/scoring";
@@ -21,6 +22,7 @@ export function buildFileRows(analysisId: string, scan: RepositoryScan, code: Co
       kind: f.kind,
       size: f.size,
       lines: f.lines,
+      contentHash: f.contentHash,
       ...(m && {
         loc: m.codeLines,
         lloc: m.logicalLines,
@@ -229,4 +231,85 @@ export function buildScoreMetricRows(analysisId: string, health: HealthScore): P
     { analysisId, key: "score.overall", value: health.score },
     ...health.dimensions.filter((d) => d.score !== null).map((d) => ({ analysisId, key: `score.${d.id}`, value: d.score! })),
   ];
+}
+
+/** Resolved imports of source and test files; rows whose file was not stored are dropped. */
+export function buildFileDependencyRows(
+  analysisId: string,
+  dependencies: readonly FileDependencyRecord[],
+  fileIds: ReadonlyMap<string, string>,
+): Prisma.FileDependencyCreateManyInput[] {
+  const rows: Prisma.FileDependencyCreateManyInput[] = [];
+  for (const d of dependencies) {
+    const fromFileId = fileIds.get(d.from);
+    const toFileId = d.to ? fileIds.get(d.to) : null;
+    if (!fromFileId || (d.to && !toFileId)) continue;
+    rows.push({ analysisId, fromFileId, toFileId: toFileId ?? null, specifier: d.specifier, kind: d.kind, packageName: d.packageName });
+  }
+  return rows;
+}
+
+export function buildSymbolRows(analysisId: string, symbols: readonly SymbolRecord[], fileIds: ReadonlyMap<string, string>): Prisma.CodeSymbolCreateManyInput[] {
+  const rows: Prisma.CodeSymbolCreateManyInput[] = [];
+  for (const s of symbols) {
+    const fileId = fileIds.get(s.path);
+    if (!fileId) continue;
+    rows.push({
+      analysisId,
+      fileId,
+      key: s.key,
+      name: s.name,
+      kind: s.kind,
+      parent: s.parent,
+      exported: s.exported,
+      isDefault: s.isDefault,
+      line: s.line,
+      endLine: s.endLine,
+      signature: s.signature,
+    });
+  }
+  return rows;
+}
+
+/** Call sites; symbol keys become ids, which exist only after the symbols are inserted (`symbolIds`: key → id). */
+export function buildReferenceRows(
+  analysisId: string,
+  references: readonly ReferenceRecord[],
+  fileIds: ReadonlyMap<string, string>,
+  symbolIds: ReadonlyMap<string, string>,
+): Prisma.SymbolReferenceCreateManyInput[] {
+  const rows: Prisma.SymbolReferenceCreateManyInput[] = [];
+  for (const r of references) {
+    const fileId = fileIds.get(r.path);
+    if (!fileId) continue;
+    rows.push({
+      analysisId,
+      fileId,
+      fromSymbolId: (r.fromKey && symbolIds.get(r.fromKey)) || null,
+      targetSymbolId: (r.targetKey && symbolIds.get(r.targetKey)) || null,
+      name: r.name,
+      receiver: r.receiver,
+      line: r.line,
+    });
+  }
+  return rows;
+}
+
+/** Repository-index sizes, stored for trends. */
+export function buildIntelligenceMetricRows(analysisId: string, index: RepositoryIndex): Prisma.MetricCreateManyInput[] {
+  const t = index.summary.totals;
+  const values: Record<string, number> = {
+    "intelligence.symbols": t.symbols,
+    "intelligence.exported_symbols": t.exportedSymbols,
+    "intelligence.references": t.references,
+    "intelligence.resolved_references": t.resolvedReferences,
+    "intelligence.dependencies": t.dependencies,
+    "intelligence.internal_dependencies": t.internalDependencies,
+    "intelligence.external_dependencies": t.externalDependencies,
+    "intelligence.unresolved_dependencies": t.unresolvedDependencies,
+    "intelligence.external_packages": t.externalPackages,
+    "intelligence.cycles": t.cycles,
+    "intelligence.modules": t.modules,
+  };
+  return Object.entries(values).map(([key, value]) => ({ analysisId, key, value }));
 }

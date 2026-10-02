@@ -46,6 +46,7 @@ export const AnalysisStage = {
   DEPENDENCIES: 'DEPENDENCIES',
   ARCHITECTURE: 'ARCHITECTURE',
   PRACTICES: 'PRACTICES',
+  INDEXING: 'INDEXING',
   GIT: 'GIT',
   AI: 'AI',
   REPORT: 'REPORT',
@@ -112,6 +113,30 @@ export const NodeKind = {
 } as const
 
 export type NodeKind = (typeof NodeKind)[keyof typeof NodeKind]
+
+
+export const SymbolKind = {
+  FUNCTION: 'FUNCTION',
+  CLASS: 'CLASS',
+  METHOD: 'METHOD',
+  INTERFACE: 'INTERFACE',
+  TYPE: 'TYPE',
+  ENUM: 'ENUM',
+  CONSTANT: 'CONSTANT',
+  VARIABLE: 'VARIABLE'
+} as const
+
+export type SymbolKind = (typeof SymbolKind)[keyof typeof SymbolKind]
+
+
+export const DependencyKind = {
+  INTERNAL: 'INTERNAL',
+  EXTERNAL: 'EXTERNAL',
+  BUILTIN: 'BUILTIN',
+  UNRESOLVED: 'UNRESOLVED'
+} as const
+
+export type DependencyKind = (typeof DependencyKind)[keyof typeof DependencyKind]
 
 
 export const RecommendationSource = {

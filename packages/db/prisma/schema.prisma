@@ -115,6 +115,8 @@ enum AnalysisStage {
   ARCHITECTURE
   /// API, database, testing and documentation analysis (Phase 5).
   PRACTICES
+  /// Repository intelligence: symbols, call references and resolved file dependencies (Phase 6).
+  INDEXING
   GIT
   AI
   REPORT
@@ -156,6 +158,9 @@ model Analysis {
   gitInsights     GitInsight[]
   recommendations Recommendation[]
   reports         Report[]
+  symbols          CodeSymbol[]
+  symbolReferences SymbolReference[]
+  fileDependencies FileDependency[]
 
   @@index([repositoryId, createdAt])
   @@index([status])
@@ -202,8 +207,14 @@ model File {
   imports         String[]
   /// Names the file exports (capped).
   exports         String[]
+  /// SHA-256 of the file's bytes (text files within the size limit); identifies unchanged files across analyses.
+  contentHash     String?
   findings        Finding[]
   metrics         Metric[]
+  symbols         CodeSymbol[]
+  references      SymbolReference[]
+  dependenciesOut FileDependency[] @relation("dependencyFrom")
+  dependenciesIn  FileDependency[] @relation("dependencyTo")
 
   @@unique([analysisId, path])
   @@index([analysisId, kind])
@@ -331,6 +342,93 @@ model ArchitectureEdge {
   inCycle    Boolean          @default(false)
 
   @@index([analysisId])
+}
+
+// ---------------------------------------------------------------- Repository intelligence (Phase 6)
+
+enum SymbolKind {
+  FUNCTION
+  CLASS
+  METHOD
+  INTERFACE
+  TYPE
+  ENUM
+  CONSTANT
+  VARIABLE
+}
+
+/// A declaration found in a source or test file (TypeScript, JavaScript, Python).
+model CodeSymbol {
+  id         String            @id @default(cuid())
+  analysisId String
+  analysis   Analysis          @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  fileId     String
+  file       File              @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  /// Stable within the analysis: path, qualified name and an ordinal for duplicates.
+  key        String
+  name       String
+  kind       SymbolKind
+  /// Enclosing class (methods) or function (nested declarations).
+  parent     String?
+  exported   Boolean           @default(false)
+  isDefault  Boolean           @default(false)
+  line       Int
+  endLine    Int
+  /// Declaration head (name and parameters), redacted and truncated.
+  signature  String?
+  calls      SymbolReference[] @relation("referenceFrom")
+  callers    SymbolReference[] @relation("referenceTarget")
+
+  @@unique([analysisId, key])
+  @@index([analysisId, name])
+  @@index([fileId])
+}
+
+/// A call site. `targetSymbolId` is set only when the call resolves unambiguously (imported or local declaration, `this`/`self` method).
+model SymbolReference {
+  id             String      @id @default(cuid())
+  analysisId     String
+  analysis       Analysis    @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  fileId         String
+  file           File        @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fromSymbolId   String?
+  fromSymbol     CodeSymbol? @relation("referenceFrom", fields: [fromSymbolId], references: [id], onDelete: SetNull)
+  targetSymbolId String?
+  targetSymbol   CodeSymbol? @relation("referenceTarget", fields: [targetSymbolId], references: [id], onDelete: SetNull)
+  /// Called name: the function, or the method for `a.b()`.
+  name           String
+  receiver       String?
+  line           Int
+
+  @@index([analysisId, name])
+  @@index([targetSymbolId])
+  @@index([fromSymbolId])
+  @@index([fileId])
+}
+
+enum DependencyKind {
+  INTERNAL
+  EXTERNAL
+  BUILTIN
+  UNRESOLVED
+}
+
+/// One import of a source or test file, resolved statically: to a repository file (INTERNAL), a package, the standard library, or nothing.
+model FileDependency {
+  id          String         @id @default(cuid())
+  analysisId  String
+  analysis    Analysis       @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  fromFileId  String
+  fromFile    File           @relation("dependencyFrom", fields: [fromFileId], references: [id], onDelete: Cascade)
+  toFileId    String?
+  toFile      File?          @relation("dependencyTo", fields: [toFileId], references: [id], onDelete: Cascade)
+  specifier   String
+  kind        DependencyKind
+  packageName String?
+
+  @@index([fromFileId])
+  @@index([toFileId])
+  @@index([analysisId, kind])
 }
 
 model GitInsight {

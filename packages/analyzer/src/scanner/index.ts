@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { classifyFile, type FileKind } from "./classify";
@@ -28,6 +29,8 @@ export interface ScannedFile {
   lines: number | null;
   /** True when the file exceeds maxFileBytes and its content is not analysed. */
   oversized: boolean;
+  /** SHA-256 of the file bytes for files that were read (not binary, not oversized); null otherwise. */
+  contentHash: string | null;
 }
 
 export interface LanguageStat {
@@ -88,11 +91,16 @@ export async function scanRepository(root: string, opts: ScanOptions): Promise<R
     const binary = !oversized && f.size > 0 ? await looksBinary(f.absPath).catch(() => false) : false;
     const kind = classifyFile(f.path, language, binary);
     let lines: number | null = null;
+    let contentHash: string | null = null;
     if (!oversized && kind !== "BINARY") {
       // A file that vanished or cannot be read keeps lines = null; the metrics stage reports it as a read error.
-      lines = await readFile(f.absPath, "utf8").then(countLines, () => null);
+      const bytes = await readFile(f.absPath).catch(() => null);
+      if (bytes) {
+        lines = countLines(bytes.toString("utf8"));
+        contentHash = createHash("sha256").update(bytes).digest("hex");
+      }
     }
-    files.push({ ...f, language: kind === "BINARY" ? null : language, kind, lines, oversized });
+    files.push({ ...f, language: kind === "BINARY" ? null : language, kind, lines, oversized, contentHash });
   }
 
   const byKind: Record<FileKind, number> = { SOURCE: 0, TEST: 0, DOCUMENTATION: 0, CONFIG: 0, GENERATED: 0, BINARY: 0, OTHER: 0 };

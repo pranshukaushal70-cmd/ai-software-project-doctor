@@ -60,6 +60,7 @@ const MODULES = [
   { id: "architecture", label: "architecture analysis", tab: "Architecture" },
   { id: "practices", label: "API, database, testing & documentation analysis", tab: "Practices" },
   { id: "health-score", label: "health scoring", tab: "Health" },
+  { id: "intelligence", label: "repository indexing", tab: "Intelligence" },
 ] as const;
 
 const joinList = (items: string[]) => (items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`);

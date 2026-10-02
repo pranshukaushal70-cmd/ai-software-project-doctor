@@ -62,6 +62,9 @@ export const ModelName = {
   Dependency: 'Dependency',
   ArchitectureNode: 'ArchitectureNode',
   ArchitectureEdge: 'ArchitectureEdge',
+  CodeSymbol: 'CodeSymbol',
+  SymbolReference: 'SymbolReference',
+  FileDependency: 'FileDependency',
   GitInsight: 'GitInsight',
   Recommendation: 'Recommendation',
   FixSuggestion: 'FixSuggestion',
@@ -184,7 +187,8 @@ export const FileScalarFieldEnum = {
   duplicatedLines: 'duplicatedLines',
   parseErrors: 'parseErrors',
   imports: 'imports',
-  exports: 'exports'
+  exports: 'exports',
+  contentHash: 'contentHash'
 } as const
 
 export type FileScalarFieldEnum = (typeof FileScalarFieldEnum)[keyof typeof FileScalarFieldEnum]
@@ -268,6 +272,51 @@ export const ArchitectureEdgeScalarFieldEnum = {
 } as const
 
 export type ArchitectureEdgeScalarFieldEnum = (typeof ArchitectureEdgeScalarFieldEnum)[keyof typeof ArchitectureEdgeScalarFieldEnum]
+
+
+export const CodeSymbolScalarFieldEnum = {
+  id: 'id',
+  analysisId: 'analysisId',
+  fileId: 'fileId',
+  key: 'key',
+  name: 'name',
+  kind: 'kind',
+  parent: 'parent',
+  exported: 'exported',
+  isDefault: 'isDefault',
+  line: 'line',
+  endLine: 'endLine',
+  signature: 'signature'
+} as const
+
+export type CodeSymbolScalarFieldEnum = (typeof CodeSymbolScalarFieldEnum)[keyof typeof CodeSymbolScalarFieldEnum]
+
+
+export const SymbolReferenceScalarFieldEnum = {
+  id: 'id',
+  analysisId: 'analysisId',
+  fileId: 'fileId',
+  fromSymbolId: 'fromSymbolId',
+  targetSymbolId: 'targetSymbolId',
+  name: 'name',
+  receiver: 'receiver',
+  line: 'line'
+} as const
+
+export type SymbolReferenceScalarFieldEnum = (typeof SymbolReferenceScalarFieldEnum)[keyof typeof SymbolReferenceScalarFieldEnum]
+
+
+export const FileDependencyScalarFieldEnum = {
+  id: 'id',
+  analysisId: 'analysisId',
+  fromFileId: 'fromFileId',
+  toFileId: 'toFileId',
+  specifier: 'specifier',
+  kind: 'kind',
+  packageName: 'packageName'
+} as const
+
+export type FileDependencyScalarFieldEnum = (typeof FileDependencyScalarFieldEnum)[keyof typeof FileDependencyScalarFieldEnum]
 
 
 export const GitInsightScalarFieldEnum = {

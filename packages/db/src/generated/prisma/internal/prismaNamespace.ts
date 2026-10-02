@@ -408,6 +408,9 @@ export const ModelName = {
   Dependency: 'Dependency',
   ArchitectureNode: 'ArchitectureNode',
   ArchitectureEdge: 'ArchitectureEdge',
+  CodeSymbol: 'CodeSymbol',
+  SymbolReference: 'SymbolReference',
+  FileDependency: 'FileDependency',
   GitInsight: 'GitInsight',
   Recommendation: 'Recommendation',
   FixSuggestion: 'FixSuggestion',
@@ -427,7 +430,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "repository" | "findingTriage" | "analysis" | "file" | "finding" | "metric" | "dependency" | "architectureNode" | "architectureEdge" | "gitInsight" | "recommendation" | "fixSuggestion" | "report"
+    modelProps: "user" | "session" | "repository" | "findingTriage" | "analysis" | "file" | "finding" | "metric" | "dependency" | "architectureNode" | "architectureEdge" | "codeSymbol" | "symbolReference" | "fileDependency" | "gitInsight" | "recommendation" | "fixSuggestion" | "report"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1245,6 +1248,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CodeSymbol: {
+      payload: Prisma.$CodeSymbolPayload<ExtArgs>
+      fields: Prisma.CodeSymbolFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CodeSymbolFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CodeSymbolFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload>
+        }
+        findFirst: {
+          args: Prisma.CodeSymbolFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CodeSymbolFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload>
+        }
+        findMany: {
+          args: Prisma.CodeSymbolFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload>[]
+        }
+        create: {
+          args: Prisma.CodeSymbolCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload>
+        }
+        createMany: {
+          args: Prisma.CodeSymbolCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CodeSymbolCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload>[]
+        }
+        delete: {
+          args: Prisma.CodeSymbolDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload>
+        }
+        update: {
+          args: Prisma.CodeSymbolUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload>
+        }
+        deleteMany: {
+          args: Prisma.CodeSymbolDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CodeSymbolUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CodeSymbolUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload>[]
+        }
+        upsert: {
+          args: Prisma.CodeSymbolUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CodeSymbolPayload>
+        }
+        aggregate: {
+          args: Prisma.CodeSymbolAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCodeSymbol>
+        }
+        groupBy: {
+          args: Prisma.CodeSymbolGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CodeSymbolGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CodeSymbolCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CodeSymbolCountAggregateOutputType> | number
+        }
+      }
+    }
+    SymbolReference: {
+      payload: Prisma.$SymbolReferencePayload<ExtArgs>
+      fields: Prisma.SymbolReferenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SymbolReferenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SymbolReferenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload>
+        }
+        findFirst: {
+          args: Prisma.SymbolReferenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SymbolReferenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload>
+        }
+        findMany: {
+          args: Prisma.SymbolReferenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload>[]
+        }
+        create: {
+          args: Prisma.SymbolReferenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload>
+        }
+        createMany: {
+          args: Prisma.SymbolReferenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SymbolReferenceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload>[]
+        }
+        delete: {
+          args: Prisma.SymbolReferenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload>
+        }
+        update: {
+          args: Prisma.SymbolReferenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload>
+        }
+        deleteMany: {
+          args: Prisma.SymbolReferenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SymbolReferenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SymbolReferenceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload>[]
+        }
+        upsert: {
+          args: Prisma.SymbolReferenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SymbolReferencePayload>
+        }
+        aggregate: {
+          args: Prisma.SymbolReferenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSymbolReference>
+        }
+        groupBy: {
+          args: Prisma.SymbolReferenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SymbolReferenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SymbolReferenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SymbolReferenceCountAggregateOutputType> | number
+        }
+      }
+    }
+    FileDependency: {
+      payload: Prisma.$FileDependencyPayload<ExtArgs>
+      fields: Prisma.FileDependencyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FileDependencyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FileDependencyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload>
+        }
+        findFirst: {
+          args: Prisma.FileDependencyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FileDependencyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload>
+        }
+        findMany: {
+          args: Prisma.FileDependencyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload>[]
+        }
+        create: {
+          args: Prisma.FileDependencyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload>
+        }
+        createMany: {
+          args: Prisma.FileDependencyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FileDependencyCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload>[]
+        }
+        delete: {
+          args: Prisma.FileDependencyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload>
+        }
+        update: {
+          args: Prisma.FileDependencyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload>
+        }
+        deleteMany: {
+          args: Prisma.FileDependencyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FileDependencyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FileDependencyUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload>[]
+        }
+        upsert: {
+          args: Prisma.FileDependencyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileDependencyPayload>
+        }
+        aggregate: {
+          args: Prisma.FileDependencyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFileDependency>
+        }
+        groupBy: {
+          args: Prisma.FileDependencyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FileDependencyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FileDependencyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FileDependencyCountAggregateOutputType> | number
+        }
+      }
+    }
     GitInsight: {
       payload: Prisma.$GitInsightPayload<ExtArgs>
       fields: Prisma.GitInsightFieldRefs
@@ -1680,7 +1905,8 @@ export const FileScalarFieldEnum = {
   duplicatedLines: 'duplicatedLines',
   parseErrors: 'parseErrors',
   imports: 'imports',
-  exports: 'exports'
+  exports: 'exports',
+  contentHash: 'contentHash'
 } as const
 
 export type FileScalarFieldEnum = (typeof FileScalarFieldEnum)[keyof typeof FileScalarFieldEnum]
@@ -1764,6 +1990,51 @@ export const ArchitectureEdgeScalarFieldEnum = {
 } as const
 
 export type ArchitectureEdgeScalarFieldEnum = (typeof ArchitectureEdgeScalarFieldEnum)[keyof typeof ArchitectureEdgeScalarFieldEnum]
+
+
+export const CodeSymbolScalarFieldEnum = {
+  id: 'id',
+  analysisId: 'analysisId',
+  fileId: 'fileId',
+  key: 'key',
+  name: 'name',
+  kind: 'kind',
+  parent: 'parent',
+  exported: 'exported',
+  isDefault: 'isDefault',
+  line: 'line',
+  endLine: 'endLine',
+  signature: 'signature'
+} as const
+
+export type CodeSymbolScalarFieldEnum = (typeof CodeSymbolScalarFieldEnum)[keyof typeof CodeSymbolScalarFieldEnum]
+
+
+export const SymbolReferenceScalarFieldEnum = {
+  id: 'id',
+  analysisId: 'analysisId',
+  fileId: 'fileId',
+  fromSymbolId: 'fromSymbolId',
+  targetSymbolId: 'targetSymbolId',
+  name: 'name',
+  receiver: 'receiver',
+  line: 'line'
+} as const
+
+export type SymbolReferenceScalarFieldEnum = (typeof SymbolReferenceScalarFieldEnum)[keyof typeof SymbolReferenceScalarFieldEnum]
+
+
+export const FileDependencyScalarFieldEnum = {
+  id: 'id',
+  analysisId: 'analysisId',
+  fromFileId: 'fromFileId',
+  toFileId: 'toFileId',
+  specifier: 'specifier',
+  kind: 'kind',
+  packageName: 'packageName'
+} as const
+
+export type FileDependencyScalarFieldEnum = (typeof FileDependencyScalarFieldEnum)[keyof typeof FileDependencyScalarFieldEnum]
 
 
 export const GitInsightScalarFieldEnum = {
@@ -2075,6 +2346,34 @@ export type ListEnumNodeKindFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 
 
 /**
+ * Reference to a field of type 'SymbolKind'
+ */
+export type EnumSymbolKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SymbolKind'>
+    
+
+
+/**
+ * Reference to a field of type 'SymbolKind[]'
+ */
+export type ListEnumSymbolKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SymbolKind[]'>
+    
+
+
+/**
+ * Reference to a field of type 'DependencyKind'
+ */
+export type EnumDependencyKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DependencyKind'>
+    
+
+
+/**
+ * Reference to a field of type 'DependencyKind[]'
+ */
+export type ListEnumDependencyKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DependencyKind[]'>
+    
+
+
+/**
  * Reference to a field of type 'Effort'
  */
 export type EnumEffortFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Effort'>
@@ -2277,6 +2576,9 @@ export type GlobalOmitConfig = {
   dependency?: Prisma.DependencyOmit
   architectureNode?: Prisma.ArchitectureNodeOmit
   architectureEdge?: Prisma.ArchitectureEdgeOmit
+  codeSymbol?: Prisma.CodeSymbolOmit
+  symbolReference?: Prisma.SymbolReferenceOmit
+  fileDependency?: Prisma.FileDependencyOmit
   gitInsight?: Prisma.GitInsightOmit
   recommendation?: Prisma.RecommendationOmit
   fixSuggestion?: Prisma.FixSuggestionOmit

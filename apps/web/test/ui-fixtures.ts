@@ -118,7 +118,7 @@ export function architectureSummary(over: Partial<ArchitectureSummaryDto> = {}):
 
 export function scanSummary(over: Partial<ScanSummaryDto> = {}): ScanSummaryDto {
   return {
-    modulesRun: ["repository-scan", "code-metrics", "security", "dependencies", "architecture", "practices", "health-score"],
+    modulesRun: ["repository-scan", "code-metrics", "security", "dependencies", "architecture", "practices", "health-score", "intelligence"],
     ingest: { source: "ZIP" },
     totals: { files: 10, bytes: 2048, lines: 300, byKind: { SOURCE: 4, TEST: 1 } },
     languages: [{ language: "typescript", files: 5, lines: 300, bytes: 2048, analyzed: true }],

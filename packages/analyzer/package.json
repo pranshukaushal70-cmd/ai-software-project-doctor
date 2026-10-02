@@ -10,7 +10,8 @@
     "./dependencies": "./src/dependencies/index.ts",
     "./architecture": "./src/architecture/index.ts",
     "./practices": "./src/practices/index.ts",
-    "./scoring": "./src/scoring/index.ts"
+    "./scoring": "./src/scoring/index.ts",
+    "./intelligence": "./src/intelligence/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
