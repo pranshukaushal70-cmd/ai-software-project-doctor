@@ -8,7 +8,7 @@ import { scanRepository } from "@pd/analyzer";
 import { buildRepositoryIndex, createSymbolCollector, type RepositoryIndex } from "@pd/analyzer/intelligence";
 import { analyzeCode } from "@pd/analyzer/metrics";
 
-// ------------------------------------------------------------------ mocks: session, database, rate limit, after(), logger
+// ------------------------------------------------------------------ mocks: session, database, rate limit, queue, logger
 
 type Row = Record<string, any>;
 
@@ -17,7 +17,7 @@ const state = vi.hoisted(() => ({
   db: null as unknown,
   rateLimited: [] as Array<[string, string]>,
   limitExceeded: false,
-  pending: [] as Array<Promise<unknown>>,
+  jobs: [] as Array<{ type: string; planId?: string }>,
   logs: [] as Array<{ level: string; obj: unknown; msg?: string }>,
 }));
 
@@ -40,8 +40,8 @@ vi.mock("@/server/rate-limit", async () => {
     },
   };
 });
-// after() needs a request scope; here the callback runs at once and the test awaits it.
-vi.mock("next/server", async (orig) => ({ ...(await orig<typeof import("next/server")>()), after: (fn: () => unknown) => void state.pending.push(Promise.resolve(fn())) }));
+// Planning runs in the worker; the test records queued jobs and runs them in process (settle()).
+vi.mock("@/server/queue", () => ({ enqueueEngineering: async (job: { type: string; planId?: string }) => void state.jobs.push(job), enqueueAnalysis: async () => undefined }));
 vi.mock("@pd/shared/logger", () => {
   const logger = (): Record<string, unknown> => {
     const l: Record<string, unknown> = {};
@@ -57,6 +57,15 @@ const taskRoute = await import("@/app/api/engineering/tasks/[id]/route");
 const planRoute = await import("@/app/api/engineering/tasks/[id]/plan/route");
 const approveRoute = await import("@/app/api/engineering/plans/[id]/approve/route");
 const { setProviderFactory } = await import("@/server/services/engineering-service");
+const { executePlanJob } = await import("@pd/engine/control");
+const { createLogger } = await import("@pd/shared/logger");
+
+/** The provider for both sides: the web check at request time and the worker's planner job. */
+let workerProvider: (() => any) | null = null;
+function useProvider(factory: () => any) {
+  setProviderFactory(factory);
+  workerProvider = factory;
+}
 const { clearGraphCache } = await import("@/server/services/intelligence-service");
 
 // ------------------------------------------------------------------ fixture: a real index of a small service
@@ -196,8 +205,9 @@ function fakeDb() {
         for (const p of hits) Object.assign(p, data);
         return { count: hits.length };
       },
-      findUniqueOrThrow: async ({ where }: { where: Row }) => {
+      findUniqueOrThrow: async ({ where, select }: { where: Row; select?: Row }) => {
         const p = plans.find((x) => x.id === where.id)!;
+        if (select?.task) return { id: p.id, task: tasks.find((t) => t.id === p.taskId)! };
         return { ...p, evidence: evidence.filter((e) => e.planId === p.id) };
       },
     },
@@ -217,7 +227,8 @@ beforeEach(() => {
   state.user = { id: "u1", email: "u1@example.com", name: "User One" };
   state.rateLimited = [];
   state.limitExceeded = false;
-  state.pending = [];
+  state.jobs = [];
+  workerProvider = null;
   state.logs = [];
   clearGraphCache();
   setProviderFactory(null);
@@ -241,7 +252,13 @@ const requestPlan = (id: string, headers?: Record<string, string>) => call(planR
 const getPlan = (id: string) => call(planRoute.GET, `/api/engineering/tasks/${id}/plan`, { id });
 const getTask = (id: string) => call(taskRoute.GET, `/api/engineering/tasks/${id}`, { id });
 const approvePlan = (id: string, headers?: Record<string, string>) => call(approveRoute.POST, `/api/engineering/plans/${id}/approve`, { method: "POST", id, headers });
-const settle = () => Promise.all(state.pending);
+/** Runs the queued plan jobs as the worker would, then forgets them. */
+async function settle() {
+  const jobs = state.jobs.splice(0);
+  for (const j of jobs) {
+    if (j.type === "plan") await executePlanJob(j.planId!, { prisma: state.db as any, log: createLogger("planner"), provider: () => workerProvider!() });
+  }
+}
 
 const TASK = { analysisId: "an1", task: "Add rate limiting to the login endpoint" };
 
@@ -333,7 +350,7 @@ describe("planning", () => {
   it("runs context retrieval, the provider and validation, and stores plan, evidence and metadata", async () => {
     const provider = scriptedPlan();
     const calls: any[] = [];
-    setProviderFactory(() => ({ ...provider, generatePlan: (ctx: any) => (calls.push(ctx), provider.generatePlan(ctx)) }));
+    useProvider(() => ({ ...provider, generatePlan: (ctx: any) => (calls.push(ctx), provider.generatePlan(ctx)) }));
     const id = await taskId();
     const started = await requestPlan(id);
     expect(started.status).toBe(202);
@@ -374,7 +391,7 @@ describe("planning", () => {
   it("flags hallucinated files and symbols, removes commands and redacts secrets before storing", async () => {
     // A fake key in Stripe's live-key format, assembled at runtime so secret scanners do not flag the test source.
     const fakeKey = ["sk", "live", "51HaBcDeFgHiJkLmNoPqRsTuV"].join("_");
-    setProviderFactory(() =>
+    useProvider(() =>
       scriptedPlan((p, ref) => {
         p.affectedFiles.push({ path: "src/auth/login-controller.ts", change: "modify", reason: "Login controller.", certainty: "VERIFIED", evidence: [ref((e) => e.kind === "FILE")] });
         p.affectedSymbols.push({ name: "rateLimitLogin", path: "src/routes/auth.ts", change: "modify", reason: "Existing limiter.", certainty: "VERIFIED", evidence: ["E1"] });
@@ -396,21 +413,36 @@ describe("planning", () => {
   });
 
   it("stores a failed plan when the output does not match the schema or the provider fails", async () => {
-    setProviderFactory(() => new ScriptedProvider([{ plan: "Just edit the files." }]));
+    useProvider(() => new ScriptedProvider([{ plan: "Just edit the files." }]));
     const id = await taskId();
     await requestPlan(id);
     await settle();
     expect((await getPlan(id)).body.data).toMatchObject({ status: "FAILED", failureReason: "invalid-output", validationStatus: "REJECTED", plan: null, inProgress: false });
 
-    setProviderFactory(() => new ScriptedProvider([new ProviderError("refused", "The model declined to plan this task.")]));
+    useProvider(() => new ScriptedProvider([new ProviderError("refused", "The model declined to plan this task.")]));
     await requestPlan(id);
     await settle();
     expect((await getPlan(id)).body.data).toMatchObject({ status: "FAILED", failureReason: "refused", error: "The model declined to plan this task." });
     expect(state.logs.filter((l) => l.msg === "plan failed").map((l) => (l.obj as Row).failureReason)).toEqual(["invalid-output", "refused"]);
   });
 
+  it("queues planning for the worker instead of running it in the web process", async () => {
+    const provider = scriptedPlan();
+    let generated = 0;
+    useProvider(() => ({ ...provider, generatePlan: (ctx: any) => (generated++, provider.generatePlan(ctx)) }));
+    const id = await taskId();
+    const started = await requestPlan(id);
+    expect(started.status).toBe(202);
+    expect(state.jobs).toEqual([{ type: "plan", planId: started.body.data.id }]);
+    expect(generated).toBe(0);
+    expect((await getPlan(id)).body.data).toMatchObject({ status: "PENDING", inProgress: true });
+    await settle();
+    expect(generated).toBe(1);
+    expect((await getPlan(id)).body.data.status).toBe("COMPLETED");
+  });
+
   it("refuses to plan when no provider is configured, without storing a plan", async () => {
-    setProviderFactory(() => {
+    useProvider(() => {
       throw new ProviderError("not-configured", "No AI provider is configured: set ANTHROPIC_API_KEY, or AI_PROVIDER=baseline for evidence-only plans.");
     });
     const id = await taskId();
@@ -425,7 +457,7 @@ describe("planning", () => {
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));
     const provider = scriptedPlan();
-    setProviderFactory(() => ({ ...provider, generatePlan: async (ctx: any) => (await gate, provider.generatePlan(ctx)) }));
+    useProvider(() => ({ ...provider, generatePlan: async (ctx: any) => (await gate, provider.generatePlan(ctx)) }));
     const id = await taskId();
     await requestPlan(id);
     expect((await requestPlan(id)).status).toBe(409);
@@ -439,7 +471,7 @@ describe("planning", () => {
   });
 
   it("enforces ownership on every task endpoint and requires auth and Origin", async () => {
-    setProviderFactory(() => scriptedPlan());
+    useProvider(() => scriptedPlan());
     const id = await taskId();
     state.user = { id: "u2", email: "", name: "" };
     expect((await getTask(id)).status).toBe(404);
@@ -456,7 +488,7 @@ describe("planning", () => {
   });
 
   it("lists the user's tasks for an analysis with their latest plan, and returns null before any plan", async () => {
-    setProviderFactory(() => scriptedPlan());
+    useProvider(() => scriptedPlan());
     const first = await taskId();
     const second = await taskId({ ...TASK, task: "Add pagination to listProducts" });
     expect((await getPlan(second)).body.data).toBeNull();
@@ -473,7 +505,7 @@ describe("planning", () => {
 
 describe("POST /api/engineering/plans/:id/approve (code engine, first gate)", () => {
   async function completedPlan() {
-    setProviderFactory(() => scriptedPlan());
+    useProvider(() => scriptedPlan());
     const task = await taskId();
     const started = await requestPlan(task);
     await settle();
@@ -498,7 +530,7 @@ describe("POST /api/engineering/plans/:id/approve (code engine, first gate)", ()
   });
 
   it("refuses plans that did not complete, are in progress or were superseded", async () => {
-    setProviderFactory(() => new ScriptedProvider([{ plan: "Just edit the files." }]));
+    useProvider(() => new ScriptedProvider([{ plan: "Just edit the files." }]));
     const task = await taskId();
     const failed = (await requestPlan(task)).body.data.id;
     await settle();
@@ -510,7 +542,7 @@ describe("POST /api/engineering/plans/:id/approve (code engine, first gate)", ()
     let release!: () => void;
     const gate = new Promise<void>((res) => (release = res));
     const provider = scriptedPlan();
-    setProviderFactory(() => ({ ...provider, generatePlan: async (ctx: any) => (await gate, provider.generatePlan(ctx)) }));
+    useProvider(() => ({ ...provider, generatePlan: async (ctx: any) => (await gate, provider.generatePlan(ctx)) }));
     const running = (await requestPlan(task)).body.data.id;
     expect((await approvePlan(running)).status).toBe(409);
     release();

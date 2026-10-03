@@ -43,7 +43,7 @@ const CLI_ENV_KEYS = ["PATH", "Path", "SystemRoot", "USERPROFILE", "HOME", "APPD
 
 export const execDocker: DockerExec = (args, opts) =>
   new Promise((resolve, reject) => {
-    const env = Object.fromEntries(CLI_ENV_KEYS.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]!]));
+    const env = Object.fromEntries(CLI_ENV_KEYS.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]!])) as NodeJS.ProcessEnv;
     const child = spawn("docker", args, { env, shell: false, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
     const buf = new TailBuffer();
     let timedOut = false;

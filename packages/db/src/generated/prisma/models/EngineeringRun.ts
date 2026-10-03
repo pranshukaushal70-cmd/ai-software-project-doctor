@@ -63,6 +63,8 @@ export type EngineeringRunMinAggregateOutputType = {
   installApproved: boolean | null
   executionApprovedAt: Date | null
   cancelRequestedAt: Date | null
+  summary: string | null
+  patch: string | null
   failureReason: string | null
   error: string | null
   createdAt: Date | null
@@ -89,6 +91,8 @@ export type EngineeringRunMaxAggregateOutputType = {
   installApproved: boolean | null
   executionApprovedAt: Date | null
   cancelRequestedAt: Date | null
+  summary: string | null
+  patch: string | null
   failureReason: string | null
   error: string | null
   createdAt: Date | null
@@ -115,6 +119,10 @@ export type EngineeringRunCountAggregateOutputType = {
   installApproved: number
   executionApprovedAt: number
   cancelRequestedAt: number
+  summary: number
+  notes: number
+  patch: number
+  testSetup: number
   failureReason: number
   error: number
   createdAt: number
@@ -161,6 +169,8 @@ export type EngineeringRunMinAggregateInputType = {
   installApproved?: true
   executionApprovedAt?: true
   cancelRequestedAt?: true
+  summary?: true
+  patch?: true
   failureReason?: true
   error?: true
   createdAt?: true
@@ -187,6 +197,8 @@ export type EngineeringRunMaxAggregateInputType = {
   installApproved?: true
   executionApprovedAt?: true
   cancelRequestedAt?: true
+  summary?: true
+  patch?: true
   failureReason?: true
   error?: true
   createdAt?: true
@@ -213,6 +225,10 @@ export type EngineeringRunCountAggregateInputType = {
   installApproved?: true
   executionApprovedAt?: true
   cancelRequestedAt?: true
+  summary?: true
+  notes?: true
+  patch?: true
+  testSetup?: true
   failureReason?: true
   error?: true
   createdAt?: true
@@ -326,6 +342,10 @@ export type EngineeringRunGroupByOutputType = {
   installApproved: boolean
   executionApprovedAt: Date | null
   cancelRequestedAt: Date | null
+  summary: string | null
+  notes: runtime.JsonValue | null
+  patch: string | null
+  testSetup: runtime.JsonValue | null
   failureReason: string | null
   error: string | null
   createdAt: Date
@@ -375,6 +395,10 @@ export type EngineeringRunWhereInput = {
   installApproved?: Prisma.BoolFilter<"EngineeringRun"> | boolean
   executionApprovedAt?: Prisma.DateTimeNullableFilter<"EngineeringRun"> | Date | string | null
   cancelRequestedAt?: Prisma.DateTimeNullableFilter<"EngineeringRun"> | Date | string | null
+  summary?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
+  notes?: Prisma.JsonNullableFilter<"EngineeringRun">
+  patch?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
+  testSetup?: Prisma.JsonNullableFilter<"EngineeringRun">
   failureReason?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
   error?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
   createdAt?: Prisma.DateTimeFilter<"EngineeringRun"> | Date | string
@@ -406,6 +430,10 @@ export type EngineeringRunOrderByWithRelationInput = {
   installApproved?: Prisma.SortOrder
   executionApprovedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelRequestedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  summary?: Prisma.SortOrderInput | Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  patch?: Prisma.SortOrderInput | Prisma.SortOrder
+  testSetup?: Prisma.SortOrderInput | Prisma.SortOrder
   failureReason?: Prisma.SortOrderInput | Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -440,6 +468,10 @@ export type EngineeringRunWhereUniqueInput = Prisma.AtLeast<{
   installApproved?: Prisma.BoolFilter<"EngineeringRun"> | boolean
   executionApprovedAt?: Prisma.DateTimeNullableFilter<"EngineeringRun"> | Date | string | null
   cancelRequestedAt?: Prisma.DateTimeNullableFilter<"EngineeringRun"> | Date | string | null
+  summary?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
+  notes?: Prisma.JsonNullableFilter<"EngineeringRun">
+  patch?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
+  testSetup?: Prisma.JsonNullableFilter<"EngineeringRun">
   failureReason?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
   error?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
   createdAt?: Prisma.DateTimeFilter<"EngineeringRun"> | Date | string
@@ -471,6 +503,10 @@ export type EngineeringRunOrderByWithAggregationInput = {
   installApproved?: Prisma.SortOrder
   executionApprovedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelRequestedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  summary?: Prisma.SortOrderInput | Prisma.SortOrder
+  notes?: Prisma.SortOrderInput | Prisma.SortOrder
+  patch?: Prisma.SortOrderInput | Prisma.SortOrder
+  testSetup?: Prisma.SortOrderInput | Prisma.SortOrder
   failureReason?: Prisma.SortOrderInput | Prisma.SortOrder
   error?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -505,6 +541,10 @@ export type EngineeringRunScalarWhereWithAggregatesInput = {
   installApproved?: Prisma.BoolWithAggregatesFilter<"EngineeringRun"> | boolean
   executionApprovedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EngineeringRun"> | Date | string | null
   cancelRequestedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EngineeringRun"> | Date | string | null
+  summary?: Prisma.StringNullableWithAggregatesFilter<"EngineeringRun"> | string | null
+  notes?: Prisma.JsonNullableWithAggregatesFilter<"EngineeringRun">
+  patch?: Prisma.StringNullableWithAggregatesFilter<"EngineeringRun"> | string | null
+  testSetup?: Prisma.JsonNullableWithAggregatesFilter<"EngineeringRun">
   failureReason?: Prisma.StringNullableWithAggregatesFilter<"EngineeringRun"> | string | null
   error?: Prisma.StringNullableWithAggregatesFilter<"EngineeringRun"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"EngineeringRun"> | Date | string
@@ -529,6 +569,10 @@ export type EngineeringRunCreateInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -560,6 +604,10 @@ export type EngineeringRunUncheckedCreateInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -587,6 +635,10 @@ export type EngineeringRunUpdateInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -618,6 +670,10 @@ export type EngineeringRunUncheckedUpdateInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -647,6 +703,10 @@ export type EngineeringRunCreateManyInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -671,6 +731,10 @@ export type EngineeringRunUpdateManyMutationInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -697,6 +761,10 @@ export type EngineeringRunUncheckedUpdateManyInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -733,6 +801,10 @@ export type EngineeringRunCountOrderByAggregateInput = {
   installApproved?: Prisma.SortOrder
   executionApprovedAt?: Prisma.SortOrder
   cancelRequestedAt?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
+  notes?: Prisma.SortOrder
+  patch?: Prisma.SortOrder
+  testSetup?: Prisma.SortOrder
   failureReason?: Prisma.SortOrder
   error?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -768,6 +840,8 @@ export type EngineeringRunMaxOrderByAggregateInput = {
   installApproved?: Prisma.SortOrder
   executionApprovedAt?: Prisma.SortOrder
   cancelRequestedAt?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
+  patch?: Prisma.SortOrder
   failureReason?: Prisma.SortOrder
   error?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -794,6 +868,8 @@ export type EngineeringRunMinOrderByAggregateInput = {
   installApproved?: Prisma.SortOrder
   executionApprovedAt?: Prisma.SortOrder
   cancelRequestedAt?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
+  patch?: Prisma.SortOrder
   failureReason?: Prisma.SortOrder
   error?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -962,6 +1038,10 @@ export type EngineeringRunCreateWithoutUserInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -991,6 +1071,10 @@ export type EngineeringRunUncheckedCreateWithoutUserInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1049,6 +1133,10 @@ export type EngineeringRunScalarWhereInput = {
   installApproved?: Prisma.BoolFilter<"EngineeringRun"> | boolean
   executionApprovedAt?: Prisma.DateTimeNullableFilter<"EngineeringRun"> | Date | string | null
   cancelRequestedAt?: Prisma.DateTimeNullableFilter<"EngineeringRun"> | Date | string | null
+  summary?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
+  notes?: Prisma.JsonNullableFilter<"EngineeringRun">
+  patch?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
+  testSetup?: Prisma.JsonNullableFilter<"EngineeringRun">
   failureReason?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
   error?: Prisma.StringNullableFilter<"EngineeringRun"> | string | null
   createdAt?: Prisma.DateTimeFilter<"EngineeringRun"> | Date | string
@@ -1073,6 +1161,10 @@ export type EngineeringRunCreateWithoutPlanInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1102,6 +1194,10 @@ export type EngineeringRunUncheckedCreateWithoutPlanInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1155,6 +1251,10 @@ export type EngineeringRunCreateWithoutChangesInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1185,6 +1285,10 @@ export type EngineeringRunUncheckedCreateWithoutChangesInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1227,6 +1331,10 @@ export type EngineeringRunUpdateWithoutChangesInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1257,6 +1365,10 @@ export type EngineeringRunUncheckedUpdateWithoutChangesInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1283,6 +1395,10 @@ export type EngineeringRunCreateWithoutExecutionsInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1313,6 +1429,10 @@ export type EngineeringRunUncheckedCreateWithoutExecutionsInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1355,6 +1475,10 @@ export type EngineeringRunUpdateWithoutExecutionsInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1385,6 +1509,10 @@ export type EngineeringRunUncheckedUpdateWithoutExecutionsInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1411,6 +1539,10 @@ export type EngineeringRunCreateWithoutEventsInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1441,6 +1573,10 @@ export type EngineeringRunUncheckedCreateWithoutEventsInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1483,6 +1619,10 @@ export type EngineeringRunUpdateWithoutEventsInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1513,6 +1653,10 @@ export type EngineeringRunUncheckedUpdateWithoutEventsInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1540,6 +1684,10 @@ export type EngineeringRunCreateManyUserInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1564,6 +1712,10 @@ export type EngineeringRunUpdateWithoutUserInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1593,6 +1745,10 @@ export type EngineeringRunUncheckedUpdateWithoutUserInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1621,6 +1777,10 @@ export type EngineeringRunUncheckedUpdateManyWithoutUserInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1646,6 +1806,10 @@ export type EngineeringRunCreateManyPlanInput = {
   installApproved?: boolean
   executionApprovedAt?: Date | string | null
   cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: string | null
   error?: string | null
   createdAt?: Date | string
@@ -1670,6 +1834,10 @@ export type EngineeringRunUpdateWithoutPlanInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1699,6 +1867,10 @@ export type EngineeringRunUncheckedUpdateWithoutPlanInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1727,6 +1899,10 @@ export type EngineeringRunUncheckedUpdateManyWithoutPlanInput = {
   installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
   executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1802,6 +1978,10 @@ export type EngineeringRunSelect<ExtArgs extends runtime.Types.Extensions.Intern
   installApproved?: boolean
   executionApprovedAt?: boolean
   cancelRequestedAt?: boolean
+  summary?: boolean
+  notes?: boolean
+  patch?: boolean
+  testSetup?: boolean
   failureReason?: boolean
   error?: boolean
   createdAt?: boolean
@@ -1834,6 +2014,10 @@ export type EngineeringRunSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   installApproved?: boolean
   executionApprovedAt?: boolean
   cancelRequestedAt?: boolean
+  summary?: boolean
+  notes?: boolean
+  patch?: boolean
+  testSetup?: boolean
   failureReason?: boolean
   error?: boolean
   createdAt?: boolean
@@ -1862,6 +2046,10 @@ export type EngineeringRunSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   installApproved?: boolean
   executionApprovedAt?: boolean
   cancelRequestedAt?: boolean
+  summary?: boolean
+  notes?: boolean
+  patch?: boolean
+  testSetup?: boolean
   failureReason?: boolean
   error?: boolean
   createdAt?: boolean
@@ -1890,6 +2078,10 @@ export type EngineeringRunSelectScalar = {
   installApproved?: boolean
   executionApprovedAt?: boolean
   cancelRequestedAt?: boolean
+  summary?: boolean
+  notes?: boolean
+  patch?: boolean
+  testSetup?: boolean
   failureReason?: boolean
   error?: boolean
   createdAt?: boolean
@@ -1898,7 +2090,7 @@ export type EngineeringRunSelectScalar = {
   finishedAt?: boolean
 }
 
-export type EngineeringRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "planId" | "userId" | "status" | "provider" | "model" | "commitSha" | "maxIterations" | "tokenBudget" | "maxDurationSeconds" | "iteration" | "inputTokens" | "outputTokens" | "testCommand" | "installApproved" | "executionApprovedAt" | "cancelRequestedAt" | "failureReason" | "error" | "createdAt" | "updatedAt" | "startedAt" | "finishedAt", ExtArgs["result"]["engineeringRun"]>
+export type EngineeringRunOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "planId" | "userId" | "status" | "provider" | "model" | "commitSha" | "maxIterations" | "tokenBudget" | "maxDurationSeconds" | "iteration" | "inputTokens" | "outputTokens" | "testCommand" | "installApproved" | "executionApprovedAt" | "cancelRequestedAt" | "summary" | "notes" | "patch" | "testSetup" | "failureReason" | "error" | "createdAt" | "updatedAt" | "startedAt" | "finishedAt", ExtArgs["result"]["engineeringRun"]>
 export type EngineeringRunInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   plan?: boolean | Prisma.EngineeringPlanDefaultArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1967,6 +2159,20 @@ export type $EngineeringRunPayload<ExtArgs extends runtime.Types.Extensions.Inte
      * Set by a cancel request while the worker holds the run; the worker stops at the next step.
      */
     cancelRequestedAt: Date | null
+    /**
+     * The model's description of the latest change and its notes for the reviewer (string[]), scrubbed.
+     */
+    summary: string | null
+    notes: runtime.JsonValue | null
+    /**
+     * Cumulative git-format patch from the analysed source to the current result: what the user downloads.
+     * Contains repository code (context and changed lines), so it is never logged and is deleted with the run.
+     */
+    patch: string | null
+    /**
+     * The resolved, allowlisted test setup shown before approval (ids, command lines, image, notes); null when none.
+     */
+    testSetup: runtime.JsonValue | null
     /**
      * Machine-readable failure reason and user-safe message when FAILED.
      */
@@ -2421,6 +2627,10 @@ export interface EngineeringRunFieldRefs {
   readonly installApproved: Prisma.FieldRef<"EngineeringRun", 'Boolean'>
   readonly executionApprovedAt: Prisma.FieldRef<"EngineeringRun", 'DateTime'>
   readonly cancelRequestedAt: Prisma.FieldRef<"EngineeringRun", 'DateTime'>
+  readonly summary: Prisma.FieldRef<"EngineeringRun", 'String'>
+  readonly notes: Prisma.FieldRef<"EngineeringRun", 'Json'>
+  readonly patch: Prisma.FieldRef<"EngineeringRun", 'String'>
+  readonly testSetup: Prisma.FieldRef<"EngineeringRun", 'Json'>
   readonly failureReason: Prisma.FieldRef<"EngineeringRun", 'String'>
   readonly error: Prisma.FieldRef<"EngineeringRun", 'String'>
   readonly createdAt: Prisma.FieldRef<"EngineeringRun", 'DateTime'>

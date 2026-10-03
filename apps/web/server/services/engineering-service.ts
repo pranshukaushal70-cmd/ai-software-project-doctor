@@ -1,34 +1,21 @@
 import "server-only";
-import {
-  buildPlanningContext,
-  createProvider,
-  ProviderError,
-  runPlanner,
-  type ContextSources,
-  type LLMProvider,
-  type RepositoryFacts,
-} from "@pd/agent";
+import { createProvider, ProviderError, type LLMProvider } from "@pd/agent";
 import { getPrisma, type Prisma } from "@pd/db";
 import { AppError, type EngineeringTaskInput } from "@pd/shared";
-import { createLogger } from "@pd/shared/logger";
+import { enqueueEngineering } from "../queue";
 import { getOwnedAnalysis } from "./analysis-service";
-import { graphFor, isIndexed, summaryOf } from "./intelligence-service";
+import { isIndexed } from "./intelligence-service";
 
 /**
- * Engineering planner: developer task in, evidence-backed plan out. Context comes from
- * the Phase 6 repository index (graphFor, stored manifest, routes, findings); the LLM
- * sees only that bounded evidence bundle and its output is validated against the
- * index before it is stored. Planning only: nothing here reads file contents, runs
- * repository code or commands, or changes the repository.
+ * Engineering planner, web side: tasks and plan requests. Planning itself (context
+ * from the Phase 6 index, the LLM call, validation against the index) runs in the
+ * worker as an engineering-queue job (@pd/engine executePlanJob). Planning only:
+ * nothing here reads file contents, runs repository code or commands, or changes
+ * the repository.
  */
 
-const log = createLogger("planner");
-
-/** A plan still PENDING/RUNNING after this long was lost (e.g. a server restart) and is reported as failed. */
+/** A plan still PENDING/RUNNING after this long was lost (e.g. the worker stopped) and is reported as failed. */
 const STALE_AFTER_MS = 15 * 60 * 1000;
-const FINDINGS_FOR_CONTEXT = 200;
-const EXTERNAL_IMPORTS_FOR_CONTEXT = 5000;
-const SEVERITY_RANK: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4 };
 
 // ---------------------------------------------------------------- provider
 
@@ -124,8 +111,9 @@ async function expireIfStale(p: PlanRow): Promise<PlanRow> {
 }
 
 /**
- * Starts a planning attempt: records a PENDING plan and returns it. The caller runs
- * `executePlan(plan.id)` after responding. One attempt per task at a time.
+ * Starts a planning attempt: records a PENDING plan and queues it for the worker.
+ * One attempt per task at a time. The provider is checked here so a missing
+ * configuration is reported at once; the worker creates its own from its environment.
  */
 export async function requestPlan(userId: string, taskId: string) {
   const task = await ownedTask(userId, taskId);
@@ -138,104 +126,17 @@ export async function requestPlan(userId: string, taskId: string) {
     if (err instanceof ProviderError) throw new AppError("CONFLICT", err.message);
     throw err;
   }
-  const plan = await getPrisma().engineeringPlan.create({ data: { taskId: task.id, provider: provider.name, model: provider.model }, select: PLAN_SUMMARY_SELECT });
-  return { plan: planSummary(plan), provider };
-}
-
-/** Builds the context, calls the provider, validates and stores the result. Never throws. */
-export async function executePlan(planId: string, provider: LLMProvider): Promise<void> {
   const prisma = getPrisma();
+  const plan = await prisma.engineeringPlan.create({ data: { taskId: task.id, provider: provider.name, model: provider.model }, select: PLAN_SUMMARY_SELECT });
   try {
-    const row = await prisma.engineeringPlan.update({
-      where: { id: planId },
-      data: { status: "RUNNING", startedAt: new Date() },
-      select: { id: true, task: { select: { userId: true, analysisId: true, request: true, scope: true, constraints: true } } },
-    });
-    const { task } = row;
-    const analysis = await getOwnedAnalysis(task.userId, task.analysisId);
-    const [graph, files, findings, external] = await Promise.all([
-      graphFor(analysis),
-      prisma.file.findMany({ where: { analysisId: analysis.id }, select: { path: true, kind: true } }),
-      prisma.finding.findMany({
-        where: { analysisId: analysis.id },
-        orderBy: { createdAt: "asc" },
-        take: FINDINGS_FOR_CONTEXT,
-        select: { ruleId: true, title: true, severity: true, line: true, file: { select: { path: true } } },
-      }),
-      prisma.fileDependency.findMany({
-        where: { analysisId: analysis.id, kind: "EXTERNAL", packageName: { not: null } },
-        take: EXTERNAL_IMPORTS_FOR_CONTEXT,
-        select: { packageName: true, fromFile: { select: { path: true } } },
-      }),
-    ]);
-    const summary = summaryOf(analysis);
-    const sources: ContextSources = {
-      graph,
-      manifest: summary.intelligence?.manifest ?? null,
-      repositoryName: analysis.repository.owner ? `${analysis.repository.owner}/${analysis.repository.name}` : analysis.repository.name,
-      routes: summary.practices?.api?.list ?? [],
-      // Titles and rule ids only: finding evidence snippets never reach the model.
-      findings: findings
-        .map((f) => ({ ruleId: f.ruleId, title: f.title, severity: f.severity, path: f.file?.path ?? null, line: f.line }))
-        .sort((a, b) => (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9)),
-      externalImports: external.map((e) => ({ path: e.fromFile.path, packageName: e.packageName! })),
-    };
-    const context = buildPlanningContext({ request: task.request, scope: task.scope, constraints: (task.constraints as string[] | null) ?? [] }, sources);
-    const facts: RepositoryFacts = {
-      files: new Map(files.map((f) => [f.path, f.kind] as const)),
-      hasSymbol: (name, path) => {
-        const leaf = name.split(".").pop() ?? name;
-        return graph.findSymbols(leaf, path).some((s) => s.name === leaf);
-      },
-    };
-    await prisma.engineeringPlanEvidence.createMany({
-      data: context.evidence.map((e) => ({ planId, ref: e.id, kind: e.kind, path: e.path, symbol: e.symbol, line: e.line, summary: e.summary, source: e.source })),
-    });
-
-    const result = await runPlanner(context, provider, facts);
-    const meta = result.meta;
-    const issues = result.report?.issues ?? [];
-    log.info(
-      {
-        planId,
-        provider: meta.provider,
-        model: meta.model,
-        durationMs: meta.durationMs,
-        inputTokens: meta.inputTokens,
-        outputTokens: meta.outputTokens,
-        evidence: context.stats.evidence,
-        validation: result.report?.status ?? null,
-        errors: issues.filter((i) => i.severity === "error").length,
-        warnings: issues.filter((i) => i.severity === "warning").length,
-        failureReason: result.ok ? null : result.reason,
-      },
-      result.ok ? "plan generated" : "plan failed",
-    );
-    await prisma.engineeringPlan.update({
-      where: { id: planId },
-      data: {
-        status: result.ok ? "COMPLETED" : "FAILED",
-        model: meta.model,
-        plan: result.ok ? (result.plan as unknown as Prisma.InputJsonValue) : undefined,
-        validation: result.report ? (result.report as unknown as Prisma.InputJsonValue) : undefined,
-        validationStatus: result.report?.status ?? null,
-        confidence: result.ok ? result.report.confidence : null,
-        contextStats: context.stats as unknown as Prisma.InputJsonValue,
-        inputTokens: meta.inputTokens,
-        outputTokens: meta.outputTokens,
-        durationMs: meta.durationMs,
-        failureReason: result.ok ? null : result.reason,
-        error: result.ok ? null : result.message,
-        finishedAt: new Date(),
-      },
-    });
+    await enqueueEngineering({ type: "plan", planId: plan.id });
   } catch (err) {
-    // Internal details stay in the log (no prompt, plan or credentials are part of these errors).
-    log.error({ planId, err: err instanceof Error ? { name: err.name, message: err.message } : String(err) }, "planner crashed");
     await prisma.engineeringPlan
-      .update({ where: { id: planId }, data: { status: "FAILED", failureReason: "internal-error", error: "Planning failed unexpectedly.", finishedAt: new Date() } })
+      .update({ where: { id: plan.id }, data: { status: "FAILED", failureReason: "queue-error", error: "Could not queue the plan. Please try again.", finishedAt: new Date() } })
       .catch(() => undefined);
+    throw err;
   }
+  return planSummary(plan);
 }
 
 /** The latest plan of an owned task with its evidence; `null` before any plan was requested. */

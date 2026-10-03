@@ -48,10 +48,12 @@ const TRANSITIONS: Record<EngineeringRunStatus, readonly EngineeringRunStatus[]>
   QUEUED: ["MATERIALIZING", ...ABORT],
   MATERIALIZING: ["GENERATING", ...ABORT],
   GENERATING: ["VALIDATING", ...ABORT],
-  // Every proposed edit rejected: a repair attempt may follow while iterations remain.
-  VALIDATING: ["APPLYING", "REPAIRING", ...ABORT],
-  // READY_FOR_REVIEW directly when the sandbox is disabled.
-  APPLYING: ["AWAITING_APPROVAL", "TESTING", "READY_FOR_REVIEW", ...ABORT],
+  // Every proposed edit rejected: a repair attempt may follow while iterations remain; when none remain after an
+  // earlier iteration applied changes, that result goes to review (READY_FOR_REVIEW).
+  VALIDATING: ["APPLYING", "REPAIRING", "READY_FOR_REVIEW", ...ABORT],
+  // READY_FOR_REVIEW directly when the sandbox is disabled. INSTALLING/TESTING only on repair iterations of a run whose
+  // command the user already approved (each test run gets a fresh sandbox, so dependencies are installed again).
+  APPLYING: ["AWAITING_APPROVAL", "INSTALLING", "TESTING", "READY_FOR_REVIEW", ...ABORT],
   // Leaving AWAITING_APPROVAL for INSTALLING/TESTING requires the user's approval of the command
   // (enforced by the caller, which records it); READY_FOR_REVIEW when the user skips the tests.
   AWAITING_APPROVAL: ["INSTALLING", "TESTING", "READY_FOR_REVIEW", ...ABORT],

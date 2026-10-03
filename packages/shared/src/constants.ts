@@ -51,3 +51,5 @@ export const REPOSITORY_SOURCES = ["GITHUB", "GITLAB", "ZIP", "DEMO"] as const;
 export type RepositorySource = (typeof REPOSITORY_SOURCES)[number];
 
 export const ANALYSIS_QUEUE_NAME = "analysis";
+/** Engineering planner and code-engine jobs (Phase 8): run by the worker, never by the web process. */
+export const ENGINEERING_QUEUE_NAME = "engineering";

@@ -863,7 +863,7 @@ export type $EngineeringChangePayload<ExtArgs extends runtime.Types.Extensions.I
     beforeHash: string | null
     afterHash: string | null
     /**
-     * Unified diff of an applied change (redacted); null when rejected.
+     * Unified diff of an applied change against the previous iteration's result (contains code); null when rejected.
      */
     diff: string | null
     additions: number

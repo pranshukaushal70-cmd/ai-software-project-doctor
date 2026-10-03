@@ -4,8 +4,8 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { scanRepository, uploadPath, uploadsDir, verifyFiles, type FetchCommitOptions } from "@pd/analyzer";
 import { loadLimits, type AnalyzerLimits } from "@pd/shared";
-import { buildZip } from "../../../packages/analyzer/test/zip-builder";
-import { DEFAULT_DEMO_DIR, materializeRepository, type MaterializeSource } from "./materialize";
+import { buildZip } from "../../analyzer/test/zip-builder";
+import { DEFAULT_DEMO_DIR, materializeRepository, type MaterializeSource } from "../src/materialize";
 
 let workspaceDir: string;
 let runDir: string;

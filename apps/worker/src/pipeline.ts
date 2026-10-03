@@ -18,7 +18,7 @@ import { createSecurityScanner } from "@pd/analyzer/security";
 import type { AnalysisStage, Prisma, PrismaClient } from "@pd/db";
 import { AppError, stageProgress, type AnalyzerLimits } from "@pd/shared";
 import type { Logger } from "@pd/shared/logger";
-import { copyDemoProject, DEFAULT_DEMO_DIR, extractUpload } from "./materialize";
+import { copyDemoProject, DEFAULT_DEMO_DIR, extractUpload } from "@pd/engine";
 import {
   buildArchitectureEdgeRows,
   buildArchitectureMetricRows,

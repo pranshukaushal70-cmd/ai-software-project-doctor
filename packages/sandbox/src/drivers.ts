@@ -19,10 +19,14 @@ export class FakeSandbox implements SandboxDriver {
   readonly name = "fake";
   readonly opened: Array<{ runId: string; workspaceDir: string; setup: TestSetup }> = [];
   readonly calls: Array<"install" | "test" | "close"> = [];
+  /** Scripted test results, consumed across sessions in order (the last one repeats). */
+  private readonly tests: Array<Partial<ExecutionResult>>;
   constructor(
     private readonly script: { install?: Partial<ExecutionResult>; test?: Array<Partial<ExecutionResult>> } = {},
     private readonly opts: { installEnabled?: boolean; unavailable?: string } = {},
-  ) {}
+  ) {
+    this.tests = [...(script.test ?? [])];
+  }
 
   async status(): Promise<SandboxStatus> {
     return this.opts.unavailable ? { available: false, reason: this.opts.unavailable } : { available: true, installEnabled: this.opts.installEnabled ?? false };
@@ -34,7 +38,7 @@ export class FakeSandbox implements SandboxDriver {
       const cmd = kind === "INSTALL" ? setup.install! : setup.test;
       return { kind, commandId: cmd.id, command: cmd.display, image: setup.image, network: kind === "INSTALL", exitCode: 0, timedOut: false, durationMs: 10, output: "", outputTruncated: false, ...over };
     };
-    const tests = [...(this.script.test ?? [])];
+    const tests = this.tests;
     return {
       install: async () => {
         this.calls.push("install");

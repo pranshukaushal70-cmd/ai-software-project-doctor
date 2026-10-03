@@ -1,6 +1,7 @@
 import "server-only";
-import { RepositoryGraph, type GraphRoute, type ImpactResult, type ImpactTarget, type IntelligenceSummary } from "@pd/analyzer/intelligence";
+import type { ImpactResult, ImpactTarget, RepositoryGraph } from "@pd/analyzer/intelligence";
 import { getPrisma, type Prisma } from "@pd/db";
+import { loadRepositoryGraph, type StoredSummary } from "@pd/engine/control";
 import type { ContextRequest, ImpactQuery, ImportsQuery, ReferencesQuery, SymbolsQuery } from "@pd/shared";
 import type { getOwnedAnalysis } from "./analysis-service";
 
@@ -11,12 +12,6 @@ import type { getOwnedAnalysis } from "./analysis-service";
  */
 
 type OwnedAnalysis = Awaited<ReturnType<typeof getOwnedAnalysis>>;
-
-interface StoredSummary {
-  intelligence?: IntelligenceSummary;
-  practices?: { api?: { list?: GraphRoute[] } };
-  architecture?: { modules?: Array<{ key: string; fanIn: number; fanOut: number; instability: number; inCycle: boolean; layer: string | null }> };
-}
 
 export const summaryOf = (a: OwnedAnalysis) => (a.summary ?? {}) as StoredSummary;
 /** Analyses made before analyzer 0.6.0 have no index; endpoints then answer `indexed: false`. */
@@ -31,29 +26,6 @@ export const isIndexed = (a: OwnedAnalysis) => a.status === "COMPLETED" && !!sum
 const CACHE_SIZE = 4;
 const graphs = new Map<string, Promise<RepositoryGraph>>();
 
-async function loadGraph(a: OwnedAnalysis): Promise<RepositoryGraph> {
-  const prisma = getPrisma();
-  const analysisId = a.id;
-  const [files, edges, symbols, references] = await Promise.all([
-    prisma.file.findMany({ where: { analysisId }, select: { id: true, path: true, kind: true } }),
-    prisma.fileDependency.findMany({ where: { analysisId, kind: "INTERNAL" }, select: { fromFileId: true, toFileId: true } }),
-    prisma.codeSymbol.findMany({
-      where: { analysisId },
-      select: { id: true, fileId: true, name: true, kind: true, parent: true, exported: true, line: true, endLine: true, signature: true },
-    }),
-    prisma.symbolReference.findMany({ where: { analysisId }, select: { fileId: true, fromSymbolId: true, targetSymbolId: true, name: true, receiver: true, line: true } }),
-  ]);
-  const summary = summaryOf(a);
-  return new RepositoryGraph({
-    files,
-    edges: edges.filter((e) => e.toFileId).map((e) => ({ from: e.fromFileId, to: e.toFileId! })),
-    symbols,
-    references,
-    routes: summary.practices?.api?.list ?? [],
-    moduleDepth: summary.intelligence?.moduleDepth ?? 1,
-  });
-}
-
 export function graphFor(a: OwnedAnalysis): Promise<RepositoryGraph> {
   const cached = graphs.get(a.id);
   if (cached) {
@@ -62,7 +34,7 @@ export function graphFor(a: OwnedAnalysis): Promise<RepositoryGraph> {
     graphs.set(a.id, cached);
     return cached;
   }
-  const loading = loadGraph(a);
+  const loading = loadRepositoryGraph(getPrisma(), a);
   graphs.set(a.id, loading);
   loading.catch(() => graphs.delete(a.id));
   while (graphs.size > CACHE_SIZE) graphs.delete(graphs.keys().next().value!);
