@@ -254,8 +254,8 @@ describe("runAnalysis", () => {
     expect(JSON.stringify(summary)).not.toContain(workspaceDir);
     expect(JSON.stringify(summary)).not.toContain("Xk92_mq7PzLw");
 
-    // The upload and the extraction workspace are removed afterwards.
-    await expect(stat(uploadPath(workspaceDir, key))).rejects.toThrow();
+    // The extraction workspace is removed; the archive of a completed analysis is kept for the code engine (Phase 8).
+    await expect(stat(uploadPath(workspaceDir, key))).resolves.toBeTruthy();
     expect(await readdir(path.join(workspaceDir, "runs"))).toEqual([]);
   });
 
@@ -326,11 +326,14 @@ describe("runAnalysis", () => {
   });
 
   it("marks the analysis failed (not stuck RUNNING) when clean-up of a previous attempt fails", async () => {
-    const analysis = zipAnalysis(await stageUpload());
+    const key = await stageUpload();
+    const analysis = zipAnalysis(key);
     const { prisma } = fakePrisma(analysis, { failOn: "dependency.deleteMany" });
     await runAnalysis("an1", { prisma, limits, log: silentLog });
     expect(analysis).toMatchObject({ status: "FAILED", error: "Analysis failed due to an internal error" });
     expect(String(analysis.error)).not.toContain("simulated");
+    // Nothing can use the archive of a failed analysis, so it is deleted at once.
+    await expect(stat(uploadPath(workspaceDir, key))).rejects.toThrow();
   });
 
   it("does not redo an analysis that already completed", async () => {

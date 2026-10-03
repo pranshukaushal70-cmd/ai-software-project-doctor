@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ENGINEERING_RUN_LIMITS } from "./engine";
 import { DEPENDENCY_ECOSYSTEMS, FINDING_CATEGORIES, SEVERITIES, SYMBOL_KINDS } from "./constants";
 
 export const emailSchema = z.email().max(254).transform((v) => v.toLowerCase());
@@ -106,6 +107,17 @@ export const analysisJobSchema = z.object({
 });
 export type AnalysisJob = z.infer<typeof analysisJobSchema>;
 
+/**
+ * Payloads on the BullMQ engineering queue (Phase 8). A run is processed in two
+ * jobs: "start" (materialise, generate, validate, apply, then wait for the user)
+ * and "execute" (after the user approved the test command: install, test, repair).
+ */
+export const engineeringJobSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("plan"), planId: idSchema }),
+  z.object({ type: z.literal("run"), runId: idSchema, phase: z.enum(["start", "execute"]) }),
+]);
+export type EngineeringJob = z.infer<typeof engineeringJobSchema>;
+
 // ---------------------------------------------------------------- repository intelligence (Phase 6)
 
 /**
@@ -203,3 +215,21 @@ export const engineeringTaskSchema = z
   })
   .strict();
 export type EngineeringTaskInput = z.infer<typeof engineeringTaskSchema>;
+
+// ---------------------------------------------------------------- code engine (Phase 8)
+
+const budget = (l: { min: number; max: number }) => z.number().int().min(l.min).max(l.max).optional();
+
+/** Starting a code-engine run for an approved plan; budgets default to ENGINEERING_RUN_LIMITS. */
+export const engineeringRunInputSchema = z
+  .object({
+    maxIterations: budget(ENGINEERING_RUN_LIMITS.maxIterations),
+    tokenBudget: budget(ENGINEERING_RUN_LIMITS.tokenBudget),
+    maxDurationSeconds: budget(ENGINEERING_RUN_LIMITS.maxDurationSeconds),
+  })
+  .strict();
+export type EngineeringRunInput = z.infer<typeof engineeringRunInputSchema>;
+
+/** Approving the sandboxed test run: the separate install step is opted into explicitly. */
+export const executionApprovalSchema = z.object({ install: z.boolean().default(false) }).strict();
+export type ExecutionApproval = z.infer<typeof executionApprovalSchema>;

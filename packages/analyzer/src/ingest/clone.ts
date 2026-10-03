@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { lstat, mkdir, readdir } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { AppError, parseRepositoryUrl } from "@pd/shared";
@@ -21,6 +22,8 @@ interface RunResult {
   stdout: string;
   stderr: string;
   timedOut: boolean;
+  /** Killed because `signal` was aborted (e.g. a size limit was exceeded). */
+  aborted: boolean;
 }
 
 /**
@@ -66,7 +69,7 @@ function gitEnv(): NodeJS.ProcessEnv {
   return env as NodeJS.ProcessEnv;
 }
 
-export function runGit(args: string[], opts: { cwd?: string; timeoutMs: number }): Promise<RunResult> {
+export function runGit(args: string[], opts: { cwd?: string; timeoutMs: number; signal?: AbortSignal }): Promise<RunResult> {
   const fullArgs = HARDENED_CONFIG.flatMap((c) => ["-c", c]).concat(args);
   const isWindows = process.platform === "win32";
   return new Promise((resolve, reject) => {
@@ -76,21 +79,29 @@ export function runGit(args: string[], opts: { cwd?: string; timeoutMs: number }
     let stdout = "";
     let stderr = "";
     let timedOut = false;
+    let aborted = false;
     let settled = false;
     const finish = (code: number | null) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve({ code, stdout, stderr, timedOut });
+      opts.signal?.removeEventListener("abort", onAbort);
+      resolve({ code, stdout, stderr, timedOut, aborted });
     };
     const timer = setTimeout(() => {
       timedOut = true;
       killTree(child.pid, () => child.kill("SIGKILL"));
     }, opts.timeoutMs);
+    const onAbort = () => {
+      aborted = true;
+      killTree(child.pid, () => child.kill("SIGKILL"));
+    };
+    if (opts.signal?.aborted) onAbort();
+    else opts.signal?.addEventListener("abort", onAbort, { once: true });
     // A helper process that survives the kill keeps stdout/stderr open, so after a
     // timeout 'close' may never come: settle on 'exit' of git itself instead.
     child.on("exit", (code) => {
-      if (timedOut) finish(code);
+      if (timedOut || aborted) finish(code);
     });
     child.stdout.on("data", (d: Buffer) => {
       if (stdout.length < 50 * 1024 * 1024) stdout += d.toString("utf8");
@@ -102,6 +113,7 @@ export function runGit(args: string[], opts: { cwd?: string; timeoutMs: number }
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      opts.signal?.removeEventListener("abort", onAbort);
       reject(err);
     });
     child.on("close", finish);
@@ -163,4 +175,100 @@ export function describeCloneFailure(stderr: string): string {
   }
   if (/Could not resolve host|unable to access/i.test(stderr)) return "Could not reach the repository host";
   return "Repository could not be cloned";
+}
+
+// ---------------------------------------------------------------- fetch one commit (code engine, Phase 8)
+
+export interface FetchCommitOptions {
+  url: string;
+  /** Full commit id (40 hex characters, or 64 for SHA-256 repositories). */
+  commitSha: string;
+  destDir: string;
+  timeoutMs: number;
+  /** Disk space the fetched repository (objects and checked-out files) may use. */
+  maxBytes: number;
+}
+
+const COMMIT_SHA = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
+const SIZE_POLL_MS = 1000;
+
+/**
+ * Re-creates the working tree of exactly one commit of a public repository: the
+ * commit an analysis was made from, so the code engine edits what was analysed and
+ * not whatever the branch points to now. Same hardened git configuration as
+ * cloneRepository (no hooks, no submodules, no LFS, https only); only that commit
+ * is fetched (depth 1). The repository's size on disk is watched while git runs,
+ * and git is killed as soon as it exceeds `maxBytes`.
+ */
+export async function fetchCommit(opts: FetchCommitOptions): Promise<CloneResult> {
+  const parsed = parseRepositoryUrl(opts.url);
+  if (!COMMIT_SHA.test(opts.commitSha)) throw new AppError("VALIDATION_ERROR", "Invalid commit id");
+  const dir = path.resolve(opts.destDir, "repo");
+  await mkdir(dir, { recursive: true });
+  const deadline = Date.now() + opts.timeoutMs;
+  const remaining = () => Math.max(1, deadline - Date.now());
+
+  const watcher = watchDirectorySize(dir, opts.maxBytes);
+  try {
+    const steps: string[][] = [
+      // No template directory: nothing (not even sample hooks) is copied into the repository.
+      ["init", "--quiet", "--template=", "--", dir],
+      ["fetch", "--quiet", "--no-tags", "--depth=1", "--", parsed.cloneUrl, opts.commitSha],
+      ["checkout", "--quiet", "--detach", "FETCH_HEAD"],
+    ];
+    for (const args of steps) {
+      const result = await runGit(args, { cwd: dir, timeoutMs: remaining(), signal: watcher.signal });
+      if (result.aborted) throw new AppError("CLONE_FAILED", `The repository exceeds the ${Math.round(opts.maxBytes / 1024 / 1024)} MB size limit`);
+      if (result.timedOut) throw new AppError("CLONE_FAILED", `Fetching the repository timed out after ${Math.round(opts.timeoutMs / 1000)}s`);
+      if (result.code !== 0) throw new AppError("CLONE_FAILED", describeFetchFailure(result.stderr), { details: { gitExitCode: result.code } });
+    }
+  } finally {
+    watcher.stop();
+  }
+  // The watcher polls; a fetch that finished between two polls is measured once more.
+  if ((await directorySize(dir)) > opts.maxBytes) throw new AppError("CLONE_FAILED", `The repository exceeds the ${Math.round(opts.maxBytes / 1024 / 1024)} MB size limit`);
+  const rev = await runGit(["rev-parse", "HEAD"], { cwd: dir, timeoutMs: 10_000 });
+  if (rev.stdout.trim() !== opts.commitSha) throw new AppError("CLONE_FAILED", "The fetched commit does not match the analysed commit");
+  return { dir, commitSha: opts.commitSha };
+}
+
+export function describeFetchFailure(stderr: string): string {
+  // The commit was force-pushed away or garbage-collected upstream.
+  if (/not our ref|couldn't find remote ref|unadvertised object|no such remote ref|reference is not a tree/i.test(stderr)) {
+    return "The analysed commit is no longer available from the repository; run a new analysis";
+  }
+  return describeCloneFailure(stderr);
+}
+
+/** Total size of the regular files under `dir` (symlinks are not followed). */
+export async function directorySize(dir: string): Promise<number> {
+  let total = 0;
+  const pending = [dir];
+  while (pending.length) {
+    const current = pending.pop()!;
+    const entries = await readdir(current, { withFileTypes: true }).catch(() => []);
+    for (const e of entries) {
+      const full = path.join(current, e.name);
+      if (e.isDirectory()) pending.push(full);
+      else if (e.isFile()) total += (await lstat(full).catch(() => null))?.size ?? 0;
+    }
+  }
+  return total;
+}
+
+/** Aborts `signal` as soon as `dir` grows beyond `maxBytes`; polled while git runs. */
+export function watchDirectorySize(dir: string, maxBytes: number, intervalMs = SIZE_POLL_MS): { signal: AbortSignal; stop(): void } {
+  const controller = new AbortController();
+  let busy = false;
+  const timer = setInterval(() => {
+    if (busy || controller.signal.aborted) return;
+    busy = true;
+    directorySize(dir)
+      .then((size) => {
+        if (size > maxBytes) controller.abort();
+      })
+      .finally(() => (busy = false));
+  }, intervalMs);
+  timer.unref?.();
+  return { signal: controller.signal, stop: () => clearInterval(timer) };
 }

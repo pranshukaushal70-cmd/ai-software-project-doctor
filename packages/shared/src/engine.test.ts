@@ -25,6 +25,10 @@ describe("engineering run lifecycle", () => {
     expect(walk(["APPLYING", "AWAITING_APPROVAL", "READY_FOR_REVIEW"])).toBe(true);
     // Every proposed edit rejected, then repaired.
     expect(walk(["VALIDATING", "REPAIRING", "VALIDATING"])).toBe(true);
+    // A repair that produces nothing valid: the earlier result goes to review.
+    expect(walk(["TESTING", "REPAIRING", "VALIDATING", "READY_FOR_REVIEW"])).toBe(true);
+    // Repair iteration of an approved run with the install step.
+    expect(walk(["REPAIRING", "VALIDATING", "APPLYING", "INSTALLING", "TESTING"])).toBe(true);
   });
 
   it("refuses to skip stages", () => {
@@ -56,7 +60,9 @@ describe("engineering run lifecycle", () => {
       const sources = ENGINEERING_RUN_STATUSES.filter((s) => canTransition(s, to));
       expect(sources.every((s) => ["AWAITING_APPROVAL", "APPLYING", "INSTALLING"].includes(s))).toBe(true);
     }
-    expect(canTransition("APPLYING", "INSTALLING")).toBe(false); // installs only right after the approval
+    // A repair iteration re-installs in its fresh sandbox; the approval gates are enforced by transitionRun.
+    expect(canTransition("APPLYING", "INSTALLING")).toBe(true);
+    expect(canTransition("MATERIALIZING", "TESTING")).toBe(false);
   });
 
   it("classifies statuses consistently", () => {

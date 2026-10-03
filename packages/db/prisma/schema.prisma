@@ -650,6 +650,14 @@ model EngineeringRun {
   executionApprovedAt DateTime?
   /// Set by a cancel request while the worker holds the run; the worker stops at the next step.
   cancelRequestedAt   DateTime?
+  /// The model's description of the latest change and its notes for the reviewer (string[]), scrubbed.
+  summary             String?
+  notes               Json?
+  /// Cumulative git-format patch from the analysed source to the current result: what the user downloads.
+  /// Contains repository code (context and changed lines), so it is never logged and is deleted with the run.
+  patch               String?
+  /// The resolved, allowlisted test setup shown before approval (ids, command lines, image, notes); null when none.
+  testSetup           Json?
   /// Machine-readable failure reason and user-safe message when FAILED.
   failureReason       String?
   error               String?
@@ -680,7 +688,7 @@ model EngineeringChange {
   /// SHA-256 of the file before and after the change (null when it does not exist).
   beforeHash String?
   afterHash  String?
-  /// Unified diff of an applied change (redacted); null when rejected.
+  /// Unified diff of an applied change against the previous iteration's result (contains code); null when rejected.
   diff       String?
   additions  Int                        @default(0)
   deletions  Int                        @default(0)

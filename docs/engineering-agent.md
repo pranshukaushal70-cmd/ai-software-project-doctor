@@ -59,7 +59,8 @@ unit-tested against a real index without a database or an LLM.
    `EngineeringTask`. Nothing is planned or executed yet.
 2. **Plan request.** `POST /api/engineering/tasks/:id/plan` checks ownership and that no plan for the task is in
    progress, resolves the configured provider (409 when none is configured), stores a `PENDING` `EngineeringPlan` with
-   provider and model, responds `202`, and runs the rest after the response (Next.js `after()`).
+   provider and model, queues an engineering job and responds `202`. The worker runs the rest (`executePlanJob` in
+   `@pd/engine`; since Phase 8 planning no longer runs in the web process).
 3. **Context retrieval** (`buildPlanningContext`, deterministic). In order, with the limits below:
    manifest facts (languages, frameworks, runtimes, test frameworks, test and source directories) → keyword search over
    the task and constraints → the highest-scoring files, their matching symbols and routes → for the top files: their
@@ -201,19 +202,22 @@ All cascade from the user and the analysis. Migration: `20261005120000_engineeri
 - Retrieval is lexical (Phase 6 keyword search with light stemming): a task phrased with words that appear nowhere in
   file, symbol or route names can retrieve little, and the plan then says so through UNKNOWN claims and low confidence.
 - Validation checks that referenced files and symbols exist, not that the plan is a good one.
-- Plans run inside the web process after the response. A plan in progress when the server stops is reported as failed
-  after 15 minutes; moving planning to the worker queue is a candidate for Phase 8.
+- Plans run in the worker (engineering queue). A plan still in progress after 15 minutes (e.g. the worker stopped) is
+  reported as failed. The provider is checked in the web tier when a plan is requested (so a missing configuration is
+  reported at once) and created again in the worker, so both need the AI provider settings.
 - Shell-command detection is pattern-based and errs on the side of removing text that names a command.
 
-## Future: Phase 8 (not implemented)
+## Phase 8: the code engine (in progress)
 
-The planner is designed as the first stage of an agent loop:
+The planner is the first stage of the code engine:
 
 ```
-task → plan (Phase 7, validated) → human approval → edit proposal in an isolated sandbox
-     → tests run in the sandbox → diff + results reviewed → (optional) branch / pull request
+task → plan (Phase 7, validated) → plan approval → edits generated, validated and applied in an isolated workspace
+     → test-command approval → tests in a disposable sandbox (repairs within budget) → diff reviewed → patch download
 ```
 
-The plan's affected files, symbols and test plan would scope what an executor may touch, validated with the same
-index checks, and every step would require explicit approval. Execution would happen only inside a disposable container
-with no network or secrets, never in the web or worker processes. None of this exists yet.
+The approved plan's files and tests scope what the engine may change, every step that runs repository code needs an
+explicit approval, and tests run only in a disposable container without network or secrets. No branch, push or pull
+request is created; the result is a patch the user downloads. Implemented so far: the run lifecycle and plan approval,
+rebuilding the analysed source, edit generation and validation, the sandbox, and the worker orchestration
+(`@pd/engine`). The run API and UI and the full documentation follow.
