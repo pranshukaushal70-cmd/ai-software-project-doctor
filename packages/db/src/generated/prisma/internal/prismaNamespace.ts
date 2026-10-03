@@ -2604,10 +2604,24 @@ export type FixSuggestionScalarFieldEnum = (typeof FixSuggestionScalarFieldEnum)
 
 export const ReportScalarFieldEnum = {
   id: 'id',
+  userId: 'userId',
+  repositoryId: 'repositoryId',
   analysisId: 'analysisId',
-  format: 'format',
-  storagePath: 'storagePath',
-  createdAt: 'createdAt'
+  planId: 'planId',
+  runId: 'runId',
+  type: 'type',
+  subjectKey: 'subjectKey',
+  status: 'status',
+  outcome: 'outcome',
+  version: 'version',
+  title: 'title',
+  summary: 'summary',
+  errorCount: 'errorCount',
+  warningCount: 'warningCount',
+  fingerprint: 'fingerprint',
+  data: 'data',
+  generatedAt: 'generatedAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
@@ -3069,16 +3083,44 @@ export type ListEnumRecommendationSourceFieldRefInput<$PrismaModel> = FieldRefIn
 
 
 /**
- * Reference to a field of type 'ReportFormat'
+ * Reference to a field of type 'ReportType'
  */
-export type EnumReportFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportFormat'>
+export type EnumReportTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportType'>
     
 
 
 /**
- * Reference to a field of type 'ReportFormat[]'
+ * Reference to a field of type 'ReportType[]'
  */
-export type ListEnumReportFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportFormat[]'>
+export type ListEnumReportTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportStatus'
+ */
+export type EnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportStatus[]'
+ */
+export type ListEnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportOutcome'
+ */
+export type EnumReportOutcomeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportOutcome'>
+    
+
+
+/**
+ * Reference to a field of type 'ReportOutcome[]'
+ */
+export type ListEnumReportOutcomeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportOutcome[]'>
     
 
 

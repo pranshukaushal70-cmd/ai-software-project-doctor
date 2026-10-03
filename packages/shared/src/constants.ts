@@ -53,3 +53,11 @@ export type RepositorySource = (typeof REPOSITORY_SOURCES)[number];
 export const ANALYSIS_QUEUE_NAME = "analysis";
 /** Engineering planner and code-engine jobs (Phase 8): run by the worker, never by the web process. */
 export const ENGINEERING_QUEUE_NAME = "engineering";
+
+/** Reports (Phase 9). Must match the Prisma enums ReportType, ReportStatus and ReportOutcome. */
+export const REPORT_TYPES = ["ANALYSIS", "PLAN", "RUN"] as const;
+export type ReportTypeName = (typeof REPORT_TYPES)[number];
+export const REPORT_STATUSES = ["COMPLETE", "PARTIAL"] as const;
+export type ReportStatusName = (typeof REPORT_STATUSES)[number];
+export const REPORT_OUTCOMES = ["COMPLETED", "TESTS_PASSED", "TESTS_FAILED", "NOT_TESTED", "DISCARDED", "FAILED", "CANCELLED", "IN_PROGRESS", "AWAITING_APPROVAL"] as const;
+export type ReportOutcomeName = (typeof REPORT_OUTCOMES)[number];

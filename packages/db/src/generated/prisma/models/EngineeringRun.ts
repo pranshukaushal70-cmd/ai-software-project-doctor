@@ -410,6 +410,7 @@ export type EngineeringRunWhereInput = {
   changes?: Prisma.EngineeringChangeListRelationFilter
   executions?: Prisma.SandboxExecutionListRelationFilter
   events?: Prisma.EngineeringRunEventListRelationFilter
+  reports?: Prisma.ReportListRelationFilter
 }
 
 export type EngineeringRunOrderByWithRelationInput = {
@@ -445,6 +446,7 @@ export type EngineeringRunOrderByWithRelationInput = {
   changes?: Prisma.EngineeringChangeOrderByRelationAggregateInput
   executions?: Prisma.SandboxExecutionOrderByRelationAggregateInput
   events?: Prisma.EngineeringRunEventOrderByRelationAggregateInput
+  reports?: Prisma.ReportOrderByRelationAggregateInput
 }
 
 export type EngineeringRunWhereUniqueInput = Prisma.AtLeast<{
@@ -483,6 +485,7 @@ export type EngineeringRunWhereUniqueInput = Prisma.AtLeast<{
   changes?: Prisma.EngineeringChangeListRelationFilter
   executions?: Prisma.SandboxExecutionListRelationFilter
   events?: Prisma.EngineeringRunEventListRelationFilter
+  reports?: Prisma.ReportListRelationFilter
 }, "id">
 
 export type EngineeringRunOrderByWithAggregationInput = {
@@ -584,6 +587,7 @@ export type EngineeringRunCreateInput = {
   changes?: Prisma.EngineeringChangeCreateNestedManyWithoutRunInput
   executions?: Prisma.SandboxExecutionCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunUncheckedCreateInput = {
@@ -617,6 +621,7 @@ export type EngineeringRunUncheckedCreateInput = {
   changes?: Prisma.EngineeringChangeUncheckedCreateNestedManyWithoutRunInput
   executions?: Prisma.SandboxExecutionUncheckedCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventUncheckedCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunUpdateInput = {
@@ -650,6 +655,7 @@ export type EngineeringRunUpdateInput = {
   changes?: Prisma.EngineeringChangeUpdateManyWithoutRunNestedInput
   executions?: Prisma.SandboxExecutionUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunUncheckedUpdateInput = {
@@ -683,6 +689,7 @@ export type EngineeringRunUncheckedUpdateInput = {
   changes?: Prisma.EngineeringChangeUncheckedUpdateManyWithoutRunNestedInput
   executions?: Prisma.SandboxExecutionUncheckedUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUncheckedUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunCreateManyInput = {
@@ -781,6 +788,11 @@ export type EngineeringRunListRelationFilter = {
 
 export type EngineeringRunOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type EngineeringRunNullableScalarRelationFilter = {
+  is?: Prisma.EngineeringRunWhereInput | null
+  isNot?: Prisma.EngineeringRunWhereInput | null
 }
 
 export type EngineeringRunCountOrderByAggregateInput = {
@@ -934,6 +946,22 @@ export type EngineeringRunUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.EngineeringRunScalarWhereInput | Prisma.EngineeringRunScalarWhereInput[]
 }
 
+export type EngineeringRunCreateNestedOneWithoutReportsInput = {
+  create?: Prisma.XOR<Prisma.EngineeringRunCreateWithoutReportsInput, Prisma.EngineeringRunUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.EngineeringRunCreateOrConnectWithoutReportsInput
+  connect?: Prisma.EngineeringRunWhereUniqueInput
+}
+
+export type EngineeringRunUpdateOneWithoutReportsNestedInput = {
+  create?: Prisma.XOR<Prisma.EngineeringRunCreateWithoutReportsInput, Prisma.EngineeringRunUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.EngineeringRunCreateOrConnectWithoutReportsInput
+  upsert?: Prisma.EngineeringRunUpsertWithoutReportsInput
+  disconnect?: Prisma.EngineeringRunWhereInput | boolean
+  delete?: Prisma.EngineeringRunWhereInput | boolean
+  connect?: Prisma.EngineeringRunWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EngineeringRunUpdateToOneWithWhereWithoutReportsInput, Prisma.EngineeringRunUpdateWithoutReportsInput>, Prisma.EngineeringRunUncheckedUpdateWithoutReportsInput>
+}
+
 export type EngineeringRunCreateNestedManyWithoutPlanInput = {
   create?: Prisma.XOR<Prisma.EngineeringRunCreateWithoutPlanInput, Prisma.EngineeringRunUncheckedCreateWithoutPlanInput> | Prisma.EngineeringRunCreateWithoutPlanInput[] | Prisma.EngineeringRunUncheckedCreateWithoutPlanInput[]
   connectOrCreate?: Prisma.EngineeringRunCreateOrConnectWithoutPlanInput | Prisma.EngineeringRunCreateOrConnectWithoutPlanInput[]
@@ -1052,6 +1080,7 @@ export type EngineeringRunCreateWithoutUserInput = {
   changes?: Prisma.EngineeringChangeCreateNestedManyWithoutRunInput
   executions?: Prisma.SandboxExecutionCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunUncheckedCreateWithoutUserInput = {
@@ -1084,6 +1113,7 @@ export type EngineeringRunUncheckedCreateWithoutUserInput = {
   changes?: Prisma.EngineeringChangeUncheckedCreateNestedManyWithoutRunInput
   executions?: Prisma.SandboxExecutionUncheckedCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventUncheckedCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunCreateOrConnectWithoutUserInput = {
@@ -1145,6 +1175,154 @@ export type EngineeringRunScalarWhereInput = {
   finishedAt?: Prisma.DateTimeNullableFilter<"EngineeringRun"> | Date | string | null
 }
 
+export type EngineeringRunCreateWithoutReportsInput = {
+  id?: string
+  status?: $Enums.EngineeringRunStatus
+  provider: string
+  model: string
+  commitSha?: string | null
+  maxIterations: number
+  tokenBudget: number
+  maxDurationSeconds: number
+  iteration?: number
+  inputTokens?: number
+  outputTokens?: number
+  testCommand?: string | null
+  installApproved?: boolean
+  executionApprovedAt?: Date | string | null
+  cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  failureReason?: string | null
+  error?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  plan: Prisma.EngineeringPlanCreateNestedOneWithoutRunsInput
+  user: Prisma.UserCreateNestedOneWithoutEngineeringRunsInput
+  changes?: Prisma.EngineeringChangeCreateNestedManyWithoutRunInput
+  executions?: Prisma.SandboxExecutionCreateNestedManyWithoutRunInput
+  events?: Prisma.EngineeringRunEventCreateNestedManyWithoutRunInput
+}
+
+export type EngineeringRunUncheckedCreateWithoutReportsInput = {
+  id?: string
+  planId: string
+  userId: string
+  status?: $Enums.EngineeringRunStatus
+  provider: string
+  model: string
+  commitSha?: string | null
+  maxIterations: number
+  tokenBudget: number
+  maxDurationSeconds: number
+  iteration?: number
+  inputTokens?: number
+  outputTokens?: number
+  testCommand?: string | null
+  installApproved?: boolean
+  executionApprovedAt?: Date | string | null
+  cancelRequestedAt?: Date | string | null
+  summary?: string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  failureReason?: string | null
+  error?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  changes?: Prisma.EngineeringChangeUncheckedCreateNestedManyWithoutRunInput
+  executions?: Prisma.SandboxExecutionUncheckedCreateNestedManyWithoutRunInput
+  events?: Prisma.EngineeringRunEventUncheckedCreateNestedManyWithoutRunInput
+}
+
+export type EngineeringRunCreateOrConnectWithoutReportsInput = {
+  where: Prisma.EngineeringRunWhereUniqueInput
+  create: Prisma.XOR<Prisma.EngineeringRunCreateWithoutReportsInput, Prisma.EngineeringRunUncheckedCreateWithoutReportsInput>
+}
+
+export type EngineeringRunUpsertWithoutReportsInput = {
+  update: Prisma.XOR<Prisma.EngineeringRunUpdateWithoutReportsInput, Prisma.EngineeringRunUncheckedUpdateWithoutReportsInput>
+  create: Prisma.XOR<Prisma.EngineeringRunCreateWithoutReportsInput, Prisma.EngineeringRunUncheckedCreateWithoutReportsInput>
+  where?: Prisma.EngineeringRunWhereInput
+}
+
+export type EngineeringRunUpdateToOneWithWhereWithoutReportsInput = {
+  where?: Prisma.EngineeringRunWhereInput
+  data: Prisma.XOR<Prisma.EngineeringRunUpdateWithoutReportsInput, Prisma.EngineeringRunUncheckedUpdateWithoutReportsInput>
+}
+
+export type EngineeringRunUpdateWithoutReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumEngineeringRunStatusFieldUpdateOperationsInput | $Enums.EngineeringRunStatus
+  provider?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  commitSha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maxIterations?: Prisma.IntFieldUpdateOperationsInput | number
+  tokenBudget?: Prisma.IntFieldUpdateOperationsInput | number
+  maxDurationSeconds?: Prisma.IntFieldUpdateOperationsInput | number
+  iteration?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.IntFieldUpdateOperationsInput | number
+  outputTokens?: Prisma.IntFieldUpdateOperationsInput | number
+  testCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  plan?: Prisma.EngineeringPlanUpdateOneRequiredWithoutRunsNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutEngineeringRunsNestedInput
+  changes?: Prisma.EngineeringChangeUpdateManyWithoutRunNestedInput
+  executions?: Prisma.SandboxExecutionUpdateManyWithoutRunNestedInput
+  events?: Prisma.EngineeringRunEventUpdateManyWithoutRunNestedInput
+}
+
+export type EngineeringRunUncheckedUpdateWithoutReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumEngineeringRunStatusFieldUpdateOperationsInput | $Enums.EngineeringRunStatus
+  provider?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  commitSha?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maxIterations?: Prisma.IntFieldUpdateOperationsInput | number
+  tokenBudget?: Prisma.IntFieldUpdateOperationsInput | number
+  maxDurationSeconds?: Prisma.IntFieldUpdateOperationsInput | number
+  iteration?: Prisma.IntFieldUpdateOperationsInput | number
+  inputTokens?: Prisma.IntFieldUpdateOperationsInput | number
+  outputTokens?: Prisma.IntFieldUpdateOperationsInput | number
+  testCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  installApproved?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  executionApprovedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancelRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  patch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  testSetup?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  changes?: Prisma.EngineeringChangeUncheckedUpdateManyWithoutRunNestedInput
+  executions?: Prisma.SandboxExecutionUncheckedUpdateManyWithoutRunNestedInput
+  events?: Prisma.EngineeringRunEventUncheckedUpdateManyWithoutRunNestedInput
+}
+
 export type EngineeringRunCreateWithoutPlanInput = {
   id?: string
   status?: $Enums.EngineeringRunStatus
@@ -1175,6 +1353,7 @@ export type EngineeringRunCreateWithoutPlanInput = {
   changes?: Prisma.EngineeringChangeCreateNestedManyWithoutRunInput
   executions?: Prisma.SandboxExecutionCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunUncheckedCreateWithoutPlanInput = {
@@ -1207,6 +1386,7 @@ export type EngineeringRunUncheckedCreateWithoutPlanInput = {
   changes?: Prisma.EngineeringChangeUncheckedCreateNestedManyWithoutRunInput
   executions?: Prisma.SandboxExecutionUncheckedCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventUncheckedCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunCreateOrConnectWithoutPlanInput = {
@@ -1265,6 +1445,7 @@ export type EngineeringRunCreateWithoutChangesInput = {
   user: Prisma.UserCreateNestedOneWithoutEngineeringRunsInput
   executions?: Prisma.SandboxExecutionCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunUncheckedCreateWithoutChangesInput = {
@@ -1297,6 +1478,7 @@ export type EngineeringRunUncheckedCreateWithoutChangesInput = {
   finishedAt?: Date | string | null
   executions?: Prisma.SandboxExecutionUncheckedCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventUncheckedCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunCreateOrConnectWithoutChangesInput = {
@@ -1345,6 +1527,7 @@ export type EngineeringRunUpdateWithoutChangesInput = {
   user?: Prisma.UserUpdateOneRequiredWithoutEngineeringRunsNestedInput
   executions?: Prisma.SandboxExecutionUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunUncheckedUpdateWithoutChangesInput = {
@@ -1377,6 +1560,7 @@ export type EngineeringRunUncheckedUpdateWithoutChangesInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   executions?: Prisma.SandboxExecutionUncheckedUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUncheckedUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunCreateWithoutExecutionsInput = {
@@ -1409,6 +1593,7 @@ export type EngineeringRunCreateWithoutExecutionsInput = {
   user: Prisma.UserCreateNestedOneWithoutEngineeringRunsInput
   changes?: Prisma.EngineeringChangeCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunUncheckedCreateWithoutExecutionsInput = {
@@ -1441,6 +1626,7 @@ export type EngineeringRunUncheckedCreateWithoutExecutionsInput = {
   finishedAt?: Date | string | null
   changes?: Prisma.EngineeringChangeUncheckedCreateNestedManyWithoutRunInput
   events?: Prisma.EngineeringRunEventUncheckedCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunCreateOrConnectWithoutExecutionsInput = {
@@ -1489,6 +1675,7 @@ export type EngineeringRunUpdateWithoutExecutionsInput = {
   user?: Prisma.UserUpdateOneRequiredWithoutEngineeringRunsNestedInput
   changes?: Prisma.EngineeringChangeUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunUncheckedUpdateWithoutExecutionsInput = {
@@ -1521,6 +1708,7 @@ export type EngineeringRunUncheckedUpdateWithoutExecutionsInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   changes?: Prisma.EngineeringChangeUncheckedUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUncheckedUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunCreateWithoutEventsInput = {
@@ -1553,6 +1741,7 @@ export type EngineeringRunCreateWithoutEventsInput = {
   user: Prisma.UserCreateNestedOneWithoutEngineeringRunsInput
   changes?: Prisma.EngineeringChangeCreateNestedManyWithoutRunInput
   executions?: Prisma.SandboxExecutionCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunUncheckedCreateWithoutEventsInput = {
@@ -1585,6 +1774,7 @@ export type EngineeringRunUncheckedCreateWithoutEventsInput = {
   finishedAt?: Date | string | null
   changes?: Prisma.EngineeringChangeUncheckedCreateNestedManyWithoutRunInput
   executions?: Prisma.SandboxExecutionUncheckedCreateNestedManyWithoutRunInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRunInput
 }
 
 export type EngineeringRunCreateOrConnectWithoutEventsInput = {
@@ -1633,6 +1823,7 @@ export type EngineeringRunUpdateWithoutEventsInput = {
   user?: Prisma.UserUpdateOneRequiredWithoutEngineeringRunsNestedInput
   changes?: Prisma.EngineeringChangeUpdateManyWithoutRunNestedInput
   executions?: Prisma.SandboxExecutionUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunUncheckedUpdateWithoutEventsInput = {
@@ -1665,6 +1856,7 @@ export type EngineeringRunUncheckedUpdateWithoutEventsInput = {
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   changes?: Prisma.EngineeringChangeUncheckedUpdateManyWithoutRunNestedInput
   executions?: Prisma.SandboxExecutionUncheckedUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunCreateManyUserInput = {
@@ -1726,6 +1918,7 @@ export type EngineeringRunUpdateWithoutUserInput = {
   changes?: Prisma.EngineeringChangeUpdateManyWithoutRunNestedInput
   executions?: Prisma.SandboxExecutionUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunUncheckedUpdateWithoutUserInput = {
@@ -1758,6 +1951,7 @@ export type EngineeringRunUncheckedUpdateWithoutUserInput = {
   changes?: Prisma.EngineeringChangeUncheckedUpdateManyWithoutRunNestedInput
   executions?: Prisma.SandboxExecutionUncheckedUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUncheckedUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunUncheckedUpdateManyWithoutUserInput = {
@@ -1848,6 +2042,7 @@ export type EngineeringRunUpdateWithoutPlanInput = {
   changes?: Prisma.EngineeringChangeUpdateManyWithoutRunNestedInput
   executions?: Prisma.SandboxExecutionUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunUncheckedUpdateWithoutPlanInput = {
@@ -1880,6 +2075,7 @@ export type EngineeringRunUncheckedUpdateWithoutPlanInput = {
   changes?: Prisma.EngineeringChangeUncheckedUpdateManyWithoutRunNestedInput
   executions?: Prisma.SandboxExecutionUncheckedUpdateManyWithoutRunNestedInput
   events?: Prisma.EngineeringRunEventUncheckedUpdateManyWithoutRunNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRunNestedInput
 }
 
 export type EngineeringRunUncheckedUpdateManyWithoutPlanInput = {
@@ -1920,12 +2116,14 @@ export type EngineeringRunCountOutputType = {
   changes: number
   executions: number
   events: number
+  reports: number
 }
 
 export type EngineeringRunCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   changes?: boolean | EngineeringRunCountOutputTypeCountChangesArgs
   executions?: boolean | EngineeringRunCountOutputTypeCountExecutionsArgs
   events?: boolean | EngineeringRunCountOutputTypeCountEventsArgs
+  reports?: boolean | EngineeringRunCountOutputTypeCountReportsArgs
 }
 
 /**
@@ -1957,6 +2155,13 @@ export type EngineeringRunCountOutputTypeCountExecutionsArgs<ExtArgs extends run
  */
 export type EngineeringRunCountOutputTypeCountEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.EngineeringRunEventWhereInput
+}
+
+/**
+ * EngineeringRunCountOutputType without action
+ */
+export type EngineeringRunCountOutputTypeCountReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReportWhereInput
 }
 
 
@@ -1993,6 +2198,7 @@ export type EngineeringRunSelect<ExtArgs extends runtime.Types.Extensions.Intern
   changes?: boolean | Prisma.EngineeringRun$changesArgs<ExtArgs>
   executions?: boolean | Prisma.EngineeringRun$executionsArgs<ExtArgs>
   events?: boolean | Prisma.EngineeringRun$eventsArgs<ExtArgs>
+  reports?: boolean | Prisma.EngineeringRun$reportsArgs<ExtArgs>
   _count?: boolean | Prisma.EngineeringRunCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["engineeringRun"]>
 
@@ -2097,6 +2303,7 @@ export type EngineeringRunInclude<ExtArgs extends runtime.Types.Extensions.Inter
   changes?: boolean | Prisma.EngineeringRun$changesArgs<ExtArgs>
   executions?: boolean | Prisma.EngineeringRun$executionsArgs<ExtArgs>
   events?: boolean | Prisma.EngineeringRun$eventsArgs<ExtArgs>
+  reports?: boolean | Prisma.EngineeringRun$reportsArgs<ExtArgs>
   _count?: boolean | Prisma.EngineeringRunCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EngineeringRunIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2116,6 +2323,7 @@ export type $EngineeringRunPayload<ExtArgs extends runtime.Types.Extensions.Inte
     changes: Prisma.$EngineeringChangePayload<ExtArgs>[]
     executions: Prisma.$SandboxExecutionPayload<ExtArgs>[]
     events: Prisma.$EngineeringRunEventPayload<ExtArgs>[]
+    reports: Prisma.$ReportPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2581,6 +2789,7 @@ export interface Prisma__EngineeringRunClient<T, Null = never, ExtArgs extends r
   changes<T extends Prisma.EngineeringRun$changesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EngineeringRun$changesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EngineeringChangePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   executions<T extends Prisma.EngineeringRun$executionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EngineeringRun$executionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SandboxExecutionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   events<T extends Prisma.EngineeringRun$eventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EngineeringRun$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EngineeringRunEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reports<T extends Prisma.EngineeringRun$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EngineeringRun$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3107,6 +3316,30 @@ export type EngineeringRun$eventsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.EngineeringRunEventScalarFieldEnum | Prisma.EngineeringRunEventScalarFieldEnum[]
+}
+
+/**
+ * EngineeringRun.reports
+ */
+export type EngineeringRun$reportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Report
+   */
+  select?: Prisma.ReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Report
+   */
+  omit?: Prisma.ReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReportInclude<ExtArgs> | null
+  where?: Prisma.ReportWhereInput
+  orderBy?: Prisma.ReportOrderByWithRelationInput | Prisma.ReportOrderByWithRelationInput[]
+  cursor?: Prisma.ReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReportScalarFieldEnum | Prisma.ReportScalarFieldEnum[]
 }
 
 /**

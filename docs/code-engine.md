@@ -170,6 +170,18 @@ Found and fixed during the verification: (1) tests that fail because their depen
 round (a model call that cannot help); such failures now go to review as "not repaired"; (2) the run timeline squeezed
 messages into a one-character column at 390 px; messages now take their own line on narrow screens.
 
+## Reports
+
+A run (or a plan) can be turned into a report: an immutable snapshot of the whole chain from the repository to the final
+result, with changes, validation, tests and security. Reports never contain diffs or patches; the report page loads a
+diff from the run while the run keeps it. See [reports.md](reports.md).
+
+## Changes after Phase 8
+
+- **Cancellation (fixed in Phase 9):** a cancel requested while the worker was applying changes could be lost, leaving
+  the run waiting for test approval. The worker now checks for a cancel request right before handing a run to the user,
+  so such a run ends `CANCELLED` (found by the Phase 9 end-to-end check; covered by a test).
+
 ## Known limitations
 
 - The real model's editing behaviour has not been verified end to end (no API key was configured); unit tests use a

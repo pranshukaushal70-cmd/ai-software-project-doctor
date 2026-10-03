@@ -11,8 +11,9 @@ explain, prioritise and recommend, and it must cite the evidence it uses.
 detection), 4 (dependency & architecture analysis) and 5 (API, database, testing and documentation analysis, an
 explainable health score and a demo project), 6 (repository intelligence: manifest, symbol index, dependency graph,
 impact analysis and an agent context API), 7 (an AI engineering planner that turns a task into an evidence-backed,
-validated plan) and 8 (a code engine that turns an approved plan into a validated change, runs the repository's tests in
-an isolated sandbox after a second approval, and hands over a patch) are implemented and tested.** See [Roadmap](#roadmap) and
+validated plan), 8 (a code engine that turns an approved plan into a validated change, runs the repository's tests in
+an isolated sandbox after a second approval, and hands over a patch) and 9 (reports: immutable, redacted snapshots of
+what was found, planned, changed, validated and tested) are implemented and tested.** See [Roadmap](#roadmap) and
 [Verification status](#verification-status). Nothing described as "planned" below is implemented yet.
 
 ## Problem statement
@@ -51,9 +52,10 @@ Planner / code engine (Phase 7–8), engineering queue in the same worker:
 | `packages/agent` | Engineering planner and code-engine editing: context, providers, schemas, validation, diffs |
 | `packages/engine` | Planner and code-engine jobs, run controls, source rebuilding |
 | `packages/sandbox` | Disposable Docker sandbox for approved test runs |
+| `packages/reports` | Report snapshots: collection, deterministic building, redaction, storage, Markdown export |
 
 More detail: [docs/architecture.md](docs/architecture.md), [docs/security.md](docs/security.md), [docs/api.md](docs/api.md),
-[docs/code-engine.md](docs/code-engine.md).
+[docs/code-engine.md](docs/code-engine.md), [docs/reports.md](docs/reports.md).
 
 ## What it analyses today
 
@@ -70,6 +72,7 @@ Each completed analysis has one tab per module:
 | Health | Explainable health score (Phase 5) | 0–100 score and grade from eight weighted dimensions, with every deduction listed; triaged findings excluded; capped while critical/high security findings are open |
 | Planner | AI engineering planner (Phase 7) | Planner page: describe a task, get a plan (affected files and symbols, steps, test plan, configuration and dependency changes, security, performance, risks, validation plan) generated from repository-index evidence; every claim marked VERIFIED, INFERRED or UNKNOWN with cited evidence; nonexistent files and symbols flagged, secrets and shell commands removed. See [docs/engineering-agent.md](docs/engineering-agent.md). **Code engine (Phase 8):** approve a plan, and the engine proposes the change in an isolated copy of the analysed source: per-file diffs with validation flags; with a second approval it runs the repository's tests in a disposable sandbox and repairs failures within a budget; download the patch or discard it. Nothing is committed or pushed. See [docs/code-engine.md](docs/code-engine.md) |
 | Intelligence | Repository intelligence (Phase 6) | Repository manifest (languages, frameworks, runtimes, manifests, Docker, CI, infrastructure), symbol search with callers, resolved file dependencies, deterministic impact analysis (dependants, tests, routes, config, modules), most depended-upon files, external packages, unresolved imports, file tree. See [docs/repository-intelligence.md](docs/repository-intelligence.md) |
+| Reports (page) | Reports (Phase 9) | Generate a report about an analysis, a plan or a code-engine run: an executive summary with the step-by-step chain (repository → analysis → plan → approval → run → changes → validation → tests → result, each passed / failed / skipped / pending / not executed / unavailable), then repository, analysis, plan, approval, run, changes, validation, tests, security, errors and warnings, limitations and timeline. Built only from stored data, immutable, de-duplicated, redacted; never claims success without a passing test run. Markdown and JSON export. See [docs/reports.md](docs/reports.md) |
 | All findings | — | Every finding with evidence, impact and recommendation, filterable by severity and type |
 
 The same data is available from the API, including `GET /api/analysis/:id/dependencies` and
@@ -175,14 +178,30 @@ the sandbox gives the worker Docker access, which is root-equivalent on the Dock
 | 7 | AI engineering planner: provider layer (Anthropic default, deterministic baseline), evidence retrieval from the index, validated evidence-cited plans, Planner page | Implemented and tested |
 | — | Evidence-cited recommendations and fix suggestions on findings | Planned |
 | 8 | Code engine: plan approval, rebuilt analysed source, validated edits, approved tests in a disposable Docker sandbox with repair, patch download (no commit/push); planner moved to the worker | Implemented and tested (E2E with a stub model) |
-| 9 | Reports (PDF/JSON/Markdown/HTML) | Planned |
+| 9 | Reports: analysis, plan and run reports as immutable redacted snapshots, Reports page and report view, Markdown/JSON export, report API | Implemented and tested (E2E with a stub model) |
 | 10 | Dockerised web/worker, CI, E2E tests, benchmark & evaluation | Planned |
 
 ## Verification status
 
-`npm test` (Vitest, all workspaces): **715 tests in 45 files passing**, plus 4 real-Docker sandbox tests that run only
-with `PD_DOCKER_TESTS=1` (all passing on 2026-10-03); `npm run typecheck` is clean for all eight workspaces and
+`npm test` (Vitest, all workspaces): **746 tests in 48 files passing**, plus 4 real-Docker sandbox tests that run only
+with `PD_DOCKER_TESTS=1` (all passing on 2026-10-03); `npm run typecheck` is clean for all nine workspaces and
 `npm run build` succeeds.
+
+| Area (Phase 9) | Tests |
+|---|---|
+| Report building and storage: analysis (completed, failed, in progress), plan (approved, superseded, rejected), run (tests passed, failed, not run, skipped, awaiting approval, in progress, failed, cancelled, discarded), no secrets/evidence/code in snapshots, hostile content, Markdown escaping, determinism, de-duplication (also under a race), historical snapshots, ownership, list filters and pagination | 16 |
+| Report API (generate, list, filters, pagination, latest, export; validation, 401/403/404/429, other users' reports) and report UI (sections, statuses, partial reports, security findings, escaping, large reports, list, empty and failure states) | 6 + 8 |
+| Code engine: a cancel requested while changes are applied is honoured (bug found by the Phase 9 end-to-end check) | 1 |
+
+**End to end (Phase 9, on 2026-10-03)** with the production build, the worker, PostgreSQL, Redis and Docker (sandbox and
+install step enabled; local model stub, no API key): reports were generated for an analysis, for a plan before and after
+its approval, and for runs whose tests passed (a dependency-free project: `npm test` exit 0 in the sandbox → `TESTS_PASSED`,
+every chain step passed), failed (the demo: exit 127 → `TESTS_FAILED`), were cancelled, waited for approval (`PARTIAL`) and
+were discarded (the earlier report kept its result, the new one says `DISCARDED`). Regenerating unchanged data returned the
+same report; another user got 404 everywhere; cross-site and unauthenticated requests were refused. No report contained a
+secret, code or a diff, and logs carried ids and outcomes only. The Reports pages passed in headless Chrome (list and filter,
+detail sections, a diff loaded from the run, the "diff no longer stored" case, generation from the analysis page, Markdown
+download, dark mode, 390 px, no console errors). Details: [docs/reports.md](docs/reports.md).
 
 | Area (Phase 8) | Tests |
 |---|---|

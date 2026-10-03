@@ -14,64 +14,171 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model Report
- * 
+ * An immutable, redacted snapshot of what the Project Doctor recorded about one analysis, plan or run.
+ * Generating again with unchanged underlying data returns the existing report (same fingerprint).
  */
 export type ReportModel = runtime.Types.Result.DefaultSelection<Prisma.$ReportPayload>
 
 export type AggregateReport = {
   _count: ReportCountAggregateOutputType | null
+  _avg: ReportAvgAggregateOutputType | null
+  _sum: ReportSumAggregateOutputType | null
   _min: ReportMinAggregateOutputType | null
   _max: ReportMaxAggregateOutputType | null
 }
 
+export type ReportAvgAggregateOutputType = {
+  version: number | null
+  errorCount: number | null
+  warningCount: number | null
+}
+
+export type ReportSumAggregateOutputType = {
+  version: number | null
+  errorCount: number | null
+  warningCount: number | null
+}
+
 export type ReportMinAggregateOutputType = {
   id: string | null
+  userId: string | null
+  repositoryId: string | null
   analysisId: string | null
-  format: $Enums.ReportFormat | null
-  storagePath: string | null
-  createdAt: Date | null
+  planId: string | null
+  runId: string | null
+  type: $Enums.ReportType | null
+  subjectKey: string | null
+  status: $Enums.ReportStatus | null
+  outcome: $Enums.ReportOutcome | null
+  version: number | null
+  title: string | null
+  summary: string | null
+  errorCount: number | null
+  warningCount: number | null
+  fingerprint: string | null
+  generatedAt: Date | null
+  updatedAt: Date | null
 }
 
 export type ReportMaxAggregateOutputType = {
   id: string | null
+  userId: string | null
+  repositoryId: string | null
   analysisId: string | null
-  format: $Enums.ReportFormat | null
-  storagePath: string | null
-  createdAt: Date | null
+  planId: string | null
+  runId: string | null
+  type: $Enums.ReportType | null
+  subjectKey: string | null
+  status: $Enums.ReportStatus | null
+  outcome: $Enums.ReportOutcome | null
+  version: number | null
+  title: string | null
+  summary: string | null
+  errorCount: number | null
+  warningCount: number | null
+  fingerprint: string | null
+  generatedAt: Date | null
+  updatedAt: Date | null
 }
 
 export type ReportCountAggregateOutputType = {
   id: number
+  userId: number
+  repositoryId: number
   analysisId: number
-  format: number
-  storagePath: number
-  createdAt: number
+  planId: number
+  runId: number
+  type: number
+  subjectKey: number
+  status: number
+  outcome: number
+  version: number
+  title: number
+  summary: number
+  errorCount: number
+  warningCount: number
+  fingerprint: number
+  data: number
+  generatedAt: number
+  updatedAt: number
   _all: number
 }
 
 
+export type ReportAvgAggregateInputType = {
+  version?: true
+  errorCount?: true
+  warningCount?: true
+}
+
+export type ReportSumAggregateInputType = {
+  version?: true
+  errorCount?: true
+  warningCount?: true
+}
+
 export type ReportMinAggregateInputType = {
   id?: true
+  userId?: true
+  repositoryId?: true
   analysisId?: true
-  format?: true
-  storagePath?: true
-  createdAt?: true
+  planId?: true
+  runId?: true
+  type?: true
+  subjectKey?: true
+  status?: true
+  outcome?: true
+  version?: true
+  title?: true
+  summary?: true
+  errorCount?: true
+  warningCount?: true
+  fingerprint?: true
+  generatedAt?: true
+  updatedAt?: true
 }
 
 export type ReportMaxAggregateInputType = {
   id?: true
+  userId?: true
+  repositoryId?: true
   analysisId?: true
-  format?: true
-  storagePath?: true
-  createdAt?: true
+  planId?: true
+  runId?: true
+  type?: true
+  subjectKey?: true
+  status?: true
+  outcome?: true
+  version?: true
+  title?: true
+  summary?: true
+  errorCount?: true
+  warningCount?: true
+  fingerprint?: true
+  generatedAt?: true
+  updatedAt?: true
 }
 
 export type ReportCountAggregateInputType = {
   id?: true
+  userId?: true
+  repositoryId?: true
   analysisId?: true
-  format?: true
-  storagePath?: true
-  createdAt?: true
+  planId?: true
+  runId?: true
+  type?: true
+  subjectKey?: true
+  status?: true
+  outcome?: true
+  version?: true
+  title?: true
+  summary?: true
+  errorCount?: true
+  warningCount?: true
+  fingerprint?: true
+  data?: true
+  generatedAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -113,6 +220,18 @@ export type ReportAggregateArgs<ExtArgs extends runtime.Types.Extensions.Interna
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: ReportAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: ReportSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: ReportMinAggregateInputType
@@ -143,17 +262,35 @@ export type ReportGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   _count?: ReportCountAggregateInputType | true
+  _avg?: ReportAvgAggregateInputType
+  _sum?: ReportSumAggregateInputType
   _min?: ReportMinAggregateInputType
   _max?: ReportMaxAggregateInputType
 }
 
 export type ReportGroupByOutputType = {
   id: string
+  userId: string
+  repositoryId: string
   analysisId: string
-  format: $Enums.ReportFormat
-  storagePath: string
-  createdAt: Date
+  planId: string | null
+  runId: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount: number
+  warningCount: number
+  fingerprint: string
+  data: runtime.JsonValue
+  generatedAt: Date
+  updatedAt: Date
   _count: ReportCountAggregateOutputType | null
+  _avg: ReportAvgAggregateOutputType | null
+  _sum: ReportSumAggregateOutputType | null
   _min: ReportMinAggregateOutputType | null
   _max: ReportMaxAggregateOutputType | null
 }
@@ -178,43 +315,114 @@ export type ReportWhereInput = {
   OR?: Prisma.ReportWhereInput[]
   NOT?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
   id?: Prisma.StringFilter<"Report"> | string
+  userId?: Prisma.StringFilter<"Report"> | string
+  repositoryId?: Prisma.StringFilter<"Report"> | string
   analysisId?: Prisma.StringFilter<"Report"> | string
-  format?: Prisma.EnumReportFormatFilter<"Report"> | $Enums.ReportFormat
-  storagePath?: Prisma.StringFilter<"Report"> | string
-  createdAt?: Prisma.DateTimeFilter<"Report"> | Date | string
+  planId?: Prisma.StringNullableFilter<"Report"> | string | null
+  runId?: Prisma.StringNullableFilter<"Report"> | string | null
+  type?: Prisma.EnumReportTypeFilter<"Report"> | $Enums.ReportType
+  subjectKey?: Prisma.StringFilter<"Report"> | string
+  status?: Prisma.EnumReportStatusFilter<"Report"> | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFilter<"Report"> | $Enums.ReportOutcome
+  version?: Prisma.IntFilter<"Report"> | number
+  title?: Prisma.StringFilter<"Report"> | string
+  summary?: Prisma.StringFilter<"Report"> | string
+  errorCount?: Prisma.IntFilter<"Report"> | number
+  warningCount?: Prisma.IntFilter<"Report"> | number
+  fingerprint?: Prisma.StringFilter<"Report"> | string
+  data?: Prisma.JsonFilter<"Report">
+  generatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  repository?: Prisma.XOR<Prisma.RepositoryScalarRelationFilter, Prisma.RepositoryWhereInput>
   analysis?: Prisma.XOR<Prisma.AnalysisScalarRelationFilter, Prisma.AnalysisWhereInput>
+  plan?: Prisma.XOR<Prisma.EngineeringPlanNullableScalarRelationFilter, Prisma.EngineeringPlanWhereInput> | null
+  run?: Prisma.XOR<Prisma.EngineeringRunNullableScalarRelationFilter, Prisma.EngineeringRunWhereInput> | null
 }
 
 export type ReportOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  repositoryId?: Prisma.SortOrder
   analysisId?: Prisma.SortOrder
-  format?: Prisma.SortOrder
-  storagePath?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  planId?: Prisma.SortOrderInput | Prisma.SortOrder
+  runId?: Prisma.SortOrderInput | Prisma.SortOrder
+  type?: Prisma.SortOrder
+  subjectKey?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  outcome?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
+  errorCount?: Prisma.SortOrder
+  warningCount?: Prisma.SortOrder
+  fingerprint?: Prisma.SortOrder
+  data?: Prisma.SortOrder
+  generatedAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  user?: Prisma.UserOrderByWithRelationInput
+  repository?: Prisma.RepositoryOrderByWithRelationInput
   analysis?: Prisma.AnalysisOrderByWithRelationInput
+  plan?: Prisma.EngineeringPlanOrderByWithRelationInput
+  run?: Prisma.EngineeringRunOrderByWithRelationInput
 }
 
 export type ReportWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  subjectKey_fingerprint?: Prisma.ReportSubjectKeyFingerprintCompoundUniqueInput
   AND?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
   OR?: Prisma.ReportWhereInput[]
   NOT?: Prisma.ReportWhereInput | Prisma.ReportWhereInput[]
+  userId?: Prisma.StringFilter<"Report"> | string
+  repositoryId?: Prisma.StringFilter<"Report"> | string
   analysisId?: Prisma.StringFilter<"Report"> | string
-  format?: Prisma.EnumReportFormatFilter<"Report"> | $Enums.ReportFormat
-  storagePath?: Prisma.StringFilter<"Report"> | string
-  createdAt?: Prisma.DateTimeFilter<"Report"> | Date | string
+  planId?: Prisma.StringNullableFilter<"Report"> | string | null
+  runId?: Prisma.StringNullableFilter<"Report"> | string | null
+  type?: Prisma.EnumReportTypeFilter<"Report"> | $Enums.ReportType
+  subjectKey?: Prisma.StringFilter<"Report"> | string
+  status?: Prisma.EnumReportStatusFilter<"Report"> | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFilter<"Report"> | $Enums.ReportOutcome
+  version?: Prisma.IntFilter<"Report"> | number
+  title?: Prisma.StringFilter<"Report"> | string
+  summary?: Prisma.StringFilter<"Report"> | string
+  errorCount?: Prisma.IntFilter<"Report"> | number
+  warningCount?: Prisma.IntFilter<"Report"> | number
+  fingerprint?: Prisma.StringFilter<"Report"> | string
+  data?: Prisma.JsonFilter<"Report">
+  generatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  repository?: Prisma.XOR<Prisma.RepositoryScalarRelationFilter, Prisma.RepositoryWhereInput>
   analysis?: Prisma.XOR<Prisma.AnalysisScalarRelationFilter, Prisma.AnalysisWhereInput>
-}, "id">
+  plan?: Prisma.XOR<Prisma.EngineeringPlanNullableScalarRelationFilter, Prisma.EngineeringPlanWhereInput> | null
+  run?: Prisma.XOR<Prisma.EngineeringRunNullableScalarRelationFilter, Prisma.EngineeringRunWhereInput> | null
+}, "id" | "subjectKey_fingerprint">
 
 export type ReportOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  repositoryId?: Prisma.SortOrder
   analysisId?: Prisma.SortOrder
-  format?: Prisma.SortOrder
-  storagePath?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  planId?: Prisma.SortOrderInput | Prisma.SortOrder
+  runId?: Prisma.SortOrderInput | Prisma.SortOrder
+  type?: Prisma.SortOrder
+  subjectKey?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  outcome?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
+  errorCount?: Prisma.SortOrder
+  warningCount?: Prisma.SortOrder
+  fingerprint?: Prisma.SortOrder
+  data?: Prisma.SortOrder
+  generatedAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.ReportCountOrderByAggregateInput
+  _avg?: Prisma.ReportAvgOrderByAggregateInput
   _max?: Prisma.ReportMaxOrderByAggregateInput
   _min?: Prisma.ReportMinOrderByAggregateInput
+  _sum?: Prisma.ReportSumOrderByAggregateInput
 }
 
 export type ReportScalarWhereWithAggregatesInput = {
@@ -222,65 +430,173 @@ export type ReportScalarWhereWithAggregatesInput = {
   OR?: Prisma.ReportScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ReportScalarWhereWithAggregatesInput | Prisma.ReportScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Report"> | string
+  userId?: Prisma.StringWithAggregatesFilter<"Report"> | string
+  repositoryId?: Prisma.StringWithAggregatesFilter<"Report"> | string
   analysisId?: Prisma.StringWithAggregatesFilter<"Report"> | string
-  format?: Prisma.EnumReportFormatWithAggregatesFilter<"Report"> | $Enums.ReportFormat
-  storagePath?: Prisma.StringWithAggregatesFilter<"Report"> | string
-  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Report"> | Date | string
+  planId?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  runId?: Prisma.StringNullableWithAggregatesFilter<"Report"> | string | null
+  type?: Prisma.EnumReportTypeWithAggregatesFilter<"Report"> | $Enums.ReportType
+  subjectKey?: Prisma.StringWithAggregatesFilter<"Report"> | string
+  status?: Prisma.EnumReportStatusWithAggregatesFilter<"Report"> | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeWithAggregatesFilter<"Report"> | $Enums.ReportOutcome
+  version?: Prisma.IntWithAggregatesFilter<"Report"> | number
+  title?: Prisma.StringWithAggregatesFilter<"Report"> | string
+  summary?: Prisma.StringWithAggregatesFilter<"Report"> | string
+  errorCount?: Prisma.IntWithAggregatesFilter<"Report"> | number
+  warningCount?: Prisma.IntWithAggregatesFilter<"Report"> | number
+  fingerprint?: Prisma.StringWithAggregatesFilter<"Report"> | string
+  data?: Prisma.JsonWithAggregatesFilter<"Report">
+  generatedAt?: Prisma.DateTimeWithAggregatesFilter<"Report"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Report"> | Date | string
 }
 
 export type ReportCreateInput = {
   id?: string
-  format: $Enums.ReportFormat
-  storagePath: string
-  createdAt?: Date | string
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+  repository: Prisma.RepositoryCreateNestedOneWithoutReportsInput
   analysis: Prisma.AnalysisCreateNestedOneWithoutReportsInput
+  plan?: Prisma.EngineeringPlanCreateNestedOneWithoutReportsInput
+  run?: Prisma.EngineeringRunCreateNestedOneWithoutReportsInput
 }
 
 export type ReportUncheckedCreateInput = {
   id?: string
+  userId: string
+  repositoryId: string
   analysisId: string
-  format: $Enums.ReportFormat
-  storagePath: string
-  createdAt?: Date | string
+  planId?: string | null
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ReportUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  format?: Prisma.EnumReportFormatFieldUpdateOperationsInput | $Enums.ReportFormat
-  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  repository?: Prisma.RepositoryUpdateOneRequiredWithoutReportsNestedInput
   analysis?: Prisma.AnalysisUpdateOneRequiredWithoutReportsNestedInput
+  plan?: Prisma.EngineeringPlanUpdateOneWithoutReportsNestedInput
+  run?: Prisma.EngineeringRunUpdateOneWithoutReportsNestedInput
 }
 
 export type ReportUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
   analysisId?: Prisma.StringFieldUpdateOperationsInput | string
-  format?: Prisma.EnumReportFormatFieldUpdateOperationsInput | $Enums.ReportFormat
-  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ReportCreateManyInput = {
   id?: string
+  userId: string
+  repositoryId: string
   analysisId: string
-  format: $Enums.ReportFormat
-  storagePath: string
-  createdAt?: Date | string
+  planId?: string | null
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ReportUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  format?: Prisma.EnumReportFormatFieldUpdateOperationsInput | $Enums.ReportFormat
-  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ReportUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
   analysisId?: Prisma.StringFieldUpdateOperationsInput | string
-  format?: Prisma.EnumReportFormatFieldUpdateOperationsInput | $Enums.ReportFormat
-  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ReportListRelationFilter = {
@@ -293,28 +609,169 @@ export type ReportOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type ReportSubjectKeyFingerprintCompoundUniqueInput = {
+  subjectKey: string
+  fingerprint: string
+}
+
 export type ReportCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  repositoryId?: Prisma.SortOrder
   analysisId?: Prisma.SortOrder
-  format?: Prisma.SortOrder
-  storagePath?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  planId?: Prisma.SortOrder
+  runId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  subjectKey?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  outcome?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
+  errorCount?: Prisma.SortOrder
+  warningCount?: Prisma.SortOrder
+  fingerprint?: Prisma.SortOrder
+  data?: Prisma.SortOrder
+  generatedAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+}
+
+export type ReportAvgOrderByAggregateInput = {
+  version?: Prisma.SortOrder
+  errorCount?: Prisma.SortOrder
+  warningCount?: Prisma.SortOrder
 }
 
 export type ReportMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  repositoryId?: Prisma.SortOrder
   analysisId?: Prisma.SortOrder
-  format?: Prisma.SortOrder
-  storagePath?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  planId?: Prisma.SortOrder
+  runId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  subjectKey?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  outcome?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
+  errorCount?: Prisma.SortOrder
+  warningCount?: Prisma.SortOrder
+  fingerprint?: Prisma.SortOrder
+  generatedAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type ReportMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  repositoryId?: Prisma.SortOrder
   analysisId?: Prisma.SortOrder
-  format?: Prisma.SortOrder
-  storagePath?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
+  planId?: Prisma.SortOrder
+  runId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  subjectKey?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  outcome?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  summary?: Prisma.SortOrder
+  errorCount?: Prisma.SortOrder
+  warningCount?: Prisma.SortOrder
+  fingerprint?: Prisma.SortOrder
+  generatedAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+}
+
+export type ReportSumOrderByAggregateInput = {
+  version?: Prisma.SortOrder
+  errorCount?: Prisma.SortOrder
+  warningCount?: Prisma.SortOrder
+}
+
+export type ReportCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutUserInput, Prisma.ReportUncheckedCreateWithoutUserInput> | Prisma.ReportCreateWithoutUserInput[] | Prisma.ReportUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutUserInput | Prisma.ReportCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ReportCreateManyUserInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
+export type ReportUncheckedCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutUserInput, Prisma.ReportUncheckedCreateWithoutUserInput> | Prisma.ReportCreateWithoutUserInput[] | Prisma.ReportUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutUserInput | Prisma.ReportCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ReportCreateManyUserInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
+export type ReportUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutUserInput, Prisma.ReportUncheckedCreateWithoutUserInput> | Prisma.ReportCreateWithoutUserInput[] | Prisma.ReportUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutUserInput | Prisma.ReportCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutUserInput | Prisma.ReportUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ReportCreateManyUserInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutUserInput | Prisma.ReportUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutUserInput | Prisma.ReportUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+}
+
+export type ReportUncheckedUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutUserInput, Prisma.ReportUncheckedCreateWithoutUserInput> | Prisma.ReportCreateWithoutUserInput[] | Prisma.ReportUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutUserInput | Prisma.ReportCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutUserInput | Prisma.ReportUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ReportCreateManyUserInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutUserInput | Prisma.ReportUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutUserInput | Prisma.ReportUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+}
+
+export type ReportCreateNestedManyWithoutRepositoryInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutRepositoryInput, Prisma.ReportUncheckedCreateWithoutRepositoryInput> | Prisma.ReportCreateWithoutRepositoryInput[] | Prisma.ReportUncheckedCreateWithoutRepositoryInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutRepositoryInput | Prisma.ReportCreateOrConnectWithoutRepositoryInput[]
+  createMany?: Prisma.ReportCreateManyRepositoryInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
+export type ReportUncheckedCreateNestedManyWithoutRepositoryInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutRepositoryInput, Prisma.ReportUncheckedCreateWithoutRepositoryInput> | Prisma.ReportCreateWithoutRepositoryInput[] | Prisma.ReportUncheckedCreateWithoutRepositoryInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutRepositoryInput | Prisma.ReportCreateOrConnectWithoutRepositoryInput[]
+  createMany?: Prisma.ReportCreateManyRepositoryInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
+export type ReportUpdateManyWithoutRepositoryNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutRepositoryInput, Prisma.ReportUncheckedCreateWithoutRepositoryInput> | Prisma.ReportCreateWithoutRepositoryInput[] | Prisma.ReportUncheckedCreateWithoutRepositoryInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutRepositoryInput | Prisma.ReportCreateOrConnectWithoutRepositoryInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutRepositoryInput | Prisma.ReportUpsertWithWhereUniqueWithoutRepositoryInput[]
+  createMany?: Prisma.ReportCreateManyRepositoryInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutRepositoryInput | Prisma.ReportUpdateWithWhereUniqueWithoutRepositoryInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutRepositoryInput | Prisma.ReportUpdateManyWithWhereWithoutRepositoryInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+}
+
+export type ReportUncheckedUpdateManyWithoutRepositoryNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutRepositoryInput, Prisma.ReportUncheckedCreateWithoutRepositoryInput> | Prisma.ReportCreateWithoutRepositoryInput[] | Prisma.ReportUncheckedCreateWithoutRepositoryInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutRepositoryInput | Prisma.ReportCreateOrConnectWithoutRepositoryInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutRepositoryInput | Prisma.ReportUpsertWithWhereUniqueWithoutRepositoryInput[]
+  createMany?: Prisma.ReportCreateManyRepositoryInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutRepositoryInput | Prisma.ReportUpdateWithWhereUniqueWithoutRepositoryInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutRepositoryInput | Prisma.ReportUpdateManyWithWhereWithoutRepositoryInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
 }
 
 export type ReportCreateNestedManyWithoutAnalysisInput = {
@@ -359,22 +816,303 @@ export type ReportUncheckedUpdateManyWithoutAnalysisNestedInput = {
   deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
 }
 
-export type EnumReportFormatFieldUpdateOperationsInput = {
-  set?: $Enums.ReportFormat
+export type EnumReportTypeFieldUpdateOperationsInput = {
+  set?: $Enums.ReportType
+}
+
+export type EnumReportStatusFieldUpdateOperationsInput = {
+  set?: $Enums.ReportStatus
+}
+
+export type EnumReportOutcomeFieldUpdateOperationsInput = {
+  set?: $Enums.ReportOutcome
+}
+
+export type ReportCreateNestedManyWithoutPlanInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutPlanInput, Prisma.ReportUncheckedCreateWithoutPlanInput> | Prisma.ReportCreateWithoutPlanInput[] | Prisma.ReportUncheckedCreateWithoutPlanInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutPlanInput | Prisma.ReportCreateOrConnectWithoutPlanInput[]
+  createMany?: Prisma.ReportCreateManyPlanInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
+export type ReportUncheckedCreateNestedManyWithoutPlanInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutPlanInput, Prisma.ReportUncheckedCreateWithoutPlanInput> | Prisma.ReportCreateWithoutPlanInput[] | Prisma.ReportUncheckedCreateWithoutPlanInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutPlanInput | Prisma.ReportCreateOrConnectWithoutPlanInput[]
+  createMany?: Prisma.ReportCreateManyPlanInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
+export type ReportUpdateManyWithoutPlanNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutPlanInput, Prisma.ReportUncheckedCreateWithoutPlanInput> | Prisma.ReportCreateWithoutPlanInput[] | Prisma.ReportUncheckedCreateWithoutPlanInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutPlanInput | Prisma.ReportCreateOrConnectWithoutPlanInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutPlanInput | Prisma.ReportUpsertWithWhereUniqueWithoutPlanInput[]
+  createMany?: Prisma.ReportCreateManyPlanInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutPlanInput | Prisma.ReportUpdateWithWhereUniqueWithoutPlanInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutPlanInput | Prisma.ReportUpdateManyWithWhereWithoutPlanInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+}
+
+export type ReportUncheckedUpdateManyWithoutPlanNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutPlanInput, Prisma.ReportUncheckedCreateWithoutPlanInput> | Prisma.ReportCreateWithoutPlanInput[] | Prisma.ReportUncheckedCreateWithoutPlanInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutPlanInput | Prisma.ReportCreateOrConnectWithoutPlanInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutPlanInput | Prisma.ReportUpsertWithWhereUniqueWithoutPlanInput[]
+  createMany?: Prisma.ReportCreateManyPlanInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutPlanInput | Prisma.ReportUpdateWithWhereUniqueWithoutPlanInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutPlanInput | Prisma.ReportUpdateManyWithWhereWithoutPlanInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+}
+
+export type ReportCreateNestedManyWithoutRunInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutRunInput, Prisma.ReportUncheckedCreateWithoutRunInput> | Prisma.ReportCreateWithoutRunInput[] | Prisma.ReportUncheckedCreateWithoutRunInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutRunInput | Prisma.ReportCreateOrConnectWithoutRunInput[]
+  createMany?: Prisma.ReportCreateManyRunInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
+export type ReportUncheckedCreateNestedManyWithoutRunInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutRunInput, Prisma.ReportUncheckedCreateWithoutRunInput> | Prisma.ReportCreateWithoutRunInput[] | Prisma.ReportUncheckedCreateWithoutRunInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutRunInput | Prisma.ReportCreateOrConnectWithoutRunInput[]
+  createMany?: Prisma.ReportCreateManyRunInputEnvelope
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+}
+
+export type ReportUpdateManyWithoutRunNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutRunInput, Prisma.ReportUncheckedCreateWithoutRunInput> | Prisma.ReportCreateWithoutRunInput[] | Prisma.ReportUncheckedCreateWithoutRunInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutRunInput | Prisma.ReportCreateOrConnectWithoutRunInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutRunInput | Prisma.ReportUpsertWithWhereUniqueWithoutRunInput[]
+  createMany?: Prisma.ReportCreateManyRunInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutRunInput | Prisma.ReportUpdateWithWhereUniqueWithoutRunInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutRunInput | Prisma.ReportUpdateManyWithWhereWithoutRunInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+}
+
+export type ReportUncheckedUpdateManyWithoutRunNestedInput = {
+  create?: Prisma.XOR<Prisma.ReportCreateWithoutRunInput, Prisma.ReportUncheckedCreateWithoutRunInput> | Prisma.ReportCreateWithoutRunInput[] | Prisma.ReportUncheckedCreateWithoutRunInput[]
+  connectOrCreate?: Prisma.ReportCreateOrConnectWithoutRunInput | Prisma.ReportCreateOrConnectWithoutRunInput[]
+  upsert?: Prisma.ReportUpsertWithWhereUniqueWithoutRunInput | Prisma.ReportUpsertWithWhereUniqueWithoutRunInput[]
+  createMany?: Prisma.ReportCreateManyRunInputEnvelope
+  set?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  disconnect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  delete?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  connect?: Prisma.ReportWhereUniqueInput | Prisma.ReportWhereUniqueInput[]
+  update?: Prisma.ReportUpdateWithWhereUniqueWithoutRunInput | Prisma.ReportUpdateWithWhereUniqueWithoutRunInput[]
+  updateMany?: Prisma.ReportUpdateManyWithWhereWithoutRunInput | Prisma.ReportUpdateManyWithWhereWithoutRunInput[]
+  deleteMany?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+}
+
+export type ReportCreateWithoutUserInput = {
+  id?: string
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+  repository: Prisma.RepositoryCreateNestedOneWithoutReportsInput
+  analysis: Prisma.AnalysisCreateNestedOneWithoutReportsInput
+  plan?: Prisma.EngineeringPlanCreateNestedOneWithoutReportsInput
+  run?: Prisma.EngineeringRunCreateNestedOneWithoutReportsInput
+}
+
+export type ReportUncheckedCreateWithoutUserInput = {
+  id?: string
+  repositoryId: string
+  analysisId: string
+  planId?: string | null
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportCreateOrConnectWithoutUserInput = {
+  where: Prisma.ReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReportCreateWithoutUserInput, Prisma.ReportUncheckedCreateWithoutUserInput>
+}
+
+export type ReportCreateManyUserInputEnvelope = {
+  data: Prisma.ReportCreateManyUserInput | Prisma.ReportCreateManyUserInput[]
+  skipDuplicates?: boolean
+}
+
+export type ReportUpsertWithWhereUniqueWithoutUserInput = {
+  where: Prisma.ReportWhereUniqueInput
+  update: Prisma.XOR<Prisma.ReportUpdateWithoutUserInput, Prisma.ReportUncheckedUpdateWithoutUserInput>
+  create: Prisma.XOR<Prisma.ReportCreateWithoutUserInput, Prisma.ReportUncheckedCreateWithoutUserInput>
+}
+
+export type ReportUpdateWithWhereUniqueWithoutUserInput = {
+  where: Prisma.ReportWhereUniqueInput
+  data: Prisma.XOR<Prisma.ReportUpdateWithoutUserInput, Prisma.ReportUncheckedUpdateWithoutUserInput>
+}
+
+export type ReportUpdateManyWithWhereWithoutUserInput = {
+  where: Prisma.ReportScalarWhereInput
+  data: Prisma.XOR<Prisma.ReportUpdateManyMutationInput, Prisma.ReportUncheckedUpdateManyWithoutUserInput>
+}
+
+export type ReportScalarWhereInput = {
+  AND?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+  OR?: Prisma.ReportScalarWhereInput[]
+  NOT?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
+  id?: Prisma.StringFilter<"Report"> | string
+  userId?: Prisma.StringFilter<"Report"> | string
+  repositoryId?: Prisma.StringFilter<"Report"> | string
+  analysisId?: Prisma.StringFilter<"Report"> | string
+  planId?: Prisma.StringNullableFilter<"Report"> | string | null
+  runId?: Prisma.StringNullableFilter<"Report"> | string | null
+  type?: Prisma.EnumReportTypeFilter<"Report"> | $Enums.ReportType
+  subjectKey?: Prisma.StringFilter<"Report"> | string
+  status?: Prisma.EnumReportStatusFilter<"Report"> | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFilter<"Report"> | $Enums.ReportOutcome
+  version?: Prisma.IntFilter<"Report"> | number
+  title?: Prisma.StringFilter<"Report"> | string
+  summary?: Prisma.StringFilter<"Report"> | string
+  errorCount?: Prisma.IntFilter<"Report"> | number
+  warningCount?: Prisma.IntFilter<"Report"> | number
+  fingerprint?: Prisma.StringFilter<"Report"> | string
+  data?: Prisma.JsonFilter<"Report">
+  generatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Report"> | Date | string
+}
+
+export type ReportCreateWithoutRepositoryInput = {
+  id?: string
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+  analysis: Prisma.AnalysisCreateNestedOneWithoutReportsInput
+  plan?: Prisma.EngineeringPlanCreateNestedOneWithoutReportsInput
+  run?: Prisma.EngineeringRunCreateNestedOneWithoutReportsInput
+}
+
+export type ReportUncheckedCreateWithoutRepositoryInput = {
+  id?: string
+  userId: string
+  analysisId: string
+  planId?: string | null
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportCreateOrConnectWithoutRepositoryInput = {
+  where: Prisma.ReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReportCreateWithoutRepositoryInput, Prisma.ReportUncheckedCreateWithoutRepositoryInput>
+}
+
+export type ReportCreateManyRepositoryInputEnvelope = {
+  data: Prisma.ReportCreateManyRepositoryInput | Prisma.ReportCreateManyRepositoryInput[]
+  skipDuplicates?: boolean
+}
+
+export type ReportUpsertWithWhereUniqueWithoutRepositoryInput = {
+  where: Prisma.ReportWhereUniqueInput
+  update: Prisma.XOR<Prisma.ReportUpdateWithoutRepositoryInput, Prisma.ReportUncheckedUpdateWithoutRepositoryInput>
+  create: Prisma.XOR<Prisma.ReportCreateWithoutRepositoryInput, Prisma.ReportUncheckedCreateWithoutRepositoryInput>
+}
+
+export type ReportUpdateWithWhereUniqueWithoutRepositoryInput = {
+  where: Prisma.ReportWhereUniqueInput
+  data: Prisma.XOR<Prisma.ReportUpdateWithoutRepositoryInput, Prisma.ReportUncheckedUpdateWithoutRepositoryInput>
+}
+
+export type ReportUpdateManyWithWhereWithoutRepositoryInput = {
+  where: Prisma.ReportScalarWhereInput
+  data: Prisma.XOR<Prisma.ReportUpdateManyMutationInput, Prisma.ReportUncheckedUpdateManyWithoutRepositoryInput>
 }
 
 export type ReportCreateWithoutAnalysisInput = {
   id?: string
-  format: $Enums.ReportFormat
-  storagePath: string
-  createdAt?: Date | string
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+  repository: Prisma.RepositoryCreateNestedOneWithoutReportsInput
+  plan?: Prisma.EngineeringPlanCreateNestedOneWithoutReportsInput
+  run?: Prisma.EngineeringRunCreateNestedOneWithoutReportsInput
 }
 
 export type ReportUncheckedCreateWithoutAnalysisInput = {
   id?: string
-  format: $Enums.ReportFormat
-  storagePath: string
-  createdAt?: Date | string
+  userId: string
+  repositoryId: string
+  planId?: string | null
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ReportCreateOrConnectWithoutAnalysisInput = {
@@ -403,104 +1141,737 @@ export type ReportUpdateManyWithWhereWithoutAnalysisInput = {
   data: Prisma.XOR<Prisma.ReportUpdateManyMutationInput, Prisma.ReportUncheckedUpdateManyWithoutAnalysisInput>
 }
 
-export type ReportScalarWhereInput = {
-  AND?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
-  OR?: Prisma.ReportScalarWhereInput[]
-  NOT?: Prisma.ReportScalarWhereInput | Prisma.ReportScalarWhereInput[]
-  id?: Prisma.StringFilter<"Report"> | string
-  analysisId?: Prisma.StringFilter<"Report"> | string
-  format?: Prisma.EnumReportFormatFilter<"Report"> | $Enums.ReportFormat
-  storagePath?: Prisma.StringFilter<"Report"> | string
-  createdAt?: Prisma.DateTimeFilter<"Report"> | Date | string
+export type ReportCreateWithoutPlanInput = {
+  id?: string
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+  repository: Prisma.RepositoryCreateNestedOneWithoutReportsInput
+  analysis: Prisma.AnalysisCreateNestedOneWithoutReportsInput
+  run?: Prisma.EngineeringRunCreateNestedOneWithoutReportsInput
+}
+
+export type ReportUncheckedCreateWithoutPlanInput = {
+  id?: string
+  userId: string
+  repositoryId: string
+  analysisId: string
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportCreateOrConnectWithoutPlanInput = {
+  where: Prisma.ReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReportCreateWithoutPlanInput, Prisma.ReportUncheckedCreateWithoutPlanInput>
+}
+
+export type ReportCreateManyPlanInputEnvelope = {
+  data: Prisma.ReportCreateManyPlanInput | Prisma.ReportCreateManyPlanInput[]
+  skipDuplicates?: boolean
+}
+
+export type ReportUpsertWithWhereUniqueWithoutPlanInput = {
+  where: Prisma.ReportWhereUniqueInput
+  update: Prisma.XOR<Prisma.ReportUpdateWithoutPlanInput, Prisma.ReportUncheckedUpdateWithoutPlanInput>
+  create: Prisma.XOR<Prisma.ReportCreateWithoutPlanInput, Prisma.ReportUncheckedCreateWithoutPlanInput>
+}
+
+export type ReportUpdateWithWhereUniqueWithoutPlanInput = {
+  where: Prisma.ReportWhereUniqueInput
+  data: Prisma.XOR<Prisma.ReportUpdateWithoutPlanInput, Prisma.ReportUncheckedUpdateWithoutPlanInput>
+}
+
+export type ReportUpdateManyWithWhereWithoutPlanInput = {
+  where: Prisma.ReportScalarWhereInput
+  data: Prisma.XOR<Prisma.ReportUpdateManyMutationInput, Prisma.ReportUncheckedUpdateManyWithoutPlanInput>
+}
+
+export type ReportCreateWithoutRunInput = {
+  id?: string
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutReportsInput
+  repository: Prisma.RepositoryCreateNestedOneWithoutReportsInput
+  analysis: Prisma.AnalysisCreateNestedOneWithoutReportsInput
+  plan?: Prisma.EngineeringPlanCreateNestedOneWithoutReportsInput
+}
+
+export type ReportUncheckedCreateWithoutRunInput = {
+  id?: string
+  userId: string
+  repositoryId: string
+  analysisId: string
+  planId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportCreateOrConnectWithoutRunInput = {
+  where: Prisma.ReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReportCreateWithoutRunInput, Prisma.ReportUncheckedCreateWithoutRunInput>
+}
+
+export type ReportCreateManyRunInputEnvelope = {
+  data: Prisma.ReportCreateManyRunInput | Prisma.ReportCreateManyRunInput[]
+  skipDuplicates?: boolean
+}
+
+export type ReportUpsertWithWhereUniqueWithoutRunInput = {
+  where: Prisma.ReportWhereUniqueInput
+  update: Prisma.XOR<Prisma.ReportUpdateWithoutRunInput, Prisma.ReportUncheckedUpdateWithoutRunInput>
+  create: Prisma.XOR<Prisma.ReportCreateWithoutRunInput, Prisma.ReportUncheckedCreateWithoutRunInput>
+}
+
+export type ReportUpdateWithWhereUniqueWithoutRunInput = {
+  where: Prisma.ReportWhereUniqueInput
+  data: Prisma.XOR<Prisma.ReportUpdateWithoutRunInput, Prisma.ReportUncheckedUpdateWithoutRunInput>
+}
+
+export type ReportUpdateManyWithWhereWithoutRunInput = {
+  where: Prisma.ReportScalarWhereInput
+  data: Prisma.XOR<Prisma.ReportUpdateManyMutationInput, Prisma.ReportUncheckedUpdateManyWithoutRunInput>
+}
+
+export type ReportCreateManyUserInput = {
+  id?: string
+  repositoryId: string
+  analysisId: string
+  planId?: string | null
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  repository?: Prisma.RepositoryUpdateOneRequiredWithoutReportsNestedInput
+  analysis?: Prisma.AnalysisUpdateOneRequiredWithoutReportsNestedInput
+  plan?: Prisma.EngineeringPlanUpdateOneWithoutReportsNestedInput
+  run?: Prisma.EngineeringRunUpdateOneWithoutReportsNestedInput
+}
+
+export type ReportUncheckedUpdateWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReportUncheckedUpdateManyWithoutUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReportCreateManyRepositoryInput = {
+  id?: string
+  userId: string
+  analysisId: string
+  planId?: string | null
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportUpdateWithoutRepositoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  analysis?: Prisma.AnalysisUpdateOneRequiredWithoutReportsNestedInput
+  plan?: Prisma.EngineeringPlanUpdateOneWithoutReportsNestedInput
+  run?: Prisma.EngineeringRunUpdateOneWithoutReportsNestedInput
+}
+
+export type ReportUncheckedUpdateWithoutRepositoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReportUncheckedUpdateManyWithoutRepositoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ReportCreateManyAnalysisInput = {
   id?: string
-  format: $Enums.ReportFormat
-  storagePath: string
-  createdAt?: Date | string
+  userId: string
+  repositoryId: string
+  planId?: string | null
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ReportUpdateWithoutAnalysisInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  format?: Prisma.EnumReportFormatFieldUpdateOperationsInput | $Enums.ReportFormat
-  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  repository?: Prisma.RepositoryUpdateOneRequiredWithoutReportsNestedInput
+  plan?: Prisma.EngineeringPlanUpdateOneWithoutReportsNestedInput
+  run?: Prisma.EngineeringRunUpdateOneWithoutReportsNestedInput
 }
 
 export type ReportUncheckedUpdateWithoutAnalysisInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  format?: Prisma.EnumReportFormatFieldUpdateOperationsInput | $Enums.ReportFormat
-  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ReportUncheckedUpdateManyWithoutAnalysisInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  format?: Prisma.EnumReportFormatFieldUpdateOperationsInput | $Enums.ReportFormat
-  storagePath?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReportCreateManyPlanInput = {
+  id?: string
+  userId: string
+  repositoryId: string
+  analysisId: string
+  runId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportUpdateWithoutPlanInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  repository?: Prisma.RepositoryUpdateOneRequiredWithoutReportsNestedInput
+  analysis?: Prisma.AnalysisUpdateOneRequiredWithoutReportsNestedInput
+  run?: Prisma.EngineeringRunUpdateOneWithoutReportsNestedInput
+}
+
+export type ReportUncheckedUpdateWithoutPlanInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReportUncheckedUpdateManyWithoutPlanInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  runId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReportCreateManyRunInput = {
+  id?: string
+  userId: string
+  repositoryId: string
+  analysisId: string
+  planId?: string | null
+  type: $Enums.ReportType
+  subjectKey: string
+  status: $Enums.ReportStatus
+  outcome: $Enums.ReportOutcome
+  version: number
+  title: string
+  summary: string
+  errorCount?: number
+  warningCount?: number
+  fingerprint: string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type ReportUpdateWithoutRunInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutReportsNestedInput
+  repository?: Prisma.RepositoryUpdateOneRequiredWithoutReportsNestedInput
+  analysis?: Prisma.AnalysisUpdateOneRequiredWithoutReportsNestedInput
+  plan?: Prisma.EngineeringPlanUpdateOneWithoutReportsNestedInput
+}
+
+export type ReportUncheckedUpdateWithoutRunInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReportUncheckedUpdateManyWithoutRunInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  repositoryId?: Prisma.StringFieldUpdateOperationsInput | string
+  analysisId?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumReportTypeFieldUpdateOperationsInput | $Enums.ReportType
+  subjectKey?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  outcome?: Prisma.EnumReportOutcomeFieldUpdateOperationsInput | $Enums.ReportOutcome
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  errorCount?: Prisma.IntFieldUpdateOperationsInput | number
+  warningCount?: Prisma.IntFieldUpdateOperationsInput | number
+  fingerprint?: Prisma.StringFieldUpdateOperationsInput | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  generatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
 
 export type ReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  userId?: boolean
+  repositoryId?: boolean
   analysisId?: boolean
-  format?: boolean
-  storagePath?: boolean
-  createdAt?: boolean
+  planId?: boolean
+  runId?: boolean
+  type?: boolean
+  subjectKey?: boolean
+  status?: boolean
+  outcome?: boolean
+  version?: boolean
+  title?: boolean
+  summary?: boolean
+  errorCount?: boolean
+  warningCount?: boolean
+  fingerprint?: boolean
+  data?: boolean
+  generatedAt?: boolean
+  updatedAt?: boolean
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  repository?: boolean | Prisma.RepositoryDefaultArgs<ExtArgs>
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
+  plan?: boolean | Prisma.Report$planArgs<ExtArgs>
+  run?: boolean | Prisma.Report$runArgs<ExtArgs>
 }, ExtArgs["result"]["report"]>
 
 export type ReportSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  userId?: boolean
+  repositoryId?: boolean
   analysisId?: boolean
-  format?: boolean
-  storagePath?: boolean
-  createdAt?: boolean
+  planId?: boolean
+  runId?: boolean
+  type?: boolean
+  subjectKey?: boolean
+  status?: boolean
+  outcome?: boolean
+  version?: boolean
+  title?: boolean
+  summary?: boolean
+  errorCount?: boolean
+  warningCount?: boolean
+  fingerprint?: boolean
+  data?: boolean
+  generatedAt?: boolean
+  updatedAt?: boolean
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  repository?: boolean | Prisma.RepositoryDefaultArgs<ExtArgs>
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
+  plan?: boolean | Prisma.Report$planArgs<ExtArgs>
+  run?: boolean | Prisma.Report$runArgs<ExtArgs>
 }, ExtArgs["result"]["report"]>
 
 export type ReportSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  userId?: boolean
+  repositoryId?: boolean
   analysisId?: boolean
-  format?: boolean
-  storagePath?: boolean
-  createdAt?: boolean
+  planId?: boolean
+  runId?: boolean
+  type?: boolean
+  subjectKey?: boolean
+  status?: boolean
+  outcome?: boolean
+  version?: boolean
+  title?: boolean
+  summary?: boolean
+  errorCount?: boolean
+  warningCount?: boolean
+  fingerprint?: boolean
+  data?: boolean
+  generatedAt?: boolean
+  updatedAt?: boolean
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  repository?: boolean | Prisma.RepositoryDefaultArgs<ExtArgs>
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
+  plan?: boolean | Prisma.Report$planArgs<ExtArgs>
+  run?: boolean | Prisma.Report$runArgs<ExtArgs>
 }, ExtArgs["result"]["report"]>
 
 export type ReportSelectScalar = {
   id?: boolean
+  userId?: boolean
+  repositoryId?: boolean
   analysisId?: boolean
-  format?: boolean
-  storagePath?: boolean
-  createdAt?: boolean
+  planId?: boolean
+  runId?: boolean
+  type?: boolean
+  subjectKey?: boolean
+  status?: boolean
+  outcome?: boolean
+  version?: boolean
+  title?: boolean
+  summary?: boolean
+  errorCount?: boolean
+  warningCount?: boolean
+  fingerprint?: boolean
+  data?: boolean
+  generatedAt?: boolean
+  updatedAt?: boolean
 }
 
-export type ReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "analysisId" | "format" | "storagePath" | "createdAt", ExtArgs["result"]["report"]>
+export type ReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "repositoryId" | "analysisId" | "planId" | "runId" | "type" | "subjectKey" | "status" | "outcome" | "version" | "title" | "summary" | "errorCount" | "warningCount" | "fingerprint" | "data" | "generatedAt" | "updatedAt", ExtArgs["result"]["report"]>
 export type ReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  repository?: boolean | Prisma.RepositoryDefaultArgs<ExtArgs>
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
+  plan?: boolean | Prisma.Report$planArgs<ExtArgs>
+  run?: boolean | Prisma.Report$runArgs<ExtArgs>
 }
 export type ReportIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  repository?: boolean | Prisma.RepositoryDefaultArgs<ExtArgs>
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
+  plan?: boolean | Prisma.Report$planArgs<ExtArgs>
+  run?: boolean | Prisma.Report$runArgs<ExtArgs>
 }
 export type ReportIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  repository?: boolean | Prisma.RepositoryDefaultArgs<ExtArgs>
   analysis?: boolean | Prisma.AnalysisDefaultArgs<ExtArgs>
+  plan?: boolean | Prisma.Report$planArgs<ExtArgs>
+  run?: boolean | Prisma.Report$runArgs<ExtArgs>
 }
 
 export type $ReportPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Report"
   objects: {
+    user: Prisma.$UserPayload<ExtArgs>
+    repository: Prisma.$RepositoryPayload<ExtArgs>
     analysis: Prisma.$AnalysisPayload<ExtArgs>
+    plan: Prisma.$EngineeringPlanPayload<ExtArgs> | null
+    run: Prisma.$EngineeringRunPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    /**
+     * The user who generated it (always the owner of the repository).
+     */
+    userId: string
+    repositoryId: string
     analysisId: string
-    format: $Enums.ReportFormat
-    storagePath: string
-    createdAt: Date
+    planId: string | null
+    runId: string | null
+    type: $Enums.ReportType
+    /**
+     * "<type>:<subject id>", e.g. "RUN:clx…": what the report is about, for de-duplication and "latest" lookups.
+     */
+    subjectKey: string
+    status: $Enums.ReportStatus
+    outcome: $Enums.ReportOutcome
+    /**
+     * Version of the snapshot schema (REPORT_VERSION in @pd/reports) the data was built with.
+     */
+    version: number
+    title: string
+    /**
+     * One-sentence statement of the result.
+     */
+    summary: string
+    errorCount: number
+    warningCount: number
+    /**
+     * SHA-256 of `data`.
+     */
+    fingerprint: string
+    /**
+     * The report body: bounded and redacted; never file contents, diffs, finding evidence or secrets.
+     */
+    data: runtime.JsonValue
+    generatedAt: Date
+    updatedAt: Date
   }, ExtArgs["result"]["report"]>
   composites: {}
 }
@@ -895,7 +2266,11 @@ readonly fields: ReportFieldRefs;
  */
 export interface Prisma__ReportClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  repository<T extends Prisma.RepositoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RepositoryDefaultArgs<ExtArgs>>): Prisma.Prisma__RepositoryClient<runtime.Types.Result.GetResult<Prisma.$RepositoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   analysis<T extends Prisma.AnalysisDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AnalysisDefaultArgs<ExtArgs>>): Prisma.Prisma__AnalysisClient<runtime.Types.Result.GetResult<Prisma.$AnalysisPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  plan<T extends Prisma.Report$planArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$planArgs<ExtArgs>>): Prisma.Prisma__EngineeringPlanClient<runtime.Types.Result.GetResult<Prisma.$EngineeringPlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  run<T extends Prisma.Report$runArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Report$runArgs<ExtArgs>>): Prisma.Prisma__EngineeringRunClient<runtime.Types.Result.GetResult<Prisma.$EngineeringRunPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -926,10 +2301,24 @@ export interface Prisma__ReportClient<T, Null = never, ExtArgs extends runtime.T
  */
 export interface ReportFieldRefs {
   readonly id: Prisma.FieldRef<"Report", 'String'>
+  readonly userId: Prisma.FieldRef<"Report", 'String'>
+  readonly repositoryId: Prisma.FieldRef<"Report", 'String'>
   readonly analysisId: Prisma.FieldRef<"Report", 'String'>
-  readonly format: Prisma.FieldRef<"Report", 'ReportFormat'>
-  readonly storagePath: Prisma.FieldRef<"Report", 'String'>
-  readonly createdAt: Prisma.FieldRef<"Report", 'DateTime'>
+  readonly planId: Prisma.FieldRef<"Report", 'String'>
+  readonly runId: Prisma.FieldRef<"Report", 'String'>
+  readonly type: Prisma.FieldRef<"Report", 'ReportType'>
+  readonly subjectKey: Prisma.FieldRef<"Report", 'String'>
+  readonly status: Prisma.FieldRef<"Report", 'ReportStatus'>
+  readonly outcome: Prisma.FieldRef<"Report", 'ReportOutcome'>
+  readonly version: Prisma.FieldRef<"Report", 'Int'>
+  readonly title: Prisma.FieldRef<"Report", 'String'>
+  readonly summary: Prisma.FieldRef<"Report", 'String'>
+  readonly errorCount: Prisma.FieldRef<"Report", 'Int'>
+  readonly warningCount: Prisma.FieldRef<"Report", 'Int'>
+  readonly fingerprint: Prisma.FieldRef<"Report", 'String'>
+  readonly data: Prisma.FieldRef<"Report", 'Json'>
+  readonly generatedAt: Prisma.FieldRef<"Report", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"Report", 'DateTime'>
 }
     
 
@@ -1328,6 +2717,44 @@ export type ReportDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Limit how many Reports to delete.
    */
   limit?: number
+}
+
+/**
+ * Report.plan
+ */
+export type Report$planArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EngineeringPlan
+   */
+  select?: Prisma.EngineeringPlanSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EngineeringPlan
+   */
+  omit?: Prisma.EngineeringPlanOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EngineeringPlanInclude<ExtArgs> | null
+  where?: Prisma.EngineeringPlanWhereInput
+}
+
+/**
+ * Report.run
+ */
+export type Report$runArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EngineeringRun
+   */
+  select?: Prisma.EngineeringRunSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EngineeringRun
+   */
+  omit?: Prisma.EngineeringRunOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EngineeringRunInclude<ExtArgs> | null
+  where?: Prisma.EngineeringRunWhereInput
 }
 
 /**

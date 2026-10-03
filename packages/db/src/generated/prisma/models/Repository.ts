@@ -225,6 +225,7 @@ export type RepositoryWhereInput = {
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   analyses?: Prisma.AnalysisListRelationFilter
   triages?: Prisma.FindingTriageListRelationFilter
+  reports?: Prisma.ReportListRelationFilter
 }
 
 export type RepositoryOrderByWithRelationInput = {
@@ -241,6 +242,7 @@ export type RepositoryOrderByWithRelationInput = {
   user?: Prisma.UserOrderByWithRelationInput
   analyses?: Prisma.AnalysisOrderByRelationAggregateInput
   triages?: Prisma.FindingTriageOrderByRelationAggregateInput
+  reports?: Prisma.ReportOrderByRelationAggregateInput
 }
 
 export type RepositoryWhereUniqueInput = Prisma.AtLeast<{
@@ -260,6 +262,7 @@ export type RepositoryWhereUniqueInput = Prisma.AtLeast<{
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   analyses?: Prisma.AnalysisListRelationFilter
   triages?: Prisma.FindingTriageListRelationFilter
+  reports?: Prisma.ReportListRelationFilter
 }, "id">
 
 export type RepositoryOrderByWithAggregationInput = {
@@ -307,6 +310,7 @@ export type RepositoryCreateInput = {
   user: Prisma.UserCreateNestedOneWithoutRepositoriesInput
   analyses?: Prisma.AnalysisCreateNestedManyWithoutRepositoryInput
   triages?: Prisma.FindingTriageCreateNestedManyWithoutRepositoryInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRepositoryInput
 }
 
 export type RepositoryUncheckedCreateInput = {
@@ -322,6 +326,7 @@ export type RepositoryUncheckedCreateInput = {
   updatedAt?: Date | string
   analyses?: Prisma.AnalysisUncheckedCreateNestedManyWithoutRepositoryInput
   triages?: Prisma.FindingTriageUncheckedCreateNestedManyWithoutRepositoryInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRepositoryInput
 }
 
 export type RepositoryUpdateInput = {
@@ -337,6 +342,7 @@ export type RepositoryUpdateInput = {
   user?: Prisma.UserUpdateOneRequiredWithoutRepositoriesNestedInput
   analyses?: Prisma.AnalysisUpdateManyWithoutRepositoryNestedInput
   triages?: Prisma.FindingTriageUpdateManyWithoutRepositoryNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRepositoryNestedInput
 }
 
 export type RepositoryUncheckedUpdateInput = {
@@ -352,6 +358,7 @@ export type RepositoryUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   analyses?: Prisma.AnalysisUncheckedUpdateManyWithoutRepositoryNestedInput
   triages?: Prisma.FindingTriageUncheckedUpdateManyWithoutRepositoryNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRepositoryNestedInput
 }
 
 export type RepositoryCreateManyInput = {
@@ -520,6 +527,20 @@ export type RepositoryUpdateOneRequiredWithoutAnalysesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.RepositoryUpdateToOneWithWhereWithoutAnalysesInput, Prisma.RepositoryUpdateWithoutAnalysesInput>, Prisma.RepositoryUncheckedUpdateWithoutAnalysesInput>
 }
 
+export type RepositoryCreateNestedOneWithoutReportsInput = {
+  create?: Prisma.XOR<Prisma.RepositoryCreateWithoutReportsInput, Prisma.RepositoryUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.RepositoryCreateOrConnectWithoutReportsInput
+  connect?: Prisma.RepositoryWhereUniqueInput
+}
+
+export type RepositoryUpdateOneRequiredWithoutReportsNestedInput = {
+  create?: Prisma.XOR<Prisma.RepositoryCreateWithoutReportsInput, Prisma.RepositoryUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.RepositoryCreateOrConnectWithoutReportsInput
+  upsert?: Prisma.RepositoryUpsertWithoutReportsInput
+  connect?: Prisma.RepositoryWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RepositoryUpdateToOneWithWhereWithoutReportsInput, Prisma.RepositoryUpdateWithoutReportsInput>, Prisma.RepositoryUncheckedUpdateWithoutReportsInput>
+}
+
 export type RepositoryCreateWithoutUserInput = {
   id?: string
   source: $Enums.RepositorySource
@@ -532,6 +553,7 @@ export type RepositoryCreateWithoutUserInput = {
   updatedAt?: Date | string
   analyses?: Prisma.AnalysisCreateNestedManyWithoutRepositoryInput
   triages?: Prisma.FindingTriageCreateNestedManyWithoutRepositoryInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRepositoryInput
 }
 
 export type RepositoryUncheckedCreateWithoutUserInput = {
@@ -546,6 +568,7 @@ export type RepositoryUncheckedCreateWithoutUserInput = {
   updatedAt?: Date | string
   analyses?: Prisma.AnalysisUncheckedCreateNestedManyWithoutRepositoryInput
   triages?: Prisma.FindingTriageUncheckedCreateNestedManyWithoutRepositoryInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRepositoryInput
 }
 
 export type RepositoryCreateOrConnectWithoutUserInput = {
@@ -602,6 +625,7 @@ export type RepositoryCreateWithoutTriagesInput = {
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutRepositoriesInput
   analyses?: Prisma.AnalysisCreateNestedManyWithoutRepositoryInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRepositoryInput
 }
 
 export type RepositoryUncheckedCreateWithoutTriagesInput = {
@@ -616,6 +640,7 @@ export type RepositoryUncheckedCreateWithoutTriagesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   analyses?: Prisma.AnalysisUncheckedCreateNestedManyWithoutRepositoryInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRepositoryInput
 }
 
 export type RepositoryCreateOrConnectWithoutTriagesInput = {
@@ -646,6 +671,7 @@ export type RepositoryUpdateWithoutTriagesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutRepositoriesNestedInput
   analyses?: Prisma.AnalysisUpdateManyWithoutRepositoryNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRepositoryNestedInput
 }
 
 export type RepositoryUncheckedUpdateWithoutTriagesInput = {
@@ -660,6 +686,7 @@ export type RepositoryUncheckedUpdateWithoutTriagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   analyses?: Prisma.AnalysisUncheckedUpdateManyWithoutRepositoryNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRepositoryNestedInput
 }
 
 export type RepositoryCreateWithoutAnalysesInput = {
@@ -674,6 +701,7 @@ export type RepositoryCreateWithoutAnalysesInput = {
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutRepositoriesInput
   triages?: Prisma.FindingTriageCreateNestedManyWithoutRepositoryInput
+  reports?: Prisma.ReportCreateNestedManyWithoutRepositoryInput
 }
 
 export type RepositoryUncheckedCreateWithoutAnalysesInput = {
@@ -688,6 +716,7 @@ export type RepositoryUncheckedCreateWithoutAnalysesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   triages?: Prisma.FindingTriageUncheckedCreateNestedManyWithoutRepositoryInput
+  reports?: Prisma.ReportUncheckedCreateNestedManyWithoutRepositoryInput
 }
 
 export type RepositoryCreateOrConnectWithoutAnalysesInput = {
@@ -718,6 +747,7 @@ export type RepositoryUpdateWithoutAnalysesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutRepositoriesNestedInput
   triages?: Prisma.FindingTriageUpdateManyWithoutRepositoryNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRepositoryNestedInput
 }
 
 export type RepositoryUncheckedUpdateWithoutAnalysesInput = {
@@ -731,6 +761,83 @@ export type RepositoryUncheckedUpdateWithoutAnalysesInput = {
   uploadKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  triages?: Prisma.FindingTriageUncheckedUpdateManyWithoutRepositoryNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRepositoryNestedInput
+}
+
+export type RepositoryCreateWithoutReportsInput = {
+  id?: string
+  source: $Enums.RepositorySource
+  name: string
+  url?: string | null
+  owner?: string | null
+  branch?: string | null
+  uploadKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutRepositoriesInput
+  analyses?: Prisma.AnalysisCreateNestedManyWithoutRepositoryInput
+  triages?: Prisma.FindingTriageCreateNestedManyWithoutRepositoryInput
+}
+
+export type RepositoryUncheckedCreateWithoutReportsInput = {
+  id?: string
+  userId: string
+  source: $Enums.RepositorySource
+  name: string
+  url?: string | null
+  owner?: string | null
+  branch?: string | null
+  uploadKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  analyses?: Prisma.AnalysisUncheckedCreateNestedManyWithoutRepositoryInput
+  triages?: Prisma.FindingTriageUncheckedCreateNestedManyWithoutRepositoryInput
+}
+
+export type RepositoryCreateOrConnectWithoutReportsInput = {
+  where: Prisma.RepositoryWhereUniqueInput
+  create: Prisma.XOR<Prisma.RepositoryCreateWithoutReportsInput, Prisma.RepositoryUncheckedCreateWithoutReportsInput>
+}
+
+export type RepositoryUpsertWithoutReportsInput = {
+  update: Prisma.XOR<Prisma.RepositoryUpdateWithoutReportsInput, Prisma.RepositoryUncheckedUpdateWithoutReportsInput>
+  create: Prisma.XOR<Prisma.RepositoryCreateWithoutReportsInput, Prisma.RepositoryUncheckedCreateWithoutReportsInput>
+  where?: Prisma.RepositoryWhereInput
+}
+
+export type RepositoryUpdateToOneWithWhereWithoutReportsInput = {
+  where?: Prisma.RepositoryWhereInput
+  data: Prisma.XOR<Prisma.RepositoryUpdateWithoutReportsInput, Prisma.RepositoryUncheckedUpdateWithoutReportsInput>
+}
+
+export type RepositoryUpdateWithoutReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumRepositorySourceFieldUpdateOperationsInput | $Enums.RepositorySource
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  owner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  branch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uploadKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutRepositoriesNestedInput
+  analyses?: Prisma.AnalysisUpdateManyWithoutRepositoryNestedInput
+  triages?: Prisma.FindingTriageUpdateManyWithoutRepositoryNestedInput
+}
+
+export type RepositoryUncheckedUpdateWithoutReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumRepositorySourceFieldUpdateOperationsInput | $Enums.RepositorySource
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  owner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  branch?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  uploadKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  analyses?: Prisma.AnalysisUncheckedUpdateManyWithoutRepositoryNestedInput
   triages?: Prisma.FindingTriageUncheckedUpdateManyWithoutRepositoryNestedInput
 }
 
@@ -758,6 +865,7 @@ export type RepositoryUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   analyses?: Prisma.AnalysisUpdateManyWithoutRepositoryNestedInput
   triages?: Prisma.FindingTriageUpdateManyWithoutRepositoryNestedInput
+  reports?: Prisma.ReportUpdateManyWithoutRepositoryNestedInput
 }
 
 export type RepositoryUncheckedUpdateWithoutUserInput = {
@@ -772,6 +880,7 @@ export type RepositoryUncheckedUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   analyses?: Prisma.AnalysisUncheckedUpdateManyWithoutRepositoryNestedInput
   triages?: Prisma.FindingTriageUncheckedUpdateManyWithoutRepositoryNestedInput
+  reports?: Prisma.ReportUncheckedUpdateManyWithoutRepositoryNestedInput
 }
 
 export type RepositoryUncheckedUpdateManyWithoutUserInput = {
@@ -794,11 +903,13 @@ export type RepositoryUncheckedUpdateManyWithoutUserInput = {
 export type RepositoryCountOutputType = {
   analyses: number
   triages: number
+  reports: number
 }
 
 export type RepositoryCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   analyses?: boolean | RepositoryCountOutputTypeCountAnalysesArgs
   triages?: boolean | RepositoryCountOutputTypeCountTriagesArgs
+  reports?: boolean | RepositoryCountOutputTypeCountReportsArgs
 }
 
 /**
@@ -825,6 +936,13 @@ export type RepositoryCountOutputTypeCountTriagesArgs<ExtArgs extends runtime.Ty
   where?: Prisma.FindingTriageWhereInput
 }
 
+/**
+ * RepositoryCountOutputType without action
+ */
+export type RepositoryCountOutputTypeCountReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReportWhereInput
+}
+
 
 export type RepositorySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -840,6 +958,7 @@ export type RepositorySelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   analyses?: boolean | Prisma.Repository$analysesArgs<ExtArgs>
   triages?: boolean | Prisma.Repository$triagesArgs<ExtArgs>
+  reports?: boolean | Prisma.Repository$reportsArgs<ExtArgs>
   _count?: boolean | Prisma.RepositoryCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["repository"]>
 
@@ -889,6 +1008,7 @@ export type RepositoryInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   analyses?: boolean | Prisma.Repository$analysesArgs<ExtArgs>
   triages?: boolean | Prisma.Repository$triagesArgs<ExtArgs>
+  reports?: boolean | Prisma.Repository$reportsArgs<ExtArgs>
   _count?: boolean | Prisma.RepositoryCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type RepositoryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -904,6 +1024,7 @@ export type $RepositoryPayload<ExtArgs extends runtime.Types.Extensions.Internal
     user: Prisma.$UserPayload<ExtArgs>
     analyses: Prisma.$AnalysisPayload<ExtArgs>[]
     triages: Prisma.$FindingTriagePayload<ExtArgs>[]
+    reports: Prisma.$ReportPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1316,6 +1437,7 @@ export interface Prisma__RepositoryClient<T, Null = never, ExtArgs extends runti
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   analyses<T extends Prisma.Repository$analysesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Repository$analysesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AnalysisPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   triages<T extends Prisma.Repository$triagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Repository$triagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FindingTriagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reports<T extends Prisma.Repository$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Repository$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1801,6 +1923,30 @@ export type Repository$triagesArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.FindingTriageScalarFieldEnum | Prisma.FindingTriageScalarFieldEnum[]
+}
+
+/**
+ * Repository.reports
+ */
+export type Repository$reportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Report
+   */
+  select?: Prisma.ReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Report
+   */
+  omit?: Prisma.ReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReportInclude<ExtArgs> | null
+  where?: Prisma.ReportWhereInput
+  orderBy?: Prisma.ReportOrderByWithRelationInput | Prisma.ReportOrderByWithRelationInput[]
+  cursor?: Prisma.ReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReportScalarFieldEnum | Prisma.ReportScalarFieldEnum[]
 }
 
 /**

@@ -39,7 +39,8 @@ lists what actually ran.
 | `@pd/engine` | agent, analyzer, db, sandbox, shared | Code engine (Phase 8), database-aware with injected dependencies: `runEngineJob` (start job: rebuild the analysed source, verify it, generate, validate, apply, store the cumulative patch, wait for test approval; execute job: re-apply the patch with `git apply`, install/test in the sandbox, repair within budget), `executePlanJob` (the planner job), run controls (create, approve or skip tests, cancel, discard), `materialize.ts` (also used by the pipeline for demo copy and archive extraction), the graph loader shared with the web tier, and the stale-run sweep. `@pd/engine/control` is the web tier's entry point and excludes the orchestrator (sandbox, tree-sitter) |
 | `@pd/agent` | analyzer, shared, zod, @anthropic-ai/sdk | Engineering planner: context retrieval, LLM providers, plan schema and validation. Code engine (Phase 8): edit scope from an approved plan, bounded and redacted edit context, edit schema and prompt, `generateEdits` (Anthropic; the baseline cannot edit), deterministic edit validation applied in memory, git-format diffs, and `@pd/agent/checks` (syntax and security re-inspection, worker only because it loads tree-sitter); no database, HTTP or filesystem code |
 | `@pd/sandbox` | analyzer, shared, zod | Code engine (Phase 8): runs a repository's tests in disposable Docker containers (Docker CLI, no SDK): allowlisted commands resolved from the repository's files, pinned images, every isolation flag in `containerArgs`, output sanitised and redacted; `DisabledSandbox` is the default and `FakeSandbox` serves tests. Real-Docker tests run only with `PD_DOCKER_TESTS=1` |
-| `@pd/web` | agent, analyzer, db, shared, bullmq | route handlers are thin; logic lives in `server/services` |
+| `@pd/reports` | analyzer, db, shared | Reports (Phase 9): `collect.ts` (ownership-checked, bounded queries), `build.ts` (pure, deterministic snapshot builder), `sanitize.ts` (redaction of every string), `store.ts` (generation with de-duplication, list, get, latest), `markdown.ts` (escaped export); no web or HTTP code |
+| `@pd/web` | agent, analyzer, db, engine, reports, sandbox, shared, bullmq | route handlers are thin; logic lives in `server/services` |
 
 Packages are consumed as TypeScript source (`exports` → `src/index.ts`), transpiled by Next.js
 (`transpilePackages`) and by `tsx` in the worker, so there is no separate build step.
@@ -383,6 +384,22 @@ Every status change goes through `transitionRun` (compare-and-set with the appro
 audit event). Workspaces live for one job; a run waiting for the user is rebuilt from stored data. The planner's job
 runs on the same engineering queue since Phase 8.
 
+## Reports (Phase 9)
+
+A report is an immutable snapshot of what was recorded about an analysis, a plan or a run; details in
+[reports.md](reports.md).
+
+```text
+POST /api/reports {type, subjectId} ─► report-service ─► @pd/reports.generateReport
+     collect (ownership-checked, bounded queries; no file contents, evidence or patches)
+     → build (pure, deterministic) → sanitize (redaction) → fingerprint
+     → existing (subjectKey, fingerprint)? return it : insert Report row
+GET /api/reports[?filters] · /api/reports/:id · /api/reports/latest · /api/reports/:id/export
+/reports (list) · /reports/:id (detail; diffs loaded from the run on demand)
+```
+
+Generation is synchronous and reads only the database (no worker job, no model call); reports are generated on request.
+
 ## Web API and UI (Phase 4)
 
 `GET /api/analysis/:id/dependencies` and `GET /api/analysis/:id/architecture` ([api.md](api.md)) follow the findings
@@ -405,7 +422,8 @@ Analyses made by earlier analyzer versions show a notice in these tabs instead o
 
 ## Data model
 
-See `packages/db/prisma/schema.prisma`. Results hang off `Analysis` and cascade on delete:
+See `packages/db/prisma/schema.prisma`. Reports (Phase 9) reference their user, repository, analysis and optional plan
+and run, and cascade with any of them. Results hang off `Analysis` and cascade on delete:
 `File`, `Finding`, `Metric`, `Dependency`, `ArchitectureNode`/`ArchitectureEdge`, `GitInsight`, `Recommendation`,
 `Report`. Phase 1 populates `Analysis.summary` and `File`; Phase 2 adds file metrics, `Finding` and `Metric`; Phase 3 adds
 `SECRET`/`SECURITY` findings and `summary.security`; Phase 4 fills `Dependency`, `ArchitectureNode` and `ArchitectureEdge`

@@ -25,6 +25,7 @@ model User {
   repositories     Repository[]
   engineeringTasks EngineeringTask[]
   engineeringRuns  EngineeringRun[]
+  reports          Report[]
 }
 
 model Session {
@@ -67,6 +68,7 @@ model Repository {
   updatedAt DateTime         @updatedAt
   analyses  Analysis[]
   triages   FindingTriage[]
+  reports   Report[]
 
   @@index([userId, createdAt])
 }
@@ -485,22 +487,86 @@ model FixSuggestion {
   @@index([findingId])
 }
 
-enum ReportFormat {
-  PDF
-  JSON
-  MARKDOWN
-  HTML
+// ---------------------------------------------------------------- reports (Phase 9)
+
+/// What a report covers: the chain from the repository up to its subject.
+enum ReportType {
+  /// Repository and analysis.
+  ANALYSIS
+  /// Repository, analysis, engineering plan and its approval.
+  PLAN
+  /// The whole chain: analysis, plan, approval, run, changes, validation, tests and the final result.
+  RUN
 }
 
-model Report {
-  id          String       @id @default(cuid())
-  analysisId  String
-  analysis    Analysis     @relation(fields: [analysisId], references: [id], onDelete: Cascade)
-  format      ReportFormat
-  storagePath String
-  createdAt   DateTime     @default(now())
+enum ReportStatus {
+  /// Everything the report covers had reached a final state when it was generated.
+  COMPLETE
+  /// Generated while something it covers was still in progress or waiting for the user; regenerate later.
+  PARTIAL
+}
 
-  @@index([analysisId])
+/// The result the report states, derived from stored data only.
+enum ReportOutcome {
+  /// Analysis or plan finished.
+  COMPLETED
+  /// Run ready for review and its last approved test run passed.
+  TESTS_PASSED
+  /// Run ready for review and its last approved test run failed or timed out.
+  TESTS_FAILED
+  /// Run ready for review without any test run (skipped, sandbox off, no supported test setup).
+  NOT_TESTED
+  /// Run result discarded by the user.
+  DISCARDED
+  FAILED
+  CANCELLED
+  /// Still queued or being processed.
+  IN_PROGRESS
+  /// Run waiting for the user to approve its test command.
+  AWAITING_APPROVAL
+}
+
+/// An immutable, redacted snapshot of what the Project Doctor recorded about one analysis, plan or run.
+/// Generating again with unchanged underlying data returns the existing report (same fingerprint).
+model Report {
+  id           String           @id @default(cuid())
+  /// The user who generated it (always the owner of the repository).
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repositoryId String
+  repository   Repository       @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  analysisId   String
+  analysis     Analysis         @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  planId       String?
+  plan         EngineeringPlan? @relation(fields: [planId], references: [id], onDelete: Cascade)
+  runId        String?
+  run          EngineeringRun?  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  type         ReportType
+  /// "<type>:<subject id>", e.g. "RUN:clx…": what the report is about, for de-duplication and "latest" lookups.
+  subjectKey   String
+  status       ReportStatus
+  outcome      ReportOutcome
+  /// Version of the snapshot schema (REPORT_VERSION in @pd/reports) the data was built with.
+  version      Int
+  title        String
+  /// One-sentence statement of the result.
+  summary      String
+  errorCount   Int              @default(0)
+  warningCount Int              @default(0)
+  /// SHA-256 of `data`.
+  fingerprint  String
+  /// The report body: bounded and redacted; never file contents, diffs, finding evidence or secrets.
+  data         Json
+  generatedAt  DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([subjectKey, fingerprint])
+  @@index([userId, generatedAt])
+  @@index([repositoryId, generatedAt])
+  @@index([analysisId, generatedAt])
+  @@index([planId, generatedAt])
+  @@index([runId, generatedAt])
+  @@index([subjectKey, generatedAt])
 }
 
 // ---------------------------------------------------------------- engineering planner (Phase 7)
@@ -561,6 +627,7 @@ model EngineeringPlan {
   approvedAt       DateTime?
   evidence         EngineeringPlanEvidence[]
   runs             EngineeringRun[]
+  reports          Report[]
 
   @@index([taskId, createdAt])
 }
@@ -668,6 +735,7 @@ model EngineeringRun {
   changes             EngineeringChange[]
   executions          SandboxExecution[]
   events              EngineeringRunEvent[]
+  reports             Report[]
 
   @@index([planId, createdAt])
   @@index([userId, createdAt])

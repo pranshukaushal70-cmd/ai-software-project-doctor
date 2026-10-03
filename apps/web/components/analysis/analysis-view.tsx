@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, ExternalLink } from "lucide-react";
 import { ANALYSIS_STAGES } from "@pd/shared/constants";
+import { GenerateReportButton } from "../reports/generate-report-button";
 import { StatusBadge } from "../status-badge";
 import { Card, CardContent } from "../ui/card";
 import { api } from "@/lib/api-client";
@@ -219,6 +220,7 @@ export function AnalysisView({ initial }: { initial: AnalysisDto }) {
             <span>{formatDate(analysis.createdAt)}</span>
           </div>
         </div>
+        {!active && <GenerateReportButton type="ANALYSIS" subjectId={analysis.id} />}
       </div>
 
       {active && <ProgressPanel stage={analysis.stage} progress={analysis.progress} connectionLost={pollError} />}

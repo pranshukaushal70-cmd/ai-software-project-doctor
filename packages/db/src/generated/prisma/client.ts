@@ -131,7 +131,8 @@ export type Recommendation = Prisma.RecommendationModel
 export type FixSuggestion = Prisma.FixSuggestionModel
 /**
  * Model Report
- * 
+ * An immutable, redacted snapshot of what the Project Doctor recorded about one analysis, plan or run.
+ * Generating again with unchanged underlying data returns the existing report (same fingerprint).
  */
 export type Report = Prisma.ReportModel
 /**

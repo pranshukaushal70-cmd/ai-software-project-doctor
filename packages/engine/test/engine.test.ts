@@ -196,6 +196,16 @@ describe("start job", () => {
     expect(db.changes).toEqual([]);
   });
 
+  it("honours a cancel requested while the changes were applied, instead of waiting for approval", async () => {
+    const id = await startRun();
+    const fake = new FakeSandbox();
+    // The user cancels while the worker is still busy (after generation, before the run is handed over).
+    const sandbox: SandboxDriver = { name: "fake", open: (...a) => fake.open(...a), status: async () => (await cancelRun(control(), "u1", id), fake.status()) };
+    await runEngineJob(id, "start", engine(new ScriptedProvider([FIRST]), sandbox));
+    expect(run().status).toBe("CANCELLED");
+    expect(statuses().slice(-2)).toEqual(["APPLYING", "CANCELLED"]);
+  });
+
   it("ignores duplicate or late jobs", async () => {
     const id = await startRun();
     await cancelRun(control(), "u1", id);
