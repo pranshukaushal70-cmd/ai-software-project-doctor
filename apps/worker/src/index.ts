@@ -4,6 +4,7 @@ import { getPrisma } from "@pd/db";
 import { ANALYSIS_QUEUE_NAME, analysisJobSchema, loadLimits } from "@pd/shared";
 import { createLogger } from "@pd/shared/logger";
 import { runAnalysis } from "./pipeline";
+import { scheduleUploadSweep } from "./uploads";
 
 process.env.SERVICE_NAME ??= "worker";
 const log = createLogger("worker");
@@ -29,6 +30,8 @@ const worker = new Worker(
 );
 
 worker.on("ready", () => log.info({ queue: ANALYSIS_QUEUE_NAME, concurrency }, "worker ready"));
+// Uploaded archives are kept only while an analysis refers to them.
+const stopUploadSweep = scheduleUploadSweep(prisma, limits.workspaceDir, log);
 worker.on("failed", (job, err) => log.error({ jobId: job?.id, err }, "job failed"));
 // Without these listeners a Redis outage surfaces as unhandled 'error' events; BullMQ reconnects on its own.
 // While Redis is down, ioredis retries continuously and BullMQ re-emits every failure,
@@ -49,6 +52,7 @@ connection.on("error", onError("connection"));
 
 async function shutdown(signal: string) {
   log.info({ signal }, "shutting down");
+  stopUploadSweep();
   await worker.close();
   await connection.quit();
   await prisma.$disconnect();

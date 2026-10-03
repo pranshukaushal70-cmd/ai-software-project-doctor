@@ -35,7 +35,7 @@ lists what actually ran.
 | `@pd/shared` | zod, pino | `constants` subpath is browser-safe; `logger` is server-only |
 | `@pd/analyzer` | shared, yauzl, ignore, web-tree-sitter | ingest (`clone`, `zip`, `workspace`), `scanner`; subpaths `metrics`, `security`, `dependencies`, `architecture`, `practices`, `scoring`, `intelligence` |
 | `@pd/db` | shared, Prisma 7 + `@prisma/adapter-pg` | generated client in `src/generated`, committed; regenerate (`npm run db:generate`) and commit it with every `schema.prisma` change. `transitionRun` (Phase 8) is the only way code-engine run statuses change: a compare-and-set checked against the lifecycle in `@pd/shared/engine`, with the approval gates in its `WHERE` clause and an audit event in the same transaction |
-| `@pd/worker` | analyzer, db, shared, bullmq | `pipeline.ts` orchestrates stages; `persist.ts` maps analyzer output to rows; supplies `fetch` for OSV.dev |
+| `@pd/worker` | analyzer, db, shared, bullmq | `pipeline.ts` orchestrates stages; `persist.ts` maps analyzer output to rows; supplies `fetch` for OSV.dev; `materialize.ts` rebuilds an analysed source for the code engine (Phase 8) and shares its demo copy and archive extraction with the pipeline; `uploads.ts` deletes archives no analysis refers to any more |
 | `@pd/agent` | analyzer, shared, zod, @anthropic-ai/sdk | Engineering planner: context retrieval, LLM providers, plan schema and validation; no database or HTTP code |
 | `@pd/web` | agent, analyzer, db, shared, bullmq | route handlers are thin; logic lives in `server/services` |
 

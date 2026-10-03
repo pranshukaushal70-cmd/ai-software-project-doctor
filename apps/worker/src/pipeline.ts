@@ -1,10 +1,9 @@
-import { cp, rename, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import {
   ANALYZER_VERSION,
   cloneRepository,
   createWorkspace,
-  extractZipSafely,
   scanRepository,
   uploadPath,
   type Workspace,
@@ -19,6 +18,7 @@ import { createSecurityScanner } from "@pd/analyzer/security";
 import type { AnalysisStage, Prisma, PrismaClient } from "@pd/db";
 import { AppError, stageProgress, type AnalyzerLimits } from "@pd/shared";
 import type { Logger } from "@pd/shared/logger";
+import { copyDemoProject, DEFAULT_DEMO_DIR, extractUpload } from "./materialize";
 import {
   buildArchitectureEdgeRows,
   buildArchitectureMetricRows,
@@ -48,16 +48,7 @@ export interface PipelineDeps {
   demoDir?: string;
 }
 
-export const DEFAULT_DEMO_DIR = path.resolve(import.meta.dirname, "../../../demo/storefront");
-/**
- * The demo stores its manifests under these names so that dependency scanners (GitHub's
- * dependency graph, Dependabot) do not report its deliberately outdated packages against
- * this repository. They get their real names back in the analysis workspace.
- */
-const DEMO_RENAMES: ReadonlyArray<[string, string]> = [
-  ["package.json.demo", "package.json"],
-  ["package-lock.json.demo", "package-lock.json"],
-];
+export { DEFAULT_DEMO_DIR };
 
 const INSERT_BATCH = 1000;
 /** Minimum interval between progress writes while parsing. */
@@ -91,6 +82,7 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
   });
   const repo = analysis.repository;
   let workspace: Workspace | undefined;
+  let completed = false;
   // Everything after the RUNNING transition is inside the try, so any failure
   // marks the analysis FAILED instead of leaving the UI polling a RUNNING row forever.
   try {
@@ -124,12 +116,7 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
       await prisma.analysis.update({ where: { id: analysisId }, data: { commitSha: cloned.commitSha } });
     } else if (repo.source === "ZIP") {
       if (!repo.uploadKey) throw new AppError("VALIDATION_ERROR", "Uploaded archive is missing");
-      const extracted = await extractZipSafely(uploadPath(limits.workspaceDir, repo.uploadKey), path.join(workspace.dir, "src"), {
-        maxEntries: limits.maxZipEntries,
-        maxExtractedBytes: limits.maxExtractedBytes,
-        maxCompressionRatio: limits.maxCompressionRatio,
-        maxFileBytes: limits.maxFileBytes,
-      });
+      const extracted = await extractUpload(limits, repo.uploadKey, path.join(workspace.dir, "src"));
       root = extracted.root;
       Object.assign(ingest, {
         extractedFiles: extracted.extractedFiles,
@@ -139,10 +126,7 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
     } else if (repo.source === "DEMO") {
       // A copy, so nothing the analysis does can touch the bundled project.
       root = path.join(workspace.dir, "src");
-      await cp(deps.demoDir ?? DEFAULT_DEMO_DIR, root, { recursive: true, verbatimSymlinks: true }).catch(() => {
-        throw new AppError("ANALYSIS_FAILED", "The demo project is not available on this server");
-      });
-      for (const [from, to] of DEMO_RENAMES) await rename(path.join(root, from), path.join(root, to)).catch(() => undefined);
+      await copyDemoProject(deps.demoDir ?? DEFAULT_DEMO_DIR, root);
       ingest.demo = path.basename(deps.demoDir ?? DEFAULT_DEMO_DIR);
     } else {
       throw new AppError("VALIDATION_ERROR", "Unsupported repository source");
@@ -297,6 +281,7 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
         finishedAt: new Date(),
       },
     });
+    completed = true;
     log.info({ ms: Date.now() - started }, "analysis completed");
   } catch (err) {
     const message = err instanceof AppError ? err.message : "Analysis failed due to an internal error";
@@ -307,8 +292,10 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
     });
   } finally {
     await workspace?.dispose().catch((err) => log.warn({ err }, "workspace cleanup failed"));
-    if (repo.source === "ZIP" && repo.uploadKey) {
-      // Uploaded source code is deleted as soon as it has been analysed.
+    if (repo.source === "ZIP" && repo.uploadKey && !completed) {
+      // The archive of a completed analysis is kept until the analysis is deleted, so the code engine
+      // (Phase 8) can rebuild the analysed source; uploads.ts deletes it then. Nothing can use the archive
+      // of a failed analysis, so it is deleted at once.
       await rm(uploadPath(limits.workspaceDir, repo.uploadKey), { force: true }).catch(() => undefined);
     }
   }
