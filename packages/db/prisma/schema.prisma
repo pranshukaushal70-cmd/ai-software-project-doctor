@@ -15,14 +15,15 @@ datasource db {
 // ---------------------------------------------------------------- Auth
 
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  name         String
-  passwordHash String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  sessions     Session[]
-  repositories Repository[]
+  id               String            @id @default(cuid())
+  email            String            @unique
+  name             String
+  passwordHash     String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  sessions         Session[]
+  repositories     Repository[]
+  engineeringTasks EngineeringTask[]
 }
 
 model Session {
@@ -149,18 +150,19 @@ model Analysis {
   startedAt       DateTime?
   finishedAt      DateTime?
 
-  files           File[]
-  findings        Finding[]
-  metrics         Metric[]
-  dependencies    Dependency[]
-  nodes           ArchitectureNode[]
-  edges           ArchitectureEdge[]
-  gitInsights     GitInsight[]
-  recommendations Recommendation[]
-  reports         Report[]
+  files            File[]
+  findings         Finding[]
+  metrics          Metric[]
+  dependencies     Dependency[]
+  nodes            ArchitectureNode[]
+  edges            ArchitectureEdge[]
+  gitInsights      GitInsight[]
+  recommendations  Recommendation[]
+  reports          Report[]
   symbols          CodeSymbol[]
   symbolReferences SymbolReference[]
   fileDependencies FileDependency[]
+  engineeringTasks EngineeringTask[]
 
   @@index([repositoryId, createdAt])
   @@index([status])
@@ -179,9 +181,9 @@ enum FileKind {
 }
 
 model File {
-  id              String    @id @default(cuid())
+  id              String            @id @default(cuid())
   analysisId      String
-  analysis        Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysis        Analysis          @relation(fields: [analysisId], references: [id], onDelete: Cascade)
   path            String
   language        String?
   kind            FileKind
@@ -213,8 +215,8 @@ model File {
   metrics         Metric[]
   symbols         CodeSymbol[]
   references      SymbolReference[]
-  dependenciesOut FileDependency[] @relation("dependencyFrom")
-  dependenciesIn  FileDependency[] @relation("dependencyTo")
+  dependenciesOut FileDependency[]  @relation("dependencyFrom")
+  dependenciesIn  FileDependency[]  @relation("dependencyTo")
 
   @@unique([analysisId, path])
   @@index([analysisId, kind])
@@ -498,4 +500,80 @@ model Report {
   createdAt   DateTime     @default(now())
 
   @@index([analysisId])
+}
+
+// ---------------------------------------------------------------- engineering planner (Phase 7)
+
+enum EngineeringPlanStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+/// A developer task to plan against one analysis. Planning only: nothing is executed.
+model EngineeringTask {
+  id          String            @id @default(cuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysisId  String
+  analysis    Analysis          @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  request     String
+  /// Optional repository-relative directory the plan is limited to.
+  scope       String?
+  /// User constraints (string[]).
+  constraints Json
+  createdAt   DateTime          @default(now())
+  plans       EngineeringPlan[]
+
+  @@index([userId, createdAt])
+  @@index([analysisId, createdAt])
+}
+
+/// One planning attempt. Stores provider metadata and the validation result, never credentials.
+model EngineeringPlan {
+  id               String                    @id @default(cuid())
+  taskId           String
+  task             EngineeringTask           @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  status           EngineeringPlanStatus     @default(PENDING)
+  provider         String
+  /// Model that served the request (requested model until it completes).
+  model            String
+  /// The validated plan (ValidatedPlan) when COMPLETED.
+  plan             Json?
+  /// ValidationReport: status, issues, model and adjusted confidence.
+  validation       Json?
+  validationStatus String?
+  confidence       Float?
+  /// Context retrieval statistics (search hits, candidate files, evidence count, truncation).
+  contextStats     Json?
+  inputTokens      Int?
+  outputTokens     Int?
+  durationMs       Int?
+  /// Machine-readable failure reason and user-safe message when FAILED.
+  failureReason    String?
+  error            String?
+  createdAt        DateTime                  @default(now())
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  evidence         EngineeringPlanEvidence[]
+
+  @@index([taskId, createdAt])
+}
+
+/// The deterministic evidence bundle a plan was generated from; plan claims cite `ref`.
+model EngineeringPlanEvidence {
+  id      String          @id @default(cuid())
+  planId  String
+  plan    EngineeringPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  /// E1, E2, ...
+  ref     String
+  kind    String
+  path    String?
+  symbol  String?
+  line    Int?
+  summary String
+  source  String
+
+  @@unique([planId, ref])
 }

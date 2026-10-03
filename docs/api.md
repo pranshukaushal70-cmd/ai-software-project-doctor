@@ -59,7 +59,23 @@ The repository tree, module graph and package list come from the existing `/file
 `/api/repository/:id/tree` → `/files?view=tree`, `/manifest` → `/manifest`, `/modules` → `/modules`,
 `/dependencies` → `/imports` (files) and `/dependencies` (packages), `/symbols` → `/symbols`, `/impact` → `/impact`.
 
-`mode` is `LOCAL_ONLY` (default) or `AI` (AI mode takes effect in Phase 7).
+### Engineering planner (Phase 7)
+
+Planning only: these endpoints never execute code or change a repository. All require a session; tasks are visible only
+to their owner (others get 404, as for analyses). POSTs need the same-origin `Origin` header. Task creation and plan
+requests share the `ai` rate limit (30 per user per hour). Design: [engineering-agent.md](engineering-agent.md).
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/engineering/tasks` | JSON `{ analysisId, task, scope?, constraints? }`: `task` 10–2000 characters without control characters, `scope` a repository-relative directory containing files, `constraints` up to 10 strings of up to 300 characters; unknown keys are rejected. `201` with the task. `404` for analyses the user does not own, `409` for analyses without a repository index. Does not plan |
+| GET | `/api/engineering/tasks?analysisId=` | The user's tasks for that analysis, newest first (50), each with `latestPlan` (`status`, `validationStatus`, `confidence`, `inProgress`) |
+| GET | `/api/engineering/tasks/:id` | The task with `latestPlan` |
+| POST | `/api/engineering/tasks/:id/plan` | Starts a planning attempt: `202` with the `PENDING` plan (`provider`, `model`). `409` if one is already in progress or no AI provider is configured. Generation and validation run after the response; poll GET |
+| GET | `/api/engineering/tasks/:id/plan` | The latest plan, or `null`: `status` (`PENDING`, `RUNNING`, `COMPLETED`, `FAILED`), `inProgress`, `plan` (validated plan; items carry `certainty`, `evidence` ids and validation `flags`), `validation` (`status` `PASSED`/`WARNINGS`/`ERRORS`/`REJECTED`, `issues`, `modelConfidence`, `confidence`), `confidence`, `evidence` (`ref`, `kind`, `path`, `symbol`, `line`, `summary`, `source`), `contextStats`, `provider`, `model`, `inputTokens`, `outputTokens`, `durationMs`, `failureReason` and `error` when failed |
+
+Plans in progress for more than 15 minutes are reported as `FAILED` (`failureReason: "timeout"`).
+
+`mode` is `LOCAL_ONLY` (default) or `AI`; it is reserved and affects neither the analysis nor the planner.
 
 For `/dependencies` and `/architecture`, `summary` is `null` (and the lists are empty) until that analysis module has run,
 for example for analyses made by an analyzer version before 0.4.0.

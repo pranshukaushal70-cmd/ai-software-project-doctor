@@ -88,6 +88,26 @@ fingerprint (rule + path + stable key, never the secret value), so it carries ov
 same repository but never applies to a different finding, file or repository. Triaged findings stay in
 results and summaries with a label; hiding them is an explicit, per-view filter.
 
+## Engineering planner and LLM output
+
+The planner (Phase 7) is planning only: it never executes repository code or commands, installs packages, writes files
+or touches git. Its boundaries, in detail in [engineering-agent.md](engineering-agent.md#security-boundaries):
+
+- **What reaches the LLM:** the task, constraints and a bounded evidence bundle from the index (paths, symbol and route
+  names, one-line summaries, finding rule ids and titles). Never file contents, finding evidence snippets or `.env`
+  values; secret files appear only as paths. With `AI_PROVIDER=baseline` nothing leaves the server.
+- **Model output is untrusted input:** it is parsed with the plan schema (else rejected), every repository reference is
+  checked against the index (nonexistent files and symbols are flagged and marked UNKNOWN; absolute, `~`, drive-letter,
+  backslash and `..` paths are removed), VERIFIED claims without valid evidence are downgraded, credential-looking values
+  are redacted and text containing shell commands is replaced before anything is stored or shown. The UI renders plan text
+  as text.
+- **Credentials:** `ANTHROPIC_API_KEY` is read from the environment only, passed to the SDK, and never stored, logged or
+  returned; provider errors are mapped to fixed messages. Logs carry provider, model, duration, token counts and
+  validation results, never the task, prompt or plan.
+- **Prompt injection:** repository text reaches the model only as identifiers and indexer-written summaries. A hostile
+  repository can still pick misleading names; the effect is limited to a plan that validation confines to existing files
+  and symbols and that nothing executes.
+
 ## Authentication
 
 - Passwords: argon2id (19 MiB, t=2), never stored or logged in plain text.
@@ -99,12 +119,13 @@ results and summaries with a label; hiding them is an explicit, per-view filter.
 ## Authorization
 
 Every analysis lookup goes through `getOwnedAnalysis(userId, id)`, which filters by the repository owner and returns
-404 (not 403) for other users' analyses so ids cannot be probed.
+404 (not 403) for other users' analyses so ids cannot be probed. Engineering tasks are looked up by id, owner and the
+owner of their analysis's repository, with the same 404 behaviour.
 
 ## Rate limiting
 
 `rate-limiter-flexible` backed by Redis (in-memory fallback): login (per IP and per email), signup, analysis, upload,
-and later AI and report generation.
+AI (engineering task creation and plan requests, 30 per user per hour) and later report generation.
 
 ## HTTP hardening
 
@@ -114,6 +135,8 @@ CSP, `X-Frame-Options: DENY`, `nosniff`, strict referrer policy, permissions pol
 
 ## Known limitations
 
+- Planner shell-command detection is pattern-based; it removes text that looks like a command, and a cleverly phrased
+  command in prose could pass. Nothing executes plan text, so this affects only what a reader sees.
 - CSP allows `'unsafe-inline'` scripts because Next.js injects inline bootstrap scripts; nonce-based CSP is planned.
 - Clone size is bounded by depth and timeout but not by bytes; a byte cap is planned with container sandboxing.
 - Nested `.gitignore` files are not yet honoured by the scanner (only the root one).

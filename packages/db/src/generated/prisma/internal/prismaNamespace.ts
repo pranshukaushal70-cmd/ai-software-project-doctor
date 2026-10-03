@@ -414,7 +414,10 @@ export const ModelName = {
   GitInsight: 'GitInsight',
   Recommendation: 'Recommendation',
   FixSuggestion: 'FixSuggestion',
-  Report: 'Report'
+  Report: 'Report',
+  EngineeringTask: 'EngineeringTask',
+  EngineeringPlan: 'EngineeringPlan',
+  EngineeringPlanEvidence: 'EngineeringPlanEvidence'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -430,7 +433,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "repository" | "findingTriage" | "analysis" | "file" | "finding" | "metric" | "dependency" | "architectureNode" | "architectureEdge" | "codeSymbol" | "symbolReference" | "fileDependency" | "gitInsight" | "recommendation" | "fixSuggestion" | "report"
+    modelProps: "user" | "session" | "repository" | "findingTriage" | "analysis" | "file" | "finding" | "metric" | "dependency" | "architectureNode" | "architectureEdge" | "codeSymbol" | "symbolReference" | "fileDependency" | "gitInsight" | "recommendation" | "fixSuggestion" | "report" | "engineeringTask" | "engineeringPlan" | "engineeringPlanEvidence"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1766,6 +1769,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    EngineeringTask: {
+      payload: Prisma.$EngineeringTaskPayload<ExtArgs>
+      fields: Prisma.EngineeringTaskFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EngineeringTaskFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EngineeringTaskFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload>
+        }
+        findFirst: {
+          args: Prisma.EngineeringTaskFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EngineeringTaskFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload>
+        }
+        findMany: {
+          args: Prisma.EngineeringTaskFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload>[]
+        }
+        create: {
+          args: Prisma.EngineeringTaskCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload>
+        }
+        createMany: {
+          args: Prisma.EngineeringTaskCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EngineeringTaskCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload>[]
+        }
+        delete: {
+          args: Prisma.EngineeringTaskDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload>
+        }
+        update: {
+          args: Prisma.EngineeringTaskUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload>
+        }
+        deleteMany: {
+          args: Prisma.EngineeringTaskDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EngineeringTaskUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EngineeringTaskUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload>[]
+        }
+        upsert: {
+          args: Prisma.EngineeringTaskUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringTaskPayload>
+        }
+        aggregate: {
+          args: Prisma.EngineeringTaskAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEngineeringTask>
+        }
+        groupBy: {
+          args: Prisma.EngineeringTaskGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringTaskGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EngineeringTaskCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringTaskCountAggregateOutputType> | number
+        }
+      }
+    }
+    EngineeringPlan: {
+      payload: Prisma.$EngineeringPlanPayload<ExtArgs>
+      fields: Prisma.EngineeringPlanFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EngineeringPlanFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EngineeringPlanFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload>
+        }
+        findFirst: {
+          args: Prisma.EngineeringPlanFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EngineeringPlanFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload>
+        }
+        findMany: {
+          args: Prisma.EngineeringPlanFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload>[]
+        }
+        create: {
+          args: Prisma.EngineeringPlanCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload>
+        }
+        createMany: {
+          args: Prisma.EngineeringPlanCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EngineeringPlanCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload>[]
+        }
+        delete: {
+          args: Prisma.EngineeringPlanDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload>
+        }
+        update: {
+          args: Prisma.EngineeringPlanUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload>
+        }
+        deleteMany: {
+          args: Prisma.EngineeringPlanDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EngineeringPlanUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EngineeringPlanUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload>[]
+        }
+        upsert: {
+          args: Prisma.EngineeringPlanUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanPayload>
+        }
+        aggregate: {
+          args: Prisma.EngineeringPlanAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEngineeringPlan>
+        }
+        groupBy: {
+          args: Prisma.EngineeringPlanGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringPlanGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EngineeringPlanCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringPlanCountAggregateOutputType> | number
+        }
+      }
+    }
+    EngineeringPlanEvidence: {
+      payload: Prisma.$EngineeringPlanEvidencePayload<ExtArgs>
+      fields: Prisma.EngineeringPlanEvidenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EngineeringPlanEvidenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EngineeringPlanEvidenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload>
+        }
+        findFirst: {
+          args: Prisma.EngineeringPlanEvidenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EngineeringPlanEvidenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload>
+        }
+        findMany: {
+          args: Prisma.EngineeringPlanEvidenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload>[]
+        }
+        create: {
+          args: Prisma.EngineeringPlanEvidenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload>
+        }
+        createMany: {
+          args: Prisma.EngineeringPlanEvidenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EngineeringPlanEvidenceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload>[]
+        }
+        delete: {
+          args: Prisma.EngineeringPlanEvidenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload>
+        }
+        update: {
+          args: Prisma.EngineeringPlanEvidenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload>
+        }
+        deleteMany: {
+          args: Prisma.EngineeringPlanEvidenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EngineeringPlanEvidenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EngineeringPlanEvidenceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload>[]
+        }
+        upsert: {
+          args: Prisma.EngineeringPlanEvidenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringPlanEvidencePayload>
+        }
+        aggregate: {
+          args: Prisma.EngineeringPlanEvidenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEngineeringPlanEvidence>
+        }
+        groupBy: {
+          args: Prisma.EngineeringPlanEvidenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringPlanEvidenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EngineeringPlanEvidenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringPlanEvidenceCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2086,6 +2311,58 @@ export const ReportScalarFieldEnum = {
 } as const
 
 export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
+
+
+export const EngineeringTaskScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  analysisId: 'analysisId',
+  request: 'request',
+  scope: 'scope',
+  constraints: 'constraints',
+  createdAt: 'createdAt'
+} as const
+
+export type EngineeringTaskScalarFieldEnum = (typeof EngineeringTaskScalarFieldEnum)[keyof typeof EngineeringTaskScalarFieldEnum]
+
+
+export const EngineeringPlanScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  status: 'status',
+  provider: 'provider',
+  model: 'model',
+  plan: 'plan',
+  validation: 'validation',
+  validationStatus: 'validationStatus',
+  confidence: 'confidence',
+  contextStats: 'contextStats',
+  inputTokens: 'inputTokens',
+  outputTokens: 'outputTokens',
+  durationMs: 'durationMs',
+  failureReason: 'failureReason',
+  error: 'error',
+  createdAt: 'createdAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type EngineeringPlanScalarFieldEnum = (typeof EngineeringPlanScalarFieldEnum)[keyof typeof EngineeringPlanScalarFieldEnum]
+
+
+export const EngineeringPlanEvidenceScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  ref: 'ref',
+  kind: 'kind',
+  path: 'path',
+  symbol: 'symbol',
+  line: 'line',
+  summary: 'summary',
+  source: 'source'
+} as const
+
+export type EngineeringPlanEvidenceScalarFieldEnum = (typeof EngineeringPlanEvidenceScalarFieldEnum)[keyof typeof EngineeringPlanEvidenceScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2414,6 +2691,20 @@ export type EnumReportFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 export type ListEnumReportFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReportFormat[]'>
     
 
+
+/**
+ * Reference to a field of type 'EngineeringPlanStatus'
+ */
+export type EnumEngineeringPlanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EngineeringPlanStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'EngineeringPlanStatus[]'
+ */
+export type ListEnumEngineeringPlanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EngineeringPlanStatus[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -2583,6 +2874,9 @@ export type GlobalOmitConfig = {
   recommendation?: Prisma.RecommendationOmit
   fixSuggestion?: Prisma.FixSuggestionOmit
   report?: Prisma.ReportOmit
+  engineeringTask?: Prisma.EngineeringTaskOmit
+  engineeringPlan?: Prisma.EngineeringPlanOmit
+  engineeringPlanEvidence?: Prisma.EngineeringPlanEvidenceOmit
 }
 
 /* Types for Logging */

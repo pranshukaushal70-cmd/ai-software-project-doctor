@@ -36,7 +36,8 @@ lists what actually ran.
 | `@pd/analyzer` | shared, yauzl, ignore, web-tree-sitter | ingest (`clone`, `zip`, `workspace`), `scanner`; subpaths `metrics`, `security`, `dependencies`, `architecture`, `practices`, `scoring`, `intelligence` |
 | `@pd/db` | Prisma 7 + `@prisma/adapter-pg` | generated client in `src/generated`, committed; regenerate (`npm run db:generate`) and commit it with every `schema.prisma` change |
 | `@pd/worker` | analyzer, db, shared, bullmq | `pipeline.ts` orchestrates stages; `persist.ts` maps analyzer output to rows; supplies `fetch` for OSV.dev |
-| `@pd/web` | analyzer, db, shared, bullmq | route handlers are thin; logic lives in `server/services` |
+| `@pd/agent` | analyzer, shared, zod, @anthropic-ai/sdk | Engineering planner: context retrieval, LLM providers, plan schema and validation; no database or HTTP code |
+| `@pd/web` | agent, analyzer, db, shared, bullmq | route handlers are thin; logic lives in `server/services` |
 
 Packages are consumed as TypeScript source (`exports` → `src/index.ts`), transpiled by Next.js
 (`transpilePackages`) and by `tsx` in the worker, so there is no separate build step.
@@ -344,6 +345,22 @@ including what is exact and what is approximate, is in [repository-intelligence.
 The **Intelligence** tab shows the manifest, index totals, symbol search with callers, impact analysis (drawn with the
 architecture graph component), modules, most depended-upon files, external packages, unresolved imports and the tree.
 
+## Engineering planner (Phase 7)
+
+`@pd/agent` turns a developer task into a validated, evidence-cited engineering plan on top of the Phase 6 index; the
+full design is in [engineering-agent.md](engineering-agent.md).
+
+- **Context retrieval** is deterministic: `RepositoryGraph.search`, `imports` and `impact` (dependants, related tests,
+  related configuration), the stored manifest and routes, external package imports and existing findings become a
+  bounded, numbered evidence bundle. No file contents.
+- **Providers** implement `LLMProvider.generatePlan`: Anthropic (structured JSON output, default `claude-opus-5-5`), a
+  deterministic baseline without an LLM, and a scripted provider for tests.
+- **Validation** parses the output with the plan schema and checks every file, symbol, test and evidence reference
+  against the index; it flags hallucinations, downgrades unsupported VERIFIED claims, redacts secrets, removes shell
+  commands and adjusts confidence.
+- `engineering-service.ts` in the web tier owns persistence and authorization; planning runs after the `202` response
+  via `after()`. The **Planner** page lists tasks per analysis and renders plans with their evidence.
+
 ## Web API and UI (Phase 4)
 
 `GET /api/analysis/:id/dependencies` and `GET /api/analysis/:id/architecture` ([api.md](api.md)) follow the findings
@@ -377,4 +394,6 @@ the `PRACTICES` value of `AnalysisStage` (migration `20261003120000_practices_st
 `SymbolReference`, `FileDependency`, `File.contentHash`, the `SymbolKind` and `DependencyKind` enums and the `INDEXING`
 stage (migration `20261004120000_repository_intelligence`), and `summary.intelligence`. `FindingTriage` (migration `20261002120000_finding_triage`)
 stores Expected/Ignored decisions per repository and finding fingerprint; it is the only table that outlives an
-analysis's findings, and it is deleted with its repository. Later phases fill the rest.
+analysis's findings, and it is deleted with its repository. Phase 7 adds `EngineeringTask`, `EngineeringPlan` and
+`EngineeringPlanEvidence` and the `EngineeringPlanStatus` enum (migration `20261005120000_engineering_planner`); tasks
+cascade from both the user and the analysis. Later phases fill the rest.
