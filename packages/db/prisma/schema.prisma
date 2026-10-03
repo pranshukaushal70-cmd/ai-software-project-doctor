@@ -24,6 +24,7 @@ model User {
   sessions         Session[]
   repositories     Repository[]
   engineeringTasks EngineeringTask[]
+  engineeringRuns  EngineeringRun[]
 }
 
 model Session {
@@ -556,7 +557,10 @@ model EngineeringPlan {
   createdAt        DateTime                  @default(now())
   startedAt        DateTime?
   finishedAt       DateTime?
+  /// When the owner approved the plan for the code engine (Phase 8): the first gate before any change is generated.
+  approvedAt       DateTime?
   evidence         EngineeringPlanEvidence[]
+  runs             EngineeringRun[]
 
   @@index([taskId, createdAt])
 }
@@ -576,4 +580,157 @@ model EngineeringPlanEvidence {
   source  String
 
   @@unique([planId, ref])
+}
+
+// ---------------------------------------------------------------- code engine (Phase 8)
+
+/// Lifecycle of a code-engine run; transitions are checked against @pd/shared/engine.
+enum EngineeringRunStatus {
+  QUEUED
+  MATERIALIZING
+  GENERATING
+  VALIDATING
+  APPLYING
+  /// Waiting for the user to approve (or skip) the sandboxed test command.
+  AWAITING_APPROVAL
+  INSTALLING
+  TESTING
+  REPAIRING
+  READY_FOR_REVIEW
+  DISCARDED
+  FAILED
+  CANCELLED
+}
+
+enum EngineeringChangeOperation {
+  CREATE
+  MODIFY
+  DELETE
+}
+
+enum EngineeringChangeStatus {
+  /// Passed validation and was applied in the isolated workspace.
+  APPLIED
+  /// Rejected by validation; kept, with its flags, so the user sees what was refused.
+  REJECTED
+}
+
+enum SandboxExecutionKind {
+  INSTALL
+  TEST
+}
+
+/// One attempt to turn an approved plan into a reviewed change. Works on an isolated copy of the analysed
+/// commit; never commits, pushes or opens pull requests. The result is a patch the user downloads.
+model EngineeringRun {
+  id                  String               @id @default(cuid())
+  planId              String
+  plan                EngineeringPlan      @relation(fields: [planId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status              EngineeringRunStatus @default(QUEUED)
+  provider            String
+  /// Model that served the latest request (requested model until then).
+  model               String
+  /// The commit the workspace was materialised at (the analysis's commitSha for git sources).
+  commitSha           String?
+  /// Budgets, fixed when the run is created (ENGINEERING_RUN_LIMITS).
+  maxIterations       Int
+  tokenBudget         Int
+  maxDurationSeconds  Int
+  /// Current edit-generation iteration (0 before the first one).
+  iteration           Int                  @default(0)
+  inputTokens         Int                  @default(0)
+  outputTokens        Int                  @default(0)
+  /// Allowlisted test command template id; never text chosen by a model.
+  testCommand         String?
+  /// Whether the user approved the separate, network-enabled dependency install step.
+  installApproved     Boolean              @default(false)
+  /// The second gate: when the user approved running `testCommand` in the sandbox.
+  executionApprovedAt DateTime?
+  /// Set by a cancel request while the worker holds the run; the worker stops at the next step.
+  cancelRequestedAt   DateTime?
+  /// Machine-readable failure reason and user-safe message when FAILED.
+  failureReason       String?
+  error               String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  startedAt           DateTime?
+  finishedAt          DateTime?
+  changes             EngineeringChange[]
+  executions          SandboxExecution[]
+  events              EngineeringRunEvent[]
+
+  @@index([planId, createdAt])
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+/// One proposed file change of one iteration, with its validation result and unified diff.
+model EngineeringChange {
+  id         String                     @id @default(cuid())
+  runId      String
+  run        EngineeringRun             @relation(fields: [runId], references: [id], onDelete: Cascade)
+  iteration  Int
+  /// Repository-relative path.
+  path       String
+  operation  EngineeringChangeOperation
+  status     EngineeringChangeStatus
+  reason     String
+  /// SHA-256 of the file before and after the change (null when it does not exist).
+  beforeHash String?
+  afterHash  String?
+  /// Unified diff of an applied change (redacted); null when rejected.
+  diff       String?
+  additions  Int                        @default(0)
+  deletions  Int                        @default(0)
+  /// Validation issue codes for this change (string[]).
+  flags      Json
+  createdAt  DateTime                   @default(now())
+
+  @@index([runId, iteration])
+}
+
+/// One command run in the disposable sandbox container. Output is redacted and truncated before storage.
+model SandboxExecution {
+  id              String               @id @default(cuid())
+  runId           String
+  run             EngineeringRun       @relation(fields: [runId], references: [id], onDelete: Cascade)
+  iteration       Int
+  kind            SandboxExecutionKind
+  /// Allowlisted command template id and the exact command line shown to the user.
+  commandId       String
+  command         String
+  /// Container image, pinned by digest.
+  image           String
+  /// Whether the container had network access (only the install step can).
+  network         Boolean              @default(false)
+  exitCode        Int?
+  timedOut        Boolean              @default(false)
+  durationMs      Int?
+  output          String               @default("")
+  outputTruncated Boolean              @default(false)
+  startedAt       DateTime             @default(now())
+  finishedAt      DateTime?
+
+  @@index([runId, startedAt])
+}
+
+/// Audit log of a run: every status change, approval and cancellation, with who caused it.
+model EngineeringRunEvent {
+  id         String                @id @default(cuid())
+  runId      String
+  run        EngineeringRun        @relation(fields: [runId], references: [id], onDelete: Cascade)
+  /// "status", "approval", "cancel-requested", …
+  type       String
+  /// "user" or "worker".
+  actor      String
+  fromStatus EngineeringRunStatus?
+  toStatus   EngineeringRunStatus?
+  /// User-safe description; never prompts, file contents or credentials.
+  message    String
+  data       Json?
+  createdAt  DateTime              @default(now())
+
+  @@index([runId, createdAt])
 }

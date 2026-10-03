@@ -125,3 +125,24 @@ export type EngineeringPlan = Prisma.EngineeringPlanModel
  * The deterministic evidence bundle a plan was generated from; plan claims cite `ref`.
  */
 export type EngineeringPlanEvidence = Prisma.EngineeringPlanEvidenceModel
+/**
+ * Model EngineeringRun
+ * One attempt to turn an approved plan into a reviewed change. Works on an isolated copy of the analysed
+ * commit; never commits, pushes or opens pull requests. The result is a patch the user downloads.
+ */
+export type EngineeringRun = Prisma.EngineeringRunModel
+/**
+ * Model EngineeringChange
+ * One proposed file change of one iteration, with its validation result and unified diff.
+ */
+export type EngineeringChange = Prisma.EngineeringChangeModel
+/**
+ * Model SandboxExecution
+ * One command run in the disposable sandbox container. Output is redacted and truncated before storage.
+ */
+export type SandboxExecution = Prisma.SandboxExecutionModel
+/**
+ * Model EngineeringRunEvent
+ * Audit log of a run: every status change, approval and cancellation, with who caused it.
+ */
+export type EngineeringRunEvent = Prisma.EngineeringRunEventModel

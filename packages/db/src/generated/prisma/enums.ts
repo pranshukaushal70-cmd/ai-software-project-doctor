@@ -174,3 +174,47 @@ export const EngineeringPlanStatus = {
 } as const
 
 export type EngineeringPlanStatus = (typeof EngineeringPlanStatus)[keyof typeof EngineeringPlanStatus]
+
+
+export const EngineeringRunStatus = {
+  QUEUED: 'QUEUED',
+  MATERIALIZING: 'MATERIALIZING',
+  GENERATING: 'GENERATING',
+  VALIDATING: 'VALIDATING',
+  APPLYING: 'APPLYING',
+  AWAITING_APPROVAL: 'AWAITING_APPROVAL',
+  INSTALLING: 'INSTALLING',
+  TESTING: 'TESTING',
+  REPAIRING: 'REPAIRING',
+  READY_FOR_REVIEW: 'READY_FOR_REVIEW',
+  DISCARDED: 'DISCARDED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type EngineeringRunStatus = (typeof EngineeringRunStatus)[keyof typeof EngineeringRunStatus]
+
+
+export const EngineeringChangeOperation = {
+  CREATE: 'CREATE',
+  MODIFY: 'MODIFY',
+  DELETE: 'DELETE'
+} as const
+
+export type EngineeringChangeOperation = (typeof EngineeringChangeOperation)[keyof typeof EngineeringChangeOperation]
+
+
+export const EngineeringChangeStatus = {
+  APPLIED: 'APPLIED',
+  REJECTED: 'REJECTED'
+} as const
+
+export type EngineeringChangeStatus = (typeof EngineeringChangeStatus)[keyof typeof EngineeringChangeStatus]
+
+
+export const SandboxExecutionKind = {
+  INSTALL: 'INSTALL',
+  TEST: 'TEST'
+} as const
+
+export type SandboxExecutionKind = (typeof SandboxExecutionKind)[keyof typeof SandboxExecutionKind]

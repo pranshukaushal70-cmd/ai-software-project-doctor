@@ -34,7 +34,7 @@ lists what actually ran.
 |---|---|---|
 | `@pd/shared` | zod, pino | `constants` subpath is browser-safe; `logger` is server-only |
 | `@pd/analyzer` | shared, yauzl, ignore, web-tree-sitter | ingest (`clone`, `zip`, `workspace`), `scanner`; subpaths `metrics`, `security`, `dependencies`, `architecture`, `practices`, `scoring`, `intelligence` |
-| `@pd/db` | Prisma 7 + `@prisma/adapter-pg` | generated client in `src/generated`, committed; regenerate (`npm run db:generate`) and commit it with every `schema.prisma` change |
+| `@pd/db` | shared, Prisma 7 + `@prisma/adapter-pg` | generated client in `src/generated`, committed; regenerate (`npm run db:generate`) and commit it with every `schema.prisma` change. `transitionRun` (Phase 8) is the only way code-engine run statuses change: a compare-and-set checked against the lifecycle in `@pd/shared/engine`, with the approval gates in its `WHERE` clause and an audit event in the same transaction |
 | `@pd/worker` | analyzer, db, shared, bullmq | `pipeline.ts` orchestrates stages; `persist.ts` maps analyzer output to rows; supplies `fetch` for OSV.dev |
 | `@pd/agent` | analyzer, shared, zod, @anthropic-ai/sdk | Engineering planner: context retrieval, LLM providers, plan schema and validation; no database or HTTP code |
 | `@pd/web` | agent, analyzer, db, shared, bullmq | route handlers are thin; logic lives in `server/services` |

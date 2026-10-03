@@ -417,7 +417,11 @@ export const ModelName = {
   Report: 'Report',
   EngineeringTask: 'EngineeringTask',
   EngineeringPlan: 'EngineeringPlan',
-  EngineeringPlanEvidence: 'EngineeringPlanEvidence'
+  EngineeringPlanEvidence: 'EngineeringPlanEvidence',
+  EngineeringRun: 'EngineeringRun',
+  EngineeringChange: 'EngineeringChange',
+  SandboxExecution: 'SandboxExecution',
+  EngineeringRunEvent: 'EngineeringRunEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -433,7 +437,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "repository" | "findingTriage" | "analysis" | "file" | "finding" | "metric" | "dependency" | "architectureNode" | "architectureEdge" | "codeSymbol" | "symbolReference" | "fileDependency" | "gitInsight" | "recommendation" | "fixSuggestion" | "report" | "engineeringTask" | "engineeringPlan" | "engineeringPlanEvidence"
+    modelProps: "user" | "session" | "repository" | "findingTriage" | "analysis" | "file" | "finding" | "metric" | "dependency" | "architectureNode" | "architectureEdge" | "codeSymbol" | "symbolReference" | "fileDependency" | "gitInsight" | "recommendation" | "fixSuggestion" | "report" | "engineeringTask" | "engineeringPlan" | "engineeringPlanEvidence" | "engineeringRun" | "engineeringChange" | "sandboxExecution" | "engineeringRunEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1991,6 +1995,302 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    EngineeringRun: {
+      payload: Prisma.$EngineeringRunPayload<ExtArgs>
+      fields: Prisma.EngineeringRunFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EngineeringRunFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EngineeringRunFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload>
+        }
+        findFirst: {
+          args: Prisma.EngineeringRunFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EngineeringRunFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload>
+        }
+        findMany: {
+          args: Prisma.EngineeringRunFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload>[]
+        }
+        create: {
+          args: Prisma.EngineeringRunCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload>
+        }
+        createMany: {
+          args: Prisma.EngineeringRunCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EngineeringRunCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload>[]
+        }
+        delete: {
+          args: Prisma.EngineeringRunDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload>
+        }
+        update: {
+          args: Prisma.EngineeringRunUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload>
+        }
+        deleteMany: {
+          args: Prisma.EngineeringRunDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EngineeringRunUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EngineeringRunUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload>[]
+        }
+        upsert: {
+          args: Prisma.EngineeringRunUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunPayload>
+        }
+        aggregate: {
+          args: Prisma.EngineeringRunAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEngineeringRun>
+        }
+        groupBy: {
+          args: Prisma.EngineeringRunGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringRunGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EngineeringRunCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringRunCountAggregateOutputType> | number
+        }
+      }
+    }
+    EngineeringChange: {
+      payload: Prisma.$EngineeringChangePayload<ExtArgs>
+      fields: Prisma.EngineeringChangeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EngineeringChangeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EngineeringChangeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload>
+        }
+        findFirst: {
+          args: Prisma.EngineeringChangeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EngineeringChangeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload>
+        }
+        findMany: {
+          args: Prisma.EngineeringChangeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload>[]
+        }
+        create: {
+          args: Prisma.EngineeringChangeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload>
+        }
+        createMany: {
+          args: Prisma.EngineeringChangeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EngineeringChangeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload>[]
+        }
+        delete: {
+          args: Prisma.EngineeringChangeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload>
+        }
+        update: {
+          args: Prisma.EngineeringChangeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload>
+        }
+        deleteMany: {
+          args: Prisma.EngineeringChangeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EngineeringChangeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EngineeringChangeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload>[]
+        }
+        upsert: {
+          args: Prisma.EngineeringChangeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringChangePayload>
+        }
+        aggregate: {
+          args: Prisma.EngineeringChangeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEngineeringChange>
+        }
+        groupBy: {
+          args: Prisma.EngineeringChangeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringChangeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EngineeringChangeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringChangeCountAggregateOutputType> | number
+        }
+      }
+    }
+    SandboxExecution: {
+      payload: Prisma.$SandboxExecutionPayload<ExtArgs>
+      fields: Prisma.SandboxExecutionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SandboxExecutionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SandboxExecutionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload>
+        }
+        findFirst: {
+          args: Prisma.SandboxExecutionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SandboxExecutionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload>
+        }
+        findMany: {
+          args: Prisma.SandboxExecutionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload>[]
+        }
+        create: {
+          args: Prisma.SandboxExecutionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload>
+        }
+        createMany: {
+          args: Prisma.SandboxExecutionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SandboxExecutionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload>[]
+        }
+        delete: {
+          args: Prisma.SandboxExecutionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload>
+        }
+        update: {
+          args: Prisma.SandboxExecutionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload>
+        }
+        deleteMany: {
+          args: Prisma.SandboxExecutionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SandboxExecutionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SandboxExecutionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload>[]
+        }
+        upsert: {
+          args: Prisma.SandboxExecutionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SandboxExecutionPayload>
+        }
+        aggregate: {
+          args: Prisma.SandboxExecutionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSandboxExecution>
+        }
+        groupBy: {
+          args: Prisma.SandboxExecutionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SandboxExecutionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SandboxExecutionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SandboxExecutionCountAggregateOutputType> | number
+        }
+      }
+    }
+    EngineeringRunEvent: {
+      payload: Prisma.$EngineeringRunEventPayload<ExtArgs>
+      fields: Prisma.EngineeringRunEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EngineeringRunEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EngineeringRunEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload>
+        }
+        findFirst: {
+          args: Prisma.EngineeringRunEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EngineeringRunEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload>
+        }
+        findMany: {
+          args: Prisma.EngineeringRunEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload>[]
+        }
+        create: {
+          args: Prisma.EngineeringRunEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload>
+        }
+        createMany: {
+          args: Prisma.EngineeringRunEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EngineeringRunEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload>[]
+        }
+        delete: {
+          args: Prisma.EngineeringRunEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload>
+        }
+        update: {
+          args: Prisma.EngineeringRunEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.EngineeringRunEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EngineeringRunEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EngineeringRunEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.EngineeringRunEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EngineeringRunEventPayload>
+        }
+        aggregate: {
+          args: Prisma.EngineeringRunEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEngineeringRunEvent>
+        }
+        groupBy: {
+          args: Prisma.EngineeringRunEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringRunEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EngineeringRunEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EngineeringRunEventCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2344,7 +2644,8 @@ export const EngineeringPlanScalarFieldEnum = {
   error: 'error',
   createdAt: 'createdAt',
   startedAt: 'startedAt',
-  finishedAt: 'finishedAt'
+  finishedAt: 'finishedAt',
+  approvedAt: 'approvedAt'
 } as const
 
 export type EngineeringPlanScalarFieldEnum = (typeof EngineeringPlanScalarFieldEnum)[keyof typeof EngineeringPlanScalarFieldEnum]
@@ -2363,6 +2664,91 @@ export const EngineeringPlanEvidenceScalarFieldEnum = {
 } as const
 
 export type EngineeringPlanEvidenceScalarFieldEnum = (typeof EngineeringPlanEvidenceScalarFieldEnum)[keyof typeof EngineeringPlanEvidenceScalarFieldEnum]
+
+
+export const EngineeringRunScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  userId: 'userId',
+  status: 'status',
+  provider: 'provider',
+  model: 'model',
+  commitSha: 'commitSha',
+  maxIterations: 'maxIterations',
+  tokenBudget: 'tokenBudget',
+  maxDurationSeconds: 'maxDurationSeconds',
+  iteration: 'iteration',
+  inputTokens: 'inputTokens',
+  outputTokens: 'outputTokens',
+  testCommand: 'testCommand',
+  installApproved: 'installApproved',
+  executionApprovedAt: 'executionApprovedAt',
+  cancelRequestedAt: 'cancelRequestedAt',
+  failureReason: 'failureReason',
+  error: 'error',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type EngineeringRunScalarFieldEnum = (typeof EngineeringRunScalarFieldEnum)[keyof typeof EngineeringRunScalarFieldEnum]
+
+
+export const EngineeringChangeScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  iteration: 'iteration',
+  path: 'path',
+  operation: 'operation',
+  status: 'status',
+  reason: 'reason',
+  beforeHash: 'beforeHash',
+  afterHash: 'afterHash',
+  diff: 'diff',
+  additions: 'additions',
+  deletions: 'deletions',
+  flags: 'flags',
+  createdAt: 'createdAt'
+} as const
+
+export type EngineeringChangeScalarFieldEnum = (typeof EngineeringChangeScalarFieldEnum)[keyof typeof EngineeringChangeScalarFieldEnum]
+
+
+export const SandboxExecutionScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  iteration: 'iteration',
+  kind: 'kind',
+  commandId: 'commandId',
+  command: 'command',
+  image: 'image',
+  network: 'network',
+  exitCode: 'exitCode',
+  timedOut: 'timedOut',
+  durationMs: 'durationMs',
+  output: 'output',
+  outputTruncated: 'outputTruncated',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type SandboxExecutionScalarFieldEnum = (typeof SandboxExecutionScalarFieldEnum)[keyof typeof SandboxExecutionScalarFieldEnum]
+
+
+export const EngineeringRunEventScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  type: 'type',
+  actor: 'actor',
+  fromStatus: 'fromStatus',
+  toStatus: 'toStatus',
+  message: 'message',
+  data: 'data',
+  createdAt: 'createdAt'
+} as const
+
+export type EngineeringRunEventScalarFieldEnum = (typeof EngineeringRunEventScalarFieldEnum)[keyof typeof EngineeringRunEventScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2705,6 +3091,62 @@ export type EnumEngineeringPlanStatusFieldRefInput<$PrismaModel> = FieldRefInput
 export type ListEnumEngineeringPlanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EngineeringPlanStatus[]'>
     
 
+
+/**
+ * Reference to a field of type 'EngineeringRunStatus'
+ */
+export type EnumEngineeringRunStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EngineeringRunStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'EngineeringRunStatus[]'
+ */
+export type ListEnumEngineeringRunStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EngineeringRunStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'EngineeringChangeOperation'
+ */
+export type EnumEngineeringChangeOperationFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EngineeringChangeOperation'>
+    
+
+
+/**
+ * Reference to a field of type 'EngineeringChangeOperation[]'
+ */
+export type ListEnumEngineeringChangeOperationFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EngineeringChangeOperation[]'>
+    
+
+
+/**
+ * Reference to a field of type 'EngineeringChangeStatus'
+ */
+export type EnumEngineeringChangeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EngineeringChangeStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'EngineeringChangeStatus[]'
+ */
+export type ListEnumEngineeringChangeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EngineeringChangeStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'SandboxExecutionKind'
+ */
+export type EnumSandboxExecutionKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SandboxExecutionKind'>
+    
+
+
+/**
+ * Reference to a field of type 'SandboxExecutionKind[]'
+ */
+export type ListEnumSandboxExecutionKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SandboxExecutionKind[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -2877,6 +3319,10 @@ export type GlobalOmitConfig = {
   engineeringTask?: Prisma.EngineeringTaskOmit
   engineeringPlan?: Prisma.EngineeringPlanOmit
   engineeringPlanEvidence?: Prisma.EngineeringPlanEvidenceOmit
+  engineeringRun?: Prisma.EngineeringRunOmit
+  engineeringChange?: Prisma.EngineeringChangeOmit
+  sandboxExecution?: Prisma.SandboxExecutionOmit
+  engineeringRunEvent?: Prisma.EngineeringRunEventOmit
 }
 
 /* Types for Logging */
