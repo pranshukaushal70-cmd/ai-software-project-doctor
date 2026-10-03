@@ -220,3 +220,4 @@ The approved plan's files and tests scope what the engine may change, every step
 explicit approval, and tests run only in a disposable container without network or secrets. No branch, push or pull
 request is created; the result is a patch the user downloads. Design, security boundaries, configuration and the
 end-to-end verification: [code-engine.md](code-engine.md); endpoints: [api.md](api.md#code-engine-phase-8).
+A plan and a run can be summarised as a report (Phase 9): [reports.md](reports.md).

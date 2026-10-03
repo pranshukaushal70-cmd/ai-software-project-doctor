@@ -368,10 +368,24 @@ export type FixSuggestionScalarFieldEnum = (typeof FixSuggestionScalarFieldEnum)
 
 export const ReportScalarFieldEnum = {
   id: 'id',
+  userId: 'userId',
+  repositoryId: 'repositoryId',
   analysisId: 'analysisId',
-  format: 'format',
-  storagePath: 'storagePath',
-  createdAt: 'createdAt'
+  planId: 'planId',
+  runId: 'runId',
+  type: 'type',
+  subjectKey: 'subjectKey',
+  status: 'status',
+  outcome: 'outcome',
+  version: 'version',
+  title: 'title',
+  summary: 'summary',
+  errorCount: 'errorCount',
+  warningCount: 'warningCount',
+  fingerprint: 'fingerprint',
+  data: 'data',
+  generatedAt: 'generatedAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]

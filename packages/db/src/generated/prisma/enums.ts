@@ -156,14 +156,36 @@ export const Effort = {
 export type Effort = (typeof Effort)[keyof typeof Effort]
 
 
-export const ReportFormat = {
-  PDF: 'PDF',
-  JSON: 'JSON',
-  MARKDOWN: 'MARKDOWN',
-  HTML: 'HTML'
+export const ReportType = {
+  ANALYSIS: 'ANALYSIS',
+  PLAN: 'PLAN',
+  RUN: 'RUN'
 } as const
 
-export type ReportFormat = (typeof ReportFormat)[keyof typeof ReportFormat]
+export type ReportType = (typeof ReportType)[keyof typeof ReportType]
+
+
+export const ReportStatus = {
+  COMPLETE: 'COMPLETE',
+  PARTIAL: 'PARTIAL'
+} as const
+
+export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus]
+
+
+export const ReportOutcome = {
+  COMPLETED: 'COMPLETED',
+  TESTS_PASSED: 'TESTS_PASSED',
+  TESTS_FAILED: 'TESTS_FAILED',
+  NOT_TESTED: 'NOT_TESTED',
+  DISCARDED: 'DISCARDED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  AWAITING_APPROVAL: 'AWAITING_APPROVAL'
+} as const
+
+export type ReportOutcome = (typeof ReportOutcome)[keyof typeof ReportOutcome]
 
 
 export const EngineeringPlanStatus = {

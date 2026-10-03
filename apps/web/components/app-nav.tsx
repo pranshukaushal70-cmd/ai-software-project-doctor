@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/dashboard", label: "Repositories" },
   { href: "/new", label: "New analysis" },
   { href: "/planner", label: "Planner" },
+  { href: "/reports", label: "Reports" },
 ];
 
 export function AppNav() {

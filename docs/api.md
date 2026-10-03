@@ -101,4 +101,17 @@ All run endpoints require a session and return `404` for other users' runs and p
 For `/dependencies` and `/architecture`, `summary` is `null` (and the lists are empty) until that analysis module has run,
 for example for analyses made by an analyzer version before 0.4.0.
 
-Planned: `/security`, `/git`, `/recommendations`, `/report`.
+Planned: `/security`, `/git`, `/recommendations`.
+
+### Reports (Phase 9)
+
+Reports are immutable snapshots built from stored data; see [reports.md](reports.md). All endpoints require a session;
+other users' reports and subjects are `404`; the POST needs the same-origin `Origin` header.
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/reports` | JSON `{ type: "ANALYSIS" \| "PLAN" \| "RUN", subjectId }` (unknown keys rejected). `201` with the new report, or `200` with the existing one when nothing changed since it was generated (`created: false`). `404` for missing or other users' subjects. Rate limit `report` (30 per user per hour) |
+| GET | `/api/reports` | `{ items, total, page, pageSize, pages }`, newest first; items are summaries (`id`, `type`, `status`, `outcome`, `title`, `summary`, `errorCount`, `warningCount`, `version`, ids of repository/analysis/plan/run, `generatedAt`, `repository`), never snapshots. Query: `page`, `pageSize` (≤ 100, default 20), `repositoryId`, `analysisId`, `planId`, `runId`, `type`, `status` (`COMPLETE`/`PARTIAL`), `outcome`; unknown parameters are rejected |
+| GET | `/api/reports/latest?type=&subjectId=` | The newest report about that analysis, plan or run, or `null` |
+| GET | `/api/reports/:id` | The report with its snapshot `data` (schema in `@pd/reports` `types.ts`, `version` 1) |
+| GET | `/api/reports/:id/export?format=markdown\|json` | Attachment (`text/markdown` or `application/json`, `Cache-Control: private, no-store`). The Markdown escapes repository-controlled text |

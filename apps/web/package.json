@@ -15,6 +15,7 @@
     "@pd/analyzer": "*",
     "@pd/db": "*",
     "@pd/engine": "*",
+    "@pd/reports": "*",
     "@pd/sandbox": "*",
     "@pd/shared": "*",
     "bullmq": "^6.3.9",

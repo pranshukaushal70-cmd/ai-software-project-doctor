@@ -278,11 +278,18 @@ class RunJob {
   private async afterApply(): Promise<void> {
     const { sandbox, sandboxConfig } = this.deps;
     const status = sandboxConfig.enabled ? await sandbox.status() : { available: false as const, reason: "Sandboxed test runs are disabled on this server." };
-    if (!status.available) return void (await this.move("READY_FOR_REVIEW", `Ready for review. Tests not run: ${status.reason}`));
-    const files = new Set([...this.facts.files.keys(), ...[...this.pristine.entries()].filter(([, before]) => before === null).map(([p]) => p)]);
-    const resolved = await resolveTestSetup({ files, readFile: (p) => readWorkspaceFile(this.root, p), config: sandboxConfig });
-    if (!resolved.ok) return void (await this.move("READY_FOR_REVIEW", `Ready for review. Tests not run: ${resolved.reason}`));
-    await this.move("AWAITING_APPROVAL", `Waiting for approval to run ${resolved.setup.test.display} in the sandbox.`, { testSetup: resolved.setup as unknown as Prisma.InputJsonValue });
+    let next: { to: EngineeringRunStatus; message: string; patch?: Prisma.EngineeringRunUpdateManyMutationInput };
+    if (!status.available) next = { to: "READY_FOR_REVIEW", message: `Ready for review. Tests not run: ${status.reason}` };
+    else {
+      const files = new Set([...this.facts.files.keys(), ...[...this.pristine.entries()].filter(([, before]) => before === null).map(([p]) => p)]);
+      const resolved = await resolveTestSetup({ files, readFile: (p) => readWorkspaceFile(this.root, p), config: sandboxConfig });
+      next = resolved.ok
+        ? { to: "AWAITING_APPROVAL", message: `Waiting for approval to run ${resolved.setup.test.display} in the sandbox.`, patch: { testSetup: resolved.setup as unknown as Prisma.InputJsonValue } }
+        : { to: "READY_FOR_REVIEW", message: `Ready for review. Tests not run: ${resolved.reason}` };
+    }
+    // A cancel requested while the worker applied the changes must win over handing the run to the user.
+    await this.checkCancel();
+    await this.move(next.to, next.message, next.patch);
   }
 
   /** Re-applies the stored cumulative patch to the freshly rebuilt source. */

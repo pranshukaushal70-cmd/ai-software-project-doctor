@@ -108,7 +108,7 @@ const FLAG_LABEL: Record<string, string> = {
 /** Lines of a diff shown inline; the download always has the whole patch. */
 const DIFF_LINES = 400;
 
-function Diff({ text }: { text: string }) {
+export function Diff({ text }: { text: string }) {
   const lines = text.replace(/\n$/, "").split("\n");
   const shown = lines.slice(0, DIFF_LINES);
   return (

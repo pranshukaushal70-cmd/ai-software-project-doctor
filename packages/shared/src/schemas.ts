@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ENGINEERING_RUN_LIMITS } from "./engine";
-import { DEPENDENCY_ECOSYSTEMS, FINDING_CATEGORIES, SEVERITIES, SYMBOL_KINDS } from "./constants";
+import { DEPENDENCY_ECOSYSTEMS, FINDING_CATEGORIES, REPORT_OUTCOMES, REPORT_STATUSES, REPORT_TYPES, SEVERITIES, SYMBOL_KINDS } from "./constants";
 
 export const emailSchema = z.email().max(254).transform((v) => v.toLowerCase());
 
@@ -233,3 +233,33 @@ export type EngineeringRunInput = z.infer<typeof engineeringRunInputSchema>;
 /** Approving the sandboxed test run: the separate install step is opted into explicitly. */
 export const executionApprovalSchema = z.object({ install: z.boolean().default(false) }).strict();
 export type ExecutionApproval = z.infer<typeof executionApprovalSchema>;
+
+// ---------------------------------------------------------------- reports (Phase 9)
+
+/** POST /api/reports: what to report on. The subject is an analysis, plan or run id, matching `type`. */
+export const reportCreateSchema = z.object({ type: z.enum(REPORT_TYPES), subjectId: idSchema }).strict();
+export type ReportCreateInput = z.infer<typeof reportCreateSchema>;
+
+/** GET /api/reports: the user's reports, newest first, optionally narrowed to one repository, analysis, plan or run. */
+export const reportsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(20),
+    repositoryId: idSchema.optional(),
+    analysisId: idSchema.optional(),
+    planId: idSchema.optional(),
+    runId: idSchema.optional(),
+    type: z.enum(REPORT_TYPES).optional(),
+    status: z.enum(REPORT_STATUSES).optional(),
+    outcome: z.enum(REPORT_OUTCOMES).optional(),
+  })
+  .strict();
+export type ReportsQuery = z.infer<typeof reportsQuerySchema>;
+
+/** GET /api/reports/latest: the newest report about one subject. */
+export const reportLatestQuerySchema = z.object({ type: z.enum(REPORT_TYPES), subjectId: idSchema }).strict();
+export type ReportLatestQuery = z.infer<typeof reportLatestQuerySchema>;
+
+/** GET /api/reports/:id/export. */
+export const reportExportQuerySchema = z.object({ format: z.enum(["markdown", "json"]).default("markdown") }).strict();
+export type ReportExportQuery = z.infer<typeof reportExportQuerySchema>;

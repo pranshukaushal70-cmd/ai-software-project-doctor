@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form";
 import { api } from "@/lib/api-client";
+import { GenerateReportButton } from "@/components/reports/generate-report-button";
 import { RunView, type RunDto } from "./run-view";
 
 /**
@@ -109,6 +110,8 @@ export function RunPanel({ planId, approvedAt: initialApprovedAt }: { planId: st
           <span className="flex items-center gap-1.5 text-ok">
             <CheckCircle2 className="size-4" /> Plan approved {new Date(approvedAt).toLocaleString()}
           </span>
+          <GenerateReportButton type="PLAN" subjectId={planId} label="Plan report" />
+          {run && <GenerateReportButton type="RUN" subjectId={run.id} label="Run report" />}
           {!open && (
             <Button size="sm" className="ml-auto" disabled={busy || !loaded} onClick={() => void act(() => post<RunDto>(`/api/engineering/plans/${planId}/runs`))}>
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Wand2 className="size-4" />}
