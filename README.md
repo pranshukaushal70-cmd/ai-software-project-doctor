@@ -9,8 +9,9 @@ explain, prioritise and recommend, and it must cite the evidence it uses.
 
 **Status: Phase 1 (foundation) complete. Phases 2 (code metrics & static analysis), 3 (secret & insecure-pattern
 detection), 4 (dependency & architecture analysis) and 5 (API, database, testing and documentation analysis, an
-explainable health score and a demo project) and 6 (repository intelligence: manifest, symbol index, dependency graph,
-impact analysis and an agent context API) are implemented and tested.** See [Roadmap](#roadmap) and
+explainable health score and a demo project), 6 (repository intelligence: manifest, symbol index, dependency graph,
+impact analysis and an agent context API) and 7 (an AI engineering planner that turns a task into an evidence-backed,
+validated plan) are implemented and tested.** See [Roadmap](#roadmap) and
 [Verification status](#verification-status). Nothing described as "planned" below is implemented yet.
 
 ## Problem statement
@@ -58,6 +59,7 @@ Each completed analysis has one tab per module:
 | Architecture | Import graph (Phase 4) | File and module import graph (SVG), import cycles, module coupling and instability, inferred layers and violations, hubs, high fan-out |
 | Practices | API, database, testing & documentation (Phase 5) | HTTP endpoints (Express, Fastify, Koa, Hono, NestJS, Next.js, Flask, FastAPI, Django, Spring) with auth/validation checks, permissive CORS, leaked stack traces, unthrottled login; Prisma/SQL/ORM schemas with unindexed foreign keys, missing primary keys, missing migrations and automatic schema sync; test files, test cases, test-to-code ratio, committed coverage reports, CI test runs, focused/skipped tests; README completeness, license, undocumented environment variables, broken links |
 | Health | Explainable health score (Phase 5) | 0–100 score and grade from eight weighted dimensions, with every deduction listed; triaged findings excluded; capped while critical/high security findings are open |
+| Planner | AI engineering planner (Phase 7) | Planner page: describe a task, get a plan (affected files and symbols, steps, test plan, configuration and dependency changes, security, performance, risks, validation plan) generated from repository-index evidence; every claim marked VERIFIED, INFERRED or UNKNOWN with cited evidence; nonexistent files and symbols flagged, secrets and shell commands removed. Planning only, nothing executed. See [docs/engineering-agent.md](docs/engineering-agent.md) |
 | Intelligence | Repository intelligence (Phase 6) | Repository manifest (languages, frameworks, runtimes, manifests, Docker, CI, infrastructure), symbol search with callers, resolved file dependencies, deterministic impact analysis (dependants, tests, routes, config, modules), most depended-upon files, external packages, unresolved imports, file tree. See [docs/repository-intelligence.md](docs/repository-intelligence.md) |
 | All findings | — | Every finding with evidence, impact and recommendation, filterable by severity and type |
 
@@ -99,7 +101,9 @@ See [.env.example](.env.example). The important ones:
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Used by `docker-compose.yml` to create the database. `POSTGRES_PASSWORD` is required (no default); it only takes effect when the database volume is first created. PostgreSQL and Redis are published on `127.0.0.1` only |
 | `REDIS_URL` | Redis for the job queue and rate limiting |
 | `JWT_SECRET` | ≥32-char secret used to HMAC session tokens before storage |
-| `ANTHROPIC_API_KEY` | Optional. Enables AI mode (Phase 6). Never sent to the browser |
+| `AI_PROVIDER` | Engineering planner provider: `anthropic` (default; needs `ANTHROPIC_API_KEY`) or `baseline` (deterministic evidence-only plans, no LLM) |
+| `ANTHROPIC_API_KEY` | Optional. Enables LLM planning (Phase 7). Read from the environment only; never stored, logged or sent to the browser |
+| `ANTHROPIC_MODEL` | Planner model, default `claude-opus-5-5` |
 | `WORKSPACE_DIR` | Where uploads and clones are stored temporarily (default: OS temp dir) |
 | `MAX_UPLOAD_MB`, `MAX_EXTRACTED_MB`, `MAX_ZIP_ENTRIES`, `MAX_COMPRESSION_RATIO`, `MAX_FILE_KB` | Ingest safety limits |
 | `CLONE_TIMEOUT_SECONDS`, `CLONE_DEPTH` | Clone limits |
@@ -128,6 +132,12 @@ repository's `.npmrc` / `.yarnrc.yml`. PyPI, Maven and Go do not record the regi
 outside the repository cannot be seen, so set `OSV_ENABLED=false` when analysing such code. Details and threat model:
 [docs/security.md](docs/security.md).
 
+The engineering planner sends the task and a bounded set of index facts (paths, symbol and route names, one-line
+summaries, finding titles) to the configured LLM provider: never file contents, finding evidence or `.env` values. Its
+output is treated as untrusted: it is schema-checked, every file and symbol is checked against the index, and secrets and
+shell commands are removed before storage. Nothing it produces is executed. With `AI_PROVIDER=baseline` no external
+request is made. See [docs/engineering-agent.md](docs/engineering-agent.md#security-boundaries).
+
 ## Roadmap
 
 | Phase | Scope | Status |
@@ -139,7 +149,8 @@ outside the repository cannot be seen, so set `OSV_ENABLED=false` when analysing
 | 5 | API/DB/test/docs analyzers, explainable health score, demo project (Practices and Health tabs) | Implemented and tested |
 | 6 | Repository intelligence layer: manifest, symbol index, dependency graph, impact analysis, agent context API (Intelligence tab) | Implemented and tested |
 | — | Git history insights (previously planned as Phase 6) | Planned |
-| 7 | LLM provider layer (Anthropic default), evidence-cited recommendations, fix suggestions | Planned |
+| 7 | AI engineering planner: provider layer (Anthropic default, deterministic baseline), evidence retrieval from the index, validated evidence-cited plans, Planner page | Implemented and tested |
+| — | Evidence-cited recommendations and fix suggestions on findings | Planned |
 | 8 | Reports (PDF/JSON/Markdown/HTML) | Planned |
 | 9 | Dockerised web/worker, CI, E2E tests, benchmark & evaluation | Planned |
 

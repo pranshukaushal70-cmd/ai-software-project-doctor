@@ -68,7 +68,10 @@ export const ModelName = {
   GitInsight: 'GitInsight',
   Recommendation: 'Recommendation',
   FixSuggestion: 'FixSuggestion',
-  Report: 'Report'
+  Report: 'Report',
+  EngineeringTask: 'EngineeringTask',
+  EngineeringPlan: 'EngineeringPlan',
+  EngineeringPlanEvidence: 'EngineeringPlanEvidence'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -368,6 +371,58 @@ export const ReportScalarFieldEnum = {
 } as const
 
 export type ReportScalarFieldEnum = (typeof ReportScalarFieldEnum)[keyof typeof ReportScalarFieldEnum]
+
+
+export const EngineeringTaskScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  analysisId: 'analysisId',
+  request: 'request',
+  scope: 'scope',
+  constraints: 'constraints',
+  createdAt: 'createdAt'
+} as const
+
+export type EngineeringTaskScalarFieldEnum = (typeof EngineeringTaskScalarFieldEnum)[keyof typeof EngineeringTaskScalarFieldEnum]
+
+
+export const EngineeringPlanScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  status: 'status',
+  provider: 'provider',
+  model: 'model',
+  plan: 'plan',
+  validation: 'validation',
+  validationStatus: 'validationStatus',
+  confidence: 'confidence',
+  contextStats: 'contextStats',
+  inputTokens: 'inputTokens',
+  outputTokens: 'outputTokens',
+  durationMs: 'durationMs',
+  failureReason: 'failureReason',
+  error: 'error',
+  createdAt: 'createdAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type EngineeringPlanScalarFieldEnum = (typeof EngineeringPlanScalarFieldEnum)[keyof typeof EngineeringPlanScalarFieldEnum]
+
+
+export const EngineeringPlanEvidenceScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  ref: 'ref',
+  kind: 'kind',
+  path: 'path',
+  symbol: 'symbol',
+  line: 'line',
+  summary: 'summary',
+  source: 'source'
+} as const
+
+export type EngineeringPlanEvidenceScalarFieldEnum = (typeof EngineeringPlanEvidenceScalarFieldEnum)[keyof typeof EngineeringPlanEvidenceScalarFieldEnum]
 
 
 export const SortOrder = {

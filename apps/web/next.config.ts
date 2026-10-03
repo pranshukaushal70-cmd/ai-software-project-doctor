@@ -27,8 +27,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
-  transpilePackages: ["@pd/shared", "@pd/analyzer", "@pd/db"],
-  serverExternalPackages: ["@node-rs/argon2", "pino", "bullmq", "ioredis", "pg", "@prisma/client", "@prisma/adapter-pg", "yauzl"],
+  transpilePackages: ["@pd/shared", "@pd/analyzer", "@pd/db", "@pd/agent"],
+  serverExternalPackages: ["@node-rs/argon2", "pino", "bullmq", "ioredis", "pg", "@prisma/client", "@prisma/adapter-pg", "yauzl", "@anthropic-ai/sdk"],
   async headers() {
     return [
       {

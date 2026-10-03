@@ -179,3 +179,27 @@ export const contextRequestSchema = z.discriminatedUnion("operation", [
   }),
 ]);
 export type ContextRequest = z.infer<typeof contextRequestSchema>;
+
+// ---------------------------------------------------------------- engineering planner
+
+export const ENGINEERING_TASK_LIMITS = { minRequest: 10, maxRequest: 2000, maxConstraints: 10, maxConstraint: 300 } as const;
+
+/** Visible text only: control characters (other than newlines and tabs) are rejected. */
+const plainText = (min: number, max: number) =>
+  z
+    .string()
+    .trim()
+    .min(min)
+    .max(max)
+    .refine((s) => !/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(s), "Must not contain control characters");
+
+export const engineeringTaskSchema = z
+  .object({
+    analysisId: idSchema,
+    task: plainText(ENGINEERING_TASK_LIMITS.minRequest, ENGINEERING_TASK_LIMITS.maxRequest),
+    /** Repository-relative directory to limit the plan to. */
+    scope: repoPathSchema.optional(),
+    constraints: z.array(plainText(1, ENGINEERING_TASK_LIMITS.maxConstraint)).max(ENGINEERING_TASK_LIMITS.maxConstraints).default([]),
+  })
+  .strict();
+export type EngineeringTaskInput = z.infer<typeof engineeringTaskSchema>;

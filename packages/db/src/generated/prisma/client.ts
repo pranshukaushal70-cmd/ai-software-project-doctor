@@ -134,3 +134,18 @@ export type FixSuggestion = Prisma.FixSuggestionModel
  * 
  */
 export type Report = Prisma.ReportModel
+/**
+ * Model EngineeringTask
+ * A developer task to plan against one analysis. Planning only: nothing is executed.
+ */
+export type EngineeringTask = Prisma.EngineeringTaskModel
+/**
+ * Model EngineeringPlan
+ * One planning attempt. Stores provider metadata and the validation result, never credentials.
+ */
+export type EngineeringPlan = Prisma.EngineeringPlanModel
+/**
+ * Model EngineeringPlanEvidence
+ * The deterministic evidence bundle a plan was generated from; plan claims cite `ref`.
+ */
+export type EngineeringPlanEvidence = Prisma.EngineeringPlanEvidenceModel

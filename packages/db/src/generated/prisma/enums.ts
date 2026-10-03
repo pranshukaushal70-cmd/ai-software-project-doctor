@@ -164,3 +164,13 @@ export const ReportFormat = {
 } as const
 
 export type ReportFormat = (typeof ReportFormat)[keyof typeof ReportFormat]
+
+
+export const EngineeringPlanStatus = {
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED'
+} as const
+
+export type EngineeringPlanStatus = (typeof EngineeringPlanStatus)[keyof typeof EngineeringPlanStatus]
