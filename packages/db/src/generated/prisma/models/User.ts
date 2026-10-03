@@ -193,6 +193,7 @@ export type UserWhereInput = {
   sessions?: Prisma.SessionListRelationFilter
   repositories?: Prisma.RepositoryListRelationFilter
   engineeringTasks?: Prisma.EngineeringTaskListRelationFilter
+  engineeringRuns?: Prisma.EngineeringRunListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -205,6 +206,7 @@ export type UserOrderByWithRelationInput = {
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   repositories?: Prisma.RepositoryOrderByRelationAggregateInput
   engineeringTasks?: Prisma.EngineeringTaskOrderByRelationAggregateInput
+  engineeringRuns?: Prisma.EngineeringRunOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -220,6 +222,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   sessions?: Prisma.SessionListRelationFilter
   repositories?: Prisma.RepositoryListRelationFilter
   engineeringTasks?: Prisma.EngineeringTaskListRelationFilter
+  engineeringRuns?: Prisma.EngineeringRunListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -256,6 +259,7 @@ export type UserCreateInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   repositories?: Prisma.RepositoryCreateNestedManyWithoutUserInput
   engineeringTasks?: Prisma.EngineeringTaskCreateNestedManyWithoutUserInput
+  engineeringRuns?: Prisma.EngineeringRunCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -268,6 +272,7 @@ export type UserUncheckedCreateInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   repositories?: Prisma.RepositoryUncheckedCreateNestedManyWithoutUserInput
   engineeringTasks?: Prisma.EngineeringTaskUncheckedCreateNestedManyWithoutUserInput
+  engineeringRuns?: Prisma.EngineeringRunUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -280,6 +285,7 @@ export type UserUpdateInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   repositories?: Prisma.RepositoryUpdateManyWithoutUserNestedInput
   engineeringTasks?: Prisma.EngineeringTaskUpdateManyWithoutUserNestedInput
+  engineeringRuns?: Prisma.EngineeringRunUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -292,6 +298,7 @@ export type UserUncheckedUpdateInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   repositories?: Prisma.RepositoryUncheckedUpdateManyWithoutUserNestedInput
   engineeringTasks?: Prisma.EngineeringTaskUncheckedUpdateManyWithoutUserNestedInput
+  engineeringRuns?: Prisma.EngineeringRunUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -403,6 +410,20 @@ export type UserUpdateOneRequiredWithoutEngineeringTasksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutEngineeringTasksInput, Prisma.UserUpdateWithoutEngineeringTasksInput>, Prisma.UserUncheckedUpdateWithoutEngineeringTasksInput>
 }
 
+export type UserCreateNestedOneWithoutEngineeringRunsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEngineeringRunsInput, Prisma.UserUncheckedCreateWithoutEngineeringRunsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEngineeringRunsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutEngineeringRunsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEngineeringRunsInput, Prisma.UserUncheckedCreateWithoutEngineeringRunsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEngineeringRunsInput
+  upsert?: Prisma.UserUpsertWithoutEngineeringRunsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutEngineeringRunsInput, Prisma.UserUpdateWithoutEngineeringRunsInput>, Prisma.UserUncheckedUpdateWithoutEngineeringRunsInput>
+}
+
 export type UserCreateWithoutSessionsInput = {
   id?: string
   email: string
@@ -412,6 +433,7 @@ export type UserCreateWithoutSessionsInput = {
   updatedAt?: Date | string
   repositories?: Prisma.RepositoryCreateNestedManyWithoutUserInput
   engineeringTasks?: Prisma.EngineeringTaskCreateNestedManyWithoutUserInput
+  engineeringRuns?: Prisma.EngineeringRunCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -423,6 +445,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   updatedAt?: Date | string
   repositories?: Prisma.RepositoryUncheckedCreateNestedManyWithoutUserInput
   engineeringTasks?: Prisma.EngineeringTaskUncheckedCreateNestedManyWithoutUserInput
+  engineeringRuns?: Prisma.EngineeringRunUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -450,6 +473,7 @@ export type UserUpdateWithoutSessionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repositories?: Prisma.RepositoryUpdateManyWithoutUserNestedInput
   engineeringTasks?: Prisma.EngineeringTaskUpdateManyWithoutUserNestedInput
+  engineeringRuns?: Prisma.EngineeringRunUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -461,6 +485,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   repositories?: Prisma.RepositoryUncheckedUpdateManyWithoutUserNestedInput
   engineeringTasks?: Prisma.EngineeringTaskUncheckedUpdateManyWithoutUserNestedInput
+  engineeringRuns?: Prisma.EngineeringRunUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRepositoriesInput = {
@@ -472,6 +497,7 @@ export type UserCreateWithoutRepositoriesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   engineeringTasks?: Prisma.EngineeringTaskCreateNestedManyWithoutUserInput
+  engineeringRuns?: Prisma.EngineeringRunCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRepositoriesInput = {
@@ -483,6 +509,7 @@ export type UserUncheckedCreateWithoutRepositoriesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   engineeringTasks?: Prisma.EngineeringTaskUncheckedCreateNestedManyWithoutUserInput
+  engineeringRuns?: Prisma.EngineeringRunUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRepositoriesInput = {
@@ -510,6 +537,7 @@ export type UserUpdateWithoutRepositoriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   engineeringTasks?: Prisma.EngineeringTaskUpdateManyWithoutUserNestedInput
+  engineeringRuns?: Prisma.EngineeringRunUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRepositoriesInput = {
@@ -521,6 +549,7 @@ export type UserUncheckedUpdateWithoutRepositoriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   engineeringTasks?: Prisma.EngineeringTaskUncheckedUpdateManyWithoutUserNestedInput
+  engineeringRuns?: Prisma.EngineeringRunUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutEngineeringTasksInput = {
@@ -532,6 +561,7 @@ export type UserCreateWithoutEngineeringTasksInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   repositories?: Prisma.RepositoryCreateNestedManyWithoutUserInput
+  engineeringRuns?: Prisma.EngineeringRunCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutEngineeringTasksInput = {
@@ -543,6 +573,7 @@ export type UserUncheckedCreateWithoutEngineeringTasksInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   repositories?: Prisma.RepositoryUncheckedCreateNestedManyWithoutUserInput
+  engineeringRuns?: Prisma.EngineeringRunUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutEngineeringTasksInput = {
@@ -570,6 +601,7 @@ export type UserUpdateWithoutEngineeringTasksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   repositories?: Prisma.RepositoryUpdateManyWithoutUserNestedInput
+  engineeringRuns?: Prisma.EngineeringRunUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutEngineeringTasksInput = {
@@ -581,6 +613,71 @@ export type UserUncheckedUpdateWithoutEngineeringTasksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   repositories?: Prisma.RepositoryUncheckedUpdateManyWithoutUserNestedInput
+  engineeringRuns?: Prisma.EngineeringRunUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutEngineeringRunsInput = {
+  id?: string
+  email: string
+  name: string
+  passwordHash: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  repositories?: Prisma.RepositoryCreateNestedManyWithoutUserInput
+  engineeringTasks?: Prisma.EngineeringTaskCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutEngineeringRunsInput = {
+  id?: string
+  email: string
+  name: string
+  passwordHash: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  repositories?: Prisma.RepositoryUncheckedCreateNestedManyWithoutUserInput
+  engineeringTasks?: Prisma.EngineeringTaskUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutEngineeringRunsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutEngineeringRunsInput, Prisma.UserUncheckedCreateWithoutEngineeringRunsInput>
+}
+
+export type UserUpsertWithoutEngineeringRunsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutEngineeringRunsInput, Prisma.UserUncheckedUpdateWithoutEngineeringRunsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutEngineeringRunsInput, Prisma.UserUncheckedCreateWithoutEngineeringRunsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutEngineeringRunsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutEngineeringRunsInput, Prisma.UserUncheckedUpdateWithoutEngineeringRunsInput>
+}
+
+export type UserUpdateWithoutEngineeringRunsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  repositories?: Prisma.RepositoryUpdateManyWithoutUserNestedInput
+  engineeringTasks?: Prisma.EngineeringTaskUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutEngineeringRunsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  repositories?: Prisma.RepositoryUncheckedUpdateManyWithoutUserNestedInput
+  engineeringTasks?: Prisma.EngineeringTaskUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -592,12 +689,14 @@ export type UserCountOutputType = {
   sessions: number
   repositories: number
   engineeringTasks: number
+  engineeringRuns: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
   repositories?: boolean | UserCountOutputTypeCountRepositoriesArgs
   engineeringTasks?: boolean | UserCountOutputTypeCountEngineeringTasksArgs
+  engineeringRuns?: boolean | UserCountOutputTypeCountEngineeringRunsArgs
 }
 
 /**
@@ -631,6 +730,13 @@ export type UserCountOutputTypeCountEngineeringTasksArgs<ExtArgs extends runtime
   where?: Prisma.EngineeringTaskWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountEngineeringRunsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EngineeringRunWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -642,6 +748,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   repositories?: boolean | Prisma.User$repositoriesArgs<ExtArgs>
   engineeringTasks?: boolean | Prisma.User$engineeringTasksArgs<ExtArgs>
+  engineeringRuns?: boolean | Prisma.User$engineeringRunsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -677,6 +784,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   repositories?: boolean | Prisma.User$repositoriesArgs<ExtArgs>
   engineeringTasks?: boolean | Prisma.User$engineeringTasksArgs<ExtArgs>
+  engineeringRuns?: boolean | Prisma.User$engineeringRunsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -688,6 +796,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     repositories: Prisma.$RepositoryPayload<ExtArgs>[]
     engineeringTasks: Prisma.$EngineeringTaskPayload<ExtArgs>[]
+    engineeringRuns: Prisma.$EngineeringRunPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1093,6 +1202,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   repositories<T extends Prisma.User$repositoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$repositoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RepositoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   engineeringTasks<T extends Prisma.User$engineeringTasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$engineeringTasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EngineeringTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  engineeringRuns<T extends Prisma.User$engineeringRunsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$engineeringRunsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EngineeringRunPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1590,6 +1700,30 @@ export type User$engineeringTasksArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.EngineeringTaskScalarFieldEnum | Prisma.EngineeringTaskScalarFieldEnum[]
+}
+
+/**
+ * User.engineeringRuns
+ */
+export type User$engineeringRunsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EngineeringRun
+   */
+  select?: Prisma.EngineeringRunSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EngineeringRun
+   */
+  omit?: Prisma.EngineeringRunOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EngineeringRunInclude<ExtArgs> | null
+  where?: Prisma.EngineeringRunWhereInput
+  orderBy?: Prisma.EngineeringRunOrderByWithRelationInput | Prisma.EngineeringRunOrderByWithRelationInput[]
+  cursor?: Prisma.EngineeringRunWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EngineeringRunScalarFieldEnum | Prisma.EngineeringRunScalarFieldEnum[]
 }
 
 /**

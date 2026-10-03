@@ -75,6 +75,16 @@ requests share the `ai` rate limit (30 per user per hour). Design: [engineering-
 
 Plans in progress for more than 15 minutes are reported as `FAILED` (`failureReason: "timeout"`).
 
+### Code engine (Phase 8, in progress)
+
+Approving a plan is the first gate of the code engine: no change is generated for a plan its owner has not approved.
+The endpoint records the approval only; nothing is generated, executed or changed. Plan responses above include
+`approvedAt` (`null` until approved).
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/engineering/plans/:id/approve` | Approves the task's latest plan once it is `COMPLETED`: `200` with `{ id, approvedAt }`; approving again returns the original time. `409` for plans that are in progress, failed or superseded by a newer plan of the same task; `404` for other users' plans. Requires a session and the same-origin `Origin` header |
+
 `mode` is `LOCAL_ONLY` (default) or `AI`; it is reserved and affects neither the analysis nor the planner.
 
 For `/dependencies` and `/architecture`, `summary` is `null` (and the lists are empty) until that analysis module has run,

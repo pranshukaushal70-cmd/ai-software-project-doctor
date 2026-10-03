@@ -71,7 +71,11 @@ export const ModelName = {
   Report: 'Report',
   EngineeringTask: 'EngineeringTask',
   EngineeringPlan: 'EngineeringPlan',
-  EngineeringPlanEvidence: 'EngineeringPlanEvidence'
+  EngineeringPlanEvidence: 'EngineeringPlanEvidence',
+  EngineeringRun: 'EngineeringRun',
+  EngineeringChange: 'EngineeringChange',
+  SandboxExecution: 'SandboxExecution',
+  EngineeringRunEvent: 'EngineeringRunEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -404,7 +408,8 @@ export const EngineeringPlanScalarFieldEnum = {
   error: 'error',
   createdAt: 'createdAt',
   startedAt: 'startedAt',
-  finishedAt: 'finishedAt'
+  finishedAt: 'finishedAt',
+  approvedAt: 'approvedAt'
 } as const
 
 export type EngineeringPlanScalarFieldEnum = (typeof EngineeringPlanScalarFieldEnum)[keyof typeof EngineeringPlanScalarFieldEnum]
@@ -423,6 +428,91 @@ export const EngineeringPlanEvidenceScalarFieldEnum = {
 } as const
 
 export type EngineeringPlanEvidenceScalarFieldEnum = (typeof EngineeringPlanEvidenceScalarFieldEnum)[keyof typeof EngineeringPlanEvidenceScalarFieldEnum]
+
+
+export const EngineeringRunScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  userId: 'userId',
+  status: 'status',
+  provider: 'provider',
+  model: 'model',
+  commitSha: 'commitSha',
+  maxIterations: 'maxIterations',
+  tokenBudget: 'tokenBudget',
+  maxDurationSeconds: 'maxDurationSeconds',
+  iteration: 'iteration',
+  inputTokens: 'inputTokens',
+  outputTokens: 'outputTokens',
+  testCommand: 'testCommand',
+  installApproved: 'installApproved',
+  executionApprovedAt: 'executionApprovedAt',
+  cancelRequestedAt: 'cancelRequestedAt',
+  failureReason: 'failureReason',
+  error: 'error',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type EngineeringRunScalarFieldEnum = (typeof EngineeringRunScalarFieldEnum)[keyof typeof EngineeringRunScalarFieldEnum]
+
+
+export const EngineeringChangeScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  iteration: 'iteration',
+  path: 'path',
+  operation: 'operation',
+  status: 'status',
+  reason: 'reason',
+  beforeHash: 'beforeHash',
+  afterHash: 'afterHash',
+  diff: 'diff',
+  additions: 'additions',
+  deletions: 'deletions',
+  flags: 'flags',
+  createdAt: 'createdAt'
+} as const
+
+export type EngineeringChangeScalarFieldEnum = (typeof EngineeringChangeScalarFieldEnum)[keyof typeof EngineeringChangeScalarFieldEnum]
+
+
+export const SandboxExecutionScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  iteration: 'iteration',
+  kind: 'kind',
+  commandId: 'commandId',
+  command: 'command',
+  image: 'image',
+  network: 'network',
+  exitCode: 'exitCode',
+  timedOut: 'timedOut',
+  durationMs: 'durationMs',
+  output: 'output',
+  outputTruncated: 'outputTruncated',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type SandboxExecutionScalarFieldEnum = (typeof SandboxExecutionScalarFieldEnum)[keyof typeof SandboxExecutionScalarFieldEnum]
+
+
+export const EngineeringRunEventScalarFieldEnum = {
+  id: 'id',
+  runId: 'runId',
+  type: 'type',
+  actor: 'actor',
+  fromStatus: 'fromStatus',
+  toStatus: 'toStatus',
+  message: 'message',
+  data: 'data',
+  createdAt: 'createdAt'
+} as const
+
+export type EngineeringRunEventScalarFieldEnum = (typeof EngineeringRunEventScalarFieldEnum)[keyof typeof EngineeringRunEventScalarFieldEnum]
 
 
 export const SortOrder = {

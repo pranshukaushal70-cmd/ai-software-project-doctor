@@ -55,6 +55,7 @@ vi.mock("@pd/shared/logger", () => {
 const tasksRoute = await import("@/app/api/engineering/tasks/route");
 const taskRoute = await import("@/app/api/engineering/tasks/[id]/route");
 const planRoute = await import("@/app/api/engineering/tasks/[id]/plan/route");
+const approveRoute = await import("@/app/api/engineering/plans/[id]/approve/route");
 const { setProviderFactory } = await import("@/server/services/engineering-service");
 const { clearGraphCache } = await import("@/server/services/intelligence-service");
 
@@ -166,11 +167,18 @@ function fakeDb() {
     },
     engineeringPlan: {
       create: async ({ data }: { data: Row }) => {
-        const p = { id: id("p"), status: "PENDING", plan: null, validation: null, validationStatus: null, confidence: null, failureReason: null, error: null, finishedAt: null, createdAt: new Date(Date.now() + seq), ...data };
+        const p = { id: id("p"), status: "PENDING", approvedAt: null, plan: null, validation: null, validationStatus: null, confidence: null, failureReason: null, error: null, finishedAt: null, createdAt: new Date(Date.now() + seq), ...data };
         plans.push(p);
         return { ...p };
       },
       findFirst: async ({ where }: { where: Row }) => {
+        if (where.id) {
+          // Ownership lookup by plan id: the task's owner and the analysis's repository owner must both match.
+          const p = plans.find((x) => x.id === where.id);
+          const t = p && tasks.find((x) => x.id === p.taskId);
+          const owned = t && t.userId === where.task.userId && analysisOf(t.analysisId).userId === where.task.analysis.repository.userId;
+          return owned ? { ...p } : null;
+        }
         const p = plans.filter((x) => x.taskId === where.taskId).sort(byNewest)[0];
         return p ? { ...p } : null;
       },
@@ -182,7 +190,9 @@ function fakeDb() {
         return select?.task ? { id: p.id, task } : pick(p, select);
       },
       updateMany: async ({ where, data }: { where: Row; data: Row }) => {
-        const hits = plans.filter((x) => x.id === where.id && where.status.in.includes(x.status));
+        const hits = plans.filter(
+          (x) => x.id === where.id && (where.status.in ? where.status.in.includes(x.status) : x.status === where.status) && (!("approvedAt" in where) || x.approvedAt == where.approvedAt),
+        );
         for (const p of hits) Object.assign(p, data);
         return { count: hits.length };
       },
@@ -230,6 +240,7 @@ const createTask = (body: unknown, headers?: Record<string, string>) => call(tas
 const requestPlan = (id: string, headers?: Record<string, string>) => call(planRoute.POST, `/api/engineering/tasks/${id}/plan`, { method: "POST", id, headers });
 const getPlan = (id: string) => call(planRoute.GET, `/api/engineering/tasks/${id}/plan`, { id });
 const getTask = (id: string) => call(taskRoute.GET, `/api/engineering/tasks/${id}`, { id });
+const approvePlan = (id: string, headers?: Record<string, string>) => call(approveRoute.POST, `/api/engineering/plans/${id}/approve`, { method: "POST", id, headers });
 const settle = () => Promise.all(state.pending);
 
 const TASK = { analysisId: "an1", task: "Add rate limiting to the login endpoint" };
@@ -457,5 +468,76 @@ describe("planning", () => {
       [first, "COMPLETED"],
     ]);
     expect((await call(tasksRoute.GET, "/api/engineering/tasks")).status).toBe(400);
+  });
+});
+
+describe("POST /api/engineering/plans/:id/approve (code engine, first gate)", () => {
+  async function completedPlan() {
+    setProviderFactory(() => scriptedPlan());
+    const task = await taskId();
+    const started = await requestPlan(task);
+    await settle();
+    return { task, plan: started.body.data.id as string };
+  }
+
+  it("approves the task's latest completed plan once, without generating or running anything", async () => {
+    const { task, plan } = await completedPlan();
+    expect((await getPlan(task)).body.data.approvedAt).toBeNull();
+    const r = await approvePlan(plan);
+    expect(r.status).toBe(200);
+    expect(r.body.data).toMatchObject({ id: plan });
+    const approvedAt = r.body.data.approvedAt;
+    expect(new Date(approvedAt).getTime()).not.toBeNaN();
+    // The planner API shows the approval.
+    expect((await getPlan(task)).body.data.approvedAt).toBe(approvedAt);
+    expect((await getTask(task)).body.data.latestPlan.approvedAt).toBe(approvedAt);
+    // Idempotent: approving again keeps the first time.
+    expect((await approvePlan(plan)).body.data.approvedAt).toBe(approvedAt);
+    expect(state.logs.filter((l) => l.msg === "plan approved")).toHaveLength(1);
+    expect(JSON.stringify(state.logs)).not.toMatch(/rate limiting to the login|Throttle POST/);
+  });
+
+  it("refuses plans that did not complete, are in progress or were superseded", async () => {
+    setProviderFactory(() => new ScriptedProvider([{ plan: "Just edit the files." }]));
+    const task = await taskId();
+    const failed = (await requestPlan(task)).body.data.id;
+    await settle();
+    const r = await approvePlan(failed);
+    expect(r.status).toBe(409);
+    expect(r.body.error!.message).toMatch(/Only a completed plan/);
+
+    // In progress.
+    let release!: () => void;
+    const gate = new Promise<void>((res) => (release = res));
+    const provider = scriptedPlan();
+    setProviderFactory(() => ({ ...provider, generatePlan: async (ctx: any) => (await gate, provider.generatePlan(ctx)) }));
+    const running = (await requestPlan(task)).body.data.id;
+    expect((await approvePlan(running)).status).toBe(409);
+    release();
+    await settle();
+    expect((await approvePlan(running)).status).toBe(200);
+
+    // A newer plan supersedes an older, unapproved one.
+    const { task: t2, plan: older } = await completedPlan();
+    await requestPlan(t2);
+    await settle();
+    const superseded = await approvePlan(older);
+    expect(superseded.status).toBe(409);
+    expect(superseded.body.error!.message).toMatch(/newer plan/);
+    expect(db.plans.find((p) => p.id === older)!.approvedAt).toBeNull();
+  });
+
+  it("enforces authentication, ownership and the Origin check", async () => {
+    const { plan } = await completedPlan();
+    state.user = { id: "u2", email: "", name: "" };
+    expect((await approvePlan(plan)).status).toBe(404);
+    expect((await approvePlan("missing")).status).toBe(404);
+    state.user = null;
+    expect((await approvePlan(plan)).status).toBe(401);
+    state.user = { id: "u1", email: "", name: "" };
+    expect((await approvePlan(plan, { "content-type": "application/json" })).status).toBe(403);
+    expect((await approvePlan(plan, { origin: "https://evil.example" })).status).toBe(403);
+    expect((await approvePlan("bad id!")).status).toBe(400);
+    expect(db.plans.find((p) => p.id === plan)!.approvedAt).toBeNull();
   });
 });

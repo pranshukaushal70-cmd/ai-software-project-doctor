@@ -64,6 +64,7 @@ const PLAN_SUMMARY_SELECT = {
   error: true,
   createdAt: true,
   finishedAt: true,
+  approvedAt: true,
 } satisfies Prisma.EngineeringPlanSelect;
 
 export async function createTask(userId: string, input: EngineeringTaskInput) {

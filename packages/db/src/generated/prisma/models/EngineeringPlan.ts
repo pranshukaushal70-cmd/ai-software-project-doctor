@@ -56,6 +56,7 @@ export type EngineeringPlanMinAggregateOutputType = {
   createdAt: Date | null
   startedAt: Date | null
   finishedAt: Date | null
+  approvedAt: Date | null
 }
 
 export type EngineeringPlanMaxAggregateOutputType = {
@@ -74,6 +75,7 @@ export type EngineeringPlanMaxAggregateOutputType = {
   createdAt: Date | null
   startedAt: Date | null
   finishedAt: Date | null
+  approvedAt: Date | null
 }
 
 export type EngineeringPlanCountAggregateOutputType = {
@@ -95,6 +97,7 @@ export type EngineeringPlanCountAggregateOutputType = {
   createdAt: number
   startedAt: number
   finishedAt: number
+  approvedAt: number
   _all: number
 }
 
@@ -129,6 +132,7 @@ export type EngineeringPlanMinAggregateInputType = {
   createdAt?: true
   startedAt?: true
   finishedAt?: true
+  approvedAt?: true
 }
 
 export type EngineeringPlanMaxAggregateInputType = {
@@ -147,6 +151,7 @@ export type EngineeringPlanMaxAggregateInputType = {
   createdAt?: true
   startedAt?: true
   finishedAt?: true
+  approvedAt?: true
 }
 
 export type EngineeringPlanCountAggregateInputType = {
@@ -168,6 +173,7 @@ export type EngineeringPlanCountAggregateInputType = {
   createdAt?: true
   startedAt?: true
   finishedAt?: true
+  approvedAt?: true
   _all?: true
 }
 
@@ -276,6 +282,7 @@ export type EngineeringPlanGroupByOutputType = {
   createdAt: Date
   startedAt: Date | null
   finishedAt: Date | null
+  approvedAt: Date | null
   _count: EngineeringPlanCountAggregateOutputType | null
   _avg: EngineeringPlanAvgAggregateOutputType | null
   _sum: EngineeringPlanSumAggregateOutputType | null
@@ -320,8 +327,10 @@ export type EngineeringPlanWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"EngineeringPlan"> | Date | string
   startedAt?: Prisma.DateTimeNullableFilter<"EngineeringPlan"> | Date | string | null
   finishedAt?: Prisma.DateTimeNullableFilter<"EngineeringPlan"> | Date | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"EngineeringPlan"> | Date | string | null
   task?: Prisma.XOR<Prisma.EngineeringTaskScalarRelationFilter, Prisma.EngineeringTaskWhereInput>
   evidence?: Prisma.EngineeringPlanEvidenceListRelationFilter
+  runs?: Prisma.EngineeringRunListRelationFilter
 }
 
 export type EngineeringPlanOrderByWithRelationInput = {
@@ -343,8 +352,10 @@ export type EngineeringPlanOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   startedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   finishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   task?: Prisma.EngineeringTaskOrderByWithRelationInput
   evidence?: Prisma.EngineeringPlanEvidenceOrderByRelationAggregateInput
+  runs?: Prisma.EngineeringRunOrderByRelationAggregateInput
 }
 
 export type EngineeringPlanWhereUniqueInput = Prisma.AtLeast<{
@@ -369,8 +380,10 @@ export type EngineeringPlanWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"EngineeringPlan"> | Date | string
   startedAt?: Prisma.DateTimeNullableFilter<"EngineeringPlan"> | Date | string | null
   finishedAt?: Prisma.DateTimeNullableFilter<"EngineeringPlan"> | Date | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"EngineeringPlan"> | Date | string | null
   task?: Prisma.XOR<Prisma.EngineeringTaskScalarRelationFilter, Prisma.EngineeringTaskWhereInput>
   evidence?: Prisma.EngineeringPlanEvidenceListRelationFilter
+  runs?: Prisma.EngineeringRunListRelationFilter
 }, "id">
 
 export type EngineeringPlanOrderByWithAggregationInput = {
@@ -392,6 +405,7 @@ export type EngineeringPlanOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   startedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   finishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.EngineeringPlanCountOrderByAggregateInput
   _avg?: Prisma.EngineeringPlanAvgOrderByAggregateInput
   _max?: Prisma.EngineeringPlanMaxOrderByAggregateInput
@@ -421,6 +435,7 @@ export type EngineeringPlanScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"EngineeringPlan"> | Date | string
   startedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EngineeringPlan"> | Date | string | null
   finishedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EngineeringPlan"> | Date | string | null
+  approvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EngineeringPlan"> | Date | string | null
 }
 
 export type EngineeringPlanCreateInput = {
@@ -441,8 +456,10 @@ export type EngineeringPlanCreateInput = {
   createdAt?: Date | string
   startedAt?: Date | string | null
   finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
   task: Prisma.EngineeringTaskCreateNestedOneWithoutPlansInput
   evidence?: Prisma.EngineeringPlanEvidenceCreateNestedManyWithoutPlanInput
+  runs?: Prisma.EngineeringRunCreateNestedManyWithoutPlanInput
 }
 
 export type EngineeringPlanUncheckedCreateInput = {
@@ -464,7 +481,9 @@ export type EngineeringPlanUncheckedCreateInput = {
   createdAt?: Date | string
   startedAt?: Date | string | null
   finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
   evidence?: Prisma.EngineeringPlanEvidenceUncheckedCreateNestedManyWithoutPlanInput
+  runs?: Prisma.EngineeringRunUncheckedCreateNestedManyWithoutPlanInput
 }
 
 export type EngineeringPlanUpdateInput = {
@@ -485,8 +504,10 @@ export type EngineeringPlanUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   task?: Prisma.EngineeringTaskUpdateOneRequiredWithoutPlansNestedInput
   evidence?: Prisma.EngineeringPlanEvidenceUpdateManyWithoutPlanNestedInput
+  runs?: Prisma.EngineeringRunUpdateManyWithoutPlanNestedInput
 }
 
 export type EngineeringPlanUncheckedUpdateInput = {
@@ -508,7 +529,9 @@ export type EngineeringPlanUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   evidence?: Prisma.EngineeringPlanEvidenceUncheckedUpdateManyWithoutPlanNestedInput
+  runs?: Prisma.EngineeringRunUncheckedUpdateManyWithoutPlanNestedInput
 }
 
 export type EngineeringPlanCreateManyInput = {
@@ -530,6 +553,7 @@ export type EngineeringPlanCreateManyInput = {
   createdAt?: Date | string
   startedAt?: Date | string | null
   finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
 }
 
 export type EngineeringPlanUpdateManyMutationInput = {
@@ -550,6 +574,7 @@ export type EngineeringPlanUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type EngineeringPlanUncheckedUpdateManyInput = {
@@ -571,6 +596,7 @@ export type EngineeringPlanUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type EngineeringPlanListRelationFilter = {
@@ -602,6 +628,7 @@ export type EngineeringPlanCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   finishedAt?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
 }
 
 export type EngineeringPlanAvgOrderByAggregateInput = {
@@ -627,6 +654,7 @@ export type EngineeringPlanMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   finishedAt?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
 }
 
 export type EngineeringPlanMinOrderByAggregateInput = {
@@ -645,6 +673,7 @@ export type EngineeringPlanMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   startedAt?: Prisma.SortOrder
   finishedAt?: Prisma.SortOrder
+  approvedAt?: Prisma.SortOrder
 }
 
 export type EngineeringPlanSumOrderByAggregateInput = {
@@ -719,6 +748,20 @@ export type EngineeringPlanUpdateOneRequiredWithoutEvidenceNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EngineeringPlanUpdateToOneWithWhereWithoutEvidenceInput, Prisma.EngineeringPlanUpdateWithoutEvidenceInput>, Prisma.EngineeringPlanUncheckedUpdateWithoutEvidenceInput>
 }
 
+export type EngineeringPlanCreateNestedOneWithoutRunsInput = {
+  create?: Prisma.XOR<Prisma.EngineeringPlanCreateWithoutRunsInput, Prisma.EngineeringPlanUncheckedCreateWithoutRunsInput>
+  connectOrCreate?: Prisma.EngineeringPlanCreateOrConnectWithoutRunsInput
+  connect?: Prisma.EngineeringPlanWhereUniqueInput
+}
+
+export type EngineeringPlanUpdateOneRequiredWithoutRunsNestedInput = {
+  create?: Prisma.XOR<Prisma.EngineeringPlanCreateWithoutRunsInput, Prisma.EngineeringPlanUncheckedCreateWithoutRunsInput>
+  connectOrCreate?: Prisma.EngineeringPlanCreateOrConnectWithoutRunsInput
+  upsert?: Prisma.EngineeringPlanUpsertWithoutRunsInput
+  connect?: Prisma.EngineeringPlanWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EngineeringPlanUpdateToOneWithWhereWithoutRunsInput, Prisma.EngineeringPlanUpdateWithoutRunsInput>, Prisma.EngineeringPlanUncheckedUpdateWithoutRunsInput>
+}
+
 export type EngineeringPlanCreateWithoutTaskInput = {
   id?: string
   status?: $Enums.EngineeringPlanStatus
@@ -737,7 +780,9 @@ export type EngineeringPlanCreateWithoutTaskInput = {
   createdAt?: Date | string
   startedAt?: Date | string | null
   finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
   evidence?: Prisma.EngineeringPlanEvidenceCreateNestedManyWithoutPlanInput
+  runs?: Prisma.EngineeringRunCreateNestedManyWithoutPlanInput
 }
 
 export type EngineeringPlanUncheckedCreateWithoutTaskInput = {
@@ -758,7 +803,9 @@ export type EngineeringPlanUncheckedCreateWithoutTaskInput = {
   createdAt?: Date | string
   startedAt?: Date | string | null
   finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
   evidence?: Prisma.EngineeringPlanEvidenceUncheckedCreateNestedManyWithoutPlanInput
+  runs?: Prisma.EngineeringRunUncheckedCreateNestedManyWithoutPlanInput
 }
 
 export type EngineeringPlanCreateOrConnectWithoutTaskInput = {
@@ -809,6 +856,7 @@ export type EngineeringPlanScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"EngineeringPlan"> | Date | string
   startedAt?: Prisma.DateTimeNullableFilter<"EngineeringPlan"> | Date | string | null
   finishedAt?: Prisma.DateTimeNullableFilter<"EngineeringPlan"> | Date | string | null
+  approvedAt?: Prisma.DateTimeNullableFilter<"EngineeringPlan"> | Date | string | null
 }
 
 export type EngineeringPlanCreateWithoutEvidenceInput = {
@@ -829,7 +877,9 @@ export type EngineeringPlanCreateWithoutEvidenceInput = {
   createdAt?: Date | string
   startedAt?: Date | string | null
   finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
   task: Prisma.EngineeringTaskCreateNestedOneWithoutPlansInput
+  runs?: Prisma.EngineeringRunCreateNestedManyWithoutPlanInput
 }
 
 export type EngineeringPlanUncheckedCreateWithoutEvidenceInput = {
@@ -851,6 +901,8 @@ export type EngineeringPlanUncheckedCreateWithoutEvidenceInput = {
   createdAt?: Date | string
   startedAt?: Date | string | null
   finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  runs?: Prisma.EngineeringRunUncheckedCreateNestedManyWithoutPlanInput
 }
 
 export type EngineeringPlanCreateOrConnectWithoutEvidenceInput = {
@@ -887,7 +939,9 @@ export type EngineeringPlanUpdateWithoutEvidenceInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   task?: Prisma.EngineeringTaskUpdateOneRequiredWithoutPlansNestedInput
+  runs?: Prisma.EngineeringRunUpdateManyWithoutPlanNestedInput
 }
 
 export type EngineeringPlanUncheckedUpdateWithoutEvidenceInput = {
@@ -909,6 +963,116 @@ export type EngineeringPlanUncheckedUpdateWithoutEvidenceInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  runs?: Prisma.EngineeringRunUncheckedUpdateManyWithoutPlanNestedInput
+}
+
+export type EngineeringPlanCreateWithoutRunsInput = {
+  id?: string
+  status?: $Enums.EngineeringPlanStatus
+  provider: string
+  model: string
+  plan?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  validation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  validationStatus?: string | null
+  confidence?: number | null
+  contextStats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  inputTokens?: number | null
+  outputTokens?: number | null
+  durationMs?: number | null
+  failureReason?: string | null
+  error?: string | null
+  createdAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  task: Prisma.EngineeringTaskCreateNestedOneWithoutPlansInput
+  evidence?: Prisma.EngineeringPlanEvidenceCreateNestedManyWithoutPlanInput
+}
+
+export type EngineeringPlanUncheckedCreateWithoutRunsInput = {
+  id?: string
+  taskId: string
+  status?: $Enums.EngineeringPlanStatus
+  provider: string
+  model: string
+  plan?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  validation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  validationStatus?: string | null
+  confidence?: number | null
+  contextStats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  inputTokens?: number | null
+  outputTokens?: number | null
+  durationMs?: number | null
+  failureReason?: string | null
+  error?: string | null
+  createdAt?: Date | string
+  startedAt?: Date | string | null
+  finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
+  evidence?: Prisma.EngineeringPlanEvidenceUncheckedCreateNestedManyWithoutPlanInput
+}
+
+export type EngineeringPlanCreateOrConnectWithoutRunsInput = {
+  where: Prisma.EngineeringPlanWhereUniqueInput
+  create: Prisma.XOR<Prisma.EngineeringPlanCreateWithoutRunsInput, Prisma.EngineeringPlanUncheckedCreateWithoutRunsInput>
+}
+
+export type EngineeringPlanUpsertWithoutRunsInput = {
+  update: Prisma.XOR<Prisma.EngineeringPlanUpdateWithoutRunsInput, Prisma.EngineeringPlanUncheckedUpdateWithoutRunsInput>
+  create: Prisma.XOR<Prisma.EngineeringPlanCreateWithoutRunsInput, Prisma.EngineeringPlanUncheckedCreateWithoutRunsInput>
+  where?: Prisma.EngineeringPlanWhereInput
+}
+
+export type EngineeringPlanUpdateToOneWithWhereWithoutRunsInput = {
+  where?: Prisma.EngineeringPlanWhereInput
+  data: Prisma.XOR<Prisma.EngineeringPlanUpdateWithoutRunsInput, Prisma.EngineeringPlanUncheckedUpdateWithoutRunsInput>
+}
+
+export type EngineeringPlanUpdateWithoutRunsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumEngineeringPlanStatusFieldUpdateOperationsInput | $Enums.EngineeringPlanStatus
+  provider?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  validation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  validationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confidence?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  contextStats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  durationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  task?: Prisma.EngineeringTaskUpdateOneRequiredWithoutPlansNestedInput
+  evidence?: Prisma.EngineeringPlanEvidenceUpdateManyWithoutPlanNestedInput
+}
+
+export type EngineeringPlanUncheckedUpdateWithoutRunsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  taskId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumEngineeringPlanStatusFieldUpdateOperationsInput | $Enums.EngineeringPlanStatus
+  provider?: Prisma.StringFieldUpdateOperationsInput | string
+  model?: Prisma.StringFieldUpdateOperationsInput | string
+  plan?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  validation?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  validationStatus?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  confidence?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  contextStats?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  inputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  outputTokens?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  durationMs?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  error?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  evidence?: Prisma.EngineeringPlanEvidenceUncheckedUpdateManyWithoutPlanNestedInput
 }
 
 export type EngineeringPlanCreateManyTaskInput = {
@@ -929,6 +1093,7 @@ export type EngineeringPlanCreateManyTaskInput = {
   createdAt?: Date | string
   startedAt?: Date | string | null
   finishedAt?: Date | string | null
+  approvedAt?: Date | string | null
 }
 
 export type EngineeringPlanUpdateWithoutTaskInput = {
@@ -949,7 +1114,9 @@ export type EngineeringPlanUpdateWithoutTaskInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   evidence?: Prisma.EngineeringPlanEvidenceUpdateManyWithoutPlanNestedInput
+  runs?: Prisma.EngineeringRunUpdateManyWithoutPlanNestedInput
 }
 
 export type EngineeringPlanUncheckedUpdateWithoutTaskInput = {
@@ -970,7 +1137,9 @@ export type EngineeringPlanUncheckedUpdateWithoutTaskInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   evidence?: Prisma.EngineeringPlanEvidenceUncheckedUpdateManyWithoutPlanNestedInput
+  runs?: Prisma.EngineeringRunUncheckedUpdateManyWithoutPlanNestedInput
 }
 
 export type EngineeringPlanUncheckedUpdateManyWithoutTaskInput = {
@@ -991,6 +1160,7 @@ export type EngineeringPlanUncheckedUpdateManyWithoutTaskInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   startedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   finishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -1000,10 +1170,12 @@ export type EngineeringPlanUncheckedUpdateManyWithoutTaskInput = {
 
 export type EngineeringPlanCountOutputType = {
   evidence: number
+  runs: number
 }
 
 export type EngineeringPlanCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   evidence?: boolean | EngineeringPlanCountOutputTypeCountEvidenceArgs
+  runs?: boolean | EngineeringPlanCountOutputTypeCountRunsArgs
 }
 
 /**
@@ -1021,6 +1193,13 @@ export type EngineeringPlanCountOutputTypeDefaultArgs<ExtArgs extends runtime.Ty
  */
 export type EngineeringPlanCountOutputTypeCountEvidenceArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.EngineeringPlanEvidenceWhereInput
+}
+
+/**
+ * EngineeringPlanCountOutputType without action
+ */
+export type EngineeringPlanCountOutputTypeCountRunsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EngineeringRunWhereInput
 }
 
 
@@ -1043,8 +1222,10 @@ export type EngineeringPlanSelect<ExtArgs extends runtime.Types.Extensions.Inter
   createdAt?: boolean
   startedAt?: boolean
   finishedAt?: boolean
+  approvedAt?: boolean
   task?: boolean | Prisma.EngineeringTaskDefaultArgs<ExtArgs>
   evidence?: boolean | Prisma.EngineeringPlan$evidenceArgs<ExtArgs>
+  runs?: boolean | Prisma.EngineeringPlan$runsArgs<ExtArgs>
   _count?: boolean | Prisma.EngineeringPlanCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["engineeringPlan"]>
 
@@ -1067,6 +1248,7 @@ export type EngineeringPlanSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   createdAt?: boolean
   startedAt?: boolean
   finishedAt?: boolean
+  approvedAt?: boolean
   task?: boolean | Prisma.EngineeringTaskDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["engineeringPlan"]>
 
@@ -1089,6 +1271,7 @@ export type EngineeringPlanSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   createdAt?: boolean
   startedAt?: boolean
   finishedAt?: boolean
+  approvedAt?: boolean
   task?: boolean | Prisma.EngineeringTaskDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["engineeringPlan"]>
 
@@ -1111,12 +1294,14 @@ export type EngineeringPlanSelectScalar = {
   createdAt?: boolean
   startedAt?: boolean
   finishedAt?: boolean
+  approvedAt?: boolean
 }
 
-export type EngineeringPlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "status" | "provider" | "model" | "plan" | "validation" | "validationStatus" | "confidence" | "contextStats" | "inputTokens" | "outputTokens" | "durationMs" | "failureReason" | "error" | "createdAt" | "startedAt" | "finishedAt", ExtArgs["result"]["engineeringPlan"]>
+export type EngineeringPlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "status" | "provider" | "model" | "plan" | "validation" | "validationStatus" | "confidence" | "contextStats" | "inputTokens" | "outputTokens" | "durationMs" | "failureReason" | "error" | "createdAt" | "startedAt" | "finishedAt" | "approvedAt", ExtArgs["result"]["engineeringPlan"]>
 export type EngineeringPlanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   task?: boolean | Prisma.EngineeringTaskDefaultArgs<ExtArgs>
   evidence?: boolean | Prisma.EngineeringPlan$evidenceArgs<ExtArgs>
+  runs?: boolean | Prisma.EngineeringPlan$runsArgs<ExtArgs>
   _count?: boolean | Prisma.EngineeringPlanCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EngineeringPlanIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1131,6 +1316,7 @@ export type $EngineeringPlanPayload<ExtArgs extends runtime.Types.Extensions.Int
   objects: {
     task: Prisma.$EngineeringTaskPayload<ExtArgs>
     evidence: Prisma.$EngineeringPlanEvidencePayload<ExtArgs>[]
+    runs: Prisma.$EngineeringRunPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1166,6 +1352,10 @@ export type $EngineeringPlanPayload<ExtArgs extends runtime.Types.Extensions.Int
     createdAt: Date
     startedAt: Date | null
     finishedAt: Date | null
+    /**
+     * When the owner approved the plan for the code engine (Phase 8): the first gate before any change is generated.
+     */
+    approvedAt: Date | null
   }, ExtArgs["result"]["engineeringPlan"]>
   composites: {}
 }
@@ -1562,6 +1752,7 @@ export interface Prisma__EngineeringPlanClient<T, Null = never, ExtArgs extends 
   readonly [Symbol.toStringTag]: "PrismaPromise"
   task<T extends Prisma.EngineeringTaskDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EngineeringTaskDefaultArgs<ExtArgs>>): Prisma.Prisma__EngineeringTaskClient<runtime.Types.Result.GetResult<Prisma.$EngineeringTaskPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   evidence<T extends Prisma.EngineeringPlan$evidenceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EngineeringPlan$evidenceArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EngineeringPlanEvidencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  runs<T extends Prisma.EngineeringPlan$runsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EngineeringPlan$runsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EngineeringRunPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1609,6 +1800,7 @@ export interface EngineeringPlanFieldRefs {
   readonly createdAt: Prisma.FieldRef<"EngineeringPlan", 'DateTime'>
   readonly startedAt: Prisma.FieldRef<"EngineeringPlan", 'DateTime'>
   readonly finishedAt: Prisma.FieldRef<"EngineeringPlan", 'DateTime'>
+  readonly approvedAt: Prisma.FieldRef<"EngineeringPlan", 'DateTime'>
 }
     
 
@@ -2031,6 +2223,30 @@ export type EngineeringPlan$evidenceArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.EngineeringPlanEvidenceScalarFieldEnum | Prisma.EngineeringPlanEvidenceScalarFieldEnum[]
+}
+
+/**
+ * EngineeringPlan.runs
+ */
+export type EngineeringPlan$runsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the EngineeringRun
+   */
+  select?: Prisma.EngineeringRunSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the EngineeringRun
+   */
+  omit?: Prisma.EngineeringRunOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EngineeringRunInclude<ExtArgs> | null
+  where?: Prisma.EngineeringRunWhereInput
+  orderBy?: Prisma.EngineeringRunOrderByWithRelationInput | Prisma.EngineeringRunOrderByWithRelationInput[]
+  cursor?: Prisma.EngineeringRunWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EngineeringRunScalarFieldEnum | Prisma.EngineeringRunScalarFieldEnum[]
 }
 
 /**
