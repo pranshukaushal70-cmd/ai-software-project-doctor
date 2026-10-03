@@ -11,6 +11,8 @@ const POLICIES = {
   upload: { points: 10, duration: 60 * 60 },
   ai: { points: 30, duration: 60 * 60 },
   report: { points: 30, duration: 60 * 60 },
+  /** Code-engine runs started and test runs approved (Phase 8): each can use a model and the sandbox for minutes. */
+  engine: { points: 10, duration: 60 * 60 },
 } as const;
 
 export type RateLimitPolicy = keyof typeof POLICIES;

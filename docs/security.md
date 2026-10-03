@@ -129,7 +129,8 @@ owner of their analysis's repository, with the same 404 behaviour.
 ## Rate limiting
 
 `rate-limiter-flexible` backed by Redis (in-memory fallback): login (per IP and per email), signup, analysis, upload,
-AI (engineering task creation and plan requests, 30 per user per hour) and later report generation.
+AI (engineering task creation and plan requests, 30 per user per hour), engine (code-engine runs started and test runs approved,
+10 per user per hour) and later report generation.
 
 ## HTTP hardening
 

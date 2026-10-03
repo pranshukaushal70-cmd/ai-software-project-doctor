@@ -36,6 +36,8 @@ export interface PlanDto {
   outputTokens: number | null;
   durationMs: number | null;
   evidence: PlanEvidenceDto[];
+  /** When the owner approved the plan for the code engine (Phase 8); null until then. */
+  approvedAt: string | null;
 }
 
 const CERTAINTY_TONE = { VERIFIED: "ok", INFERRED: "medium", UNKNOWN: "neutral" } as const;

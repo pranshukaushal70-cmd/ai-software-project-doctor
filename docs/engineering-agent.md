@@ -218,6 +218,6 @@ task → plan (Phase 7, validated) → plan approval → edits generated, valida
 
 The approved plan's files and tests scope what the engine may change, every step that runs repository code needs an
 explicit approval, and tests run only in a disposable container without network or secrets. No branch, push or pull
-request is created; the result is a patch the user downloads. Implemented so far: the run lifecycle and plan approval,
-rebuilding the analysed source, edit generation and validation, the sandbox, and the worker orchestration
-(`@pd/engine`). The run API and UI and the full documentation follow.
+request is created; the result is a patch the user downloads. Implemented: the run lifecycle and plan approval,
+rebuilding the analysed source, edit generation and validation, the sandbox, the worker orchestration (`@pd/engine`),
+the run API ([api.md](api.md#code-engine-phase-8)) and the run UI on the Planner page. Full documentation follows.
