@@ -36,7 +36,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # "web" and "worker" services are added in Phase 8 (production hardening),
+  # "web" and "worker" services are added in Phase 10 (Dockerised web/worker, CI),
   # once their Dockerfiles exist.
 
 volumes:

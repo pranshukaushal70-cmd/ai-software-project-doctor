@@ -319,11 +319,12 @@ export function RunView({ run, actions, busy = false }: { run: RunDto; actions?:
         <CardContent>
           <ol className="space-y-1.5 text-sm">
             {run.events.map((e, i) => (
-              <li key={i} className="flex min-w-0 flex-wrap items-start gap-2">
+              <li key={i} className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-0.5">
                 <span className="w-20 shrink-0 text-xs text-muted-foreground">{new Date(e.createdAt).toLocaleTimeString()}</span>
                 {e.toStatus && <Badge tone={RUN_STATUS[e.toStatus].tone}>{RUN_STATUS[e.toStatus].label}</Badge>}
-                <span className="min-w-0 flex-1 break-words">{e.message}</span>
-                <span className="text-[11px] text-muted-foreground">{e.actor}</span>
+                {/* On narrow screens the message takes its own full-width line instead of a squeezed column. */}
+                <span className="order-last min-w-0 basis-full break-words sm:order-none sm:flex-1 sm:basis-0">{e.message}</span>
+                <span className="ml-auto text-[11px] text-muted-foreground sm:ml-0">{e.actor}</span>
               </li>
             ))}
           </ol>

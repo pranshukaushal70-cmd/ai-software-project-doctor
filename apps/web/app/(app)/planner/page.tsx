@@ -15,7 +15,8 @@ export default async function PlannerPage({ searchParams }: { searchParams: Prom
       <h1 className="text-2xl font-semibold tracking-tight">Engineering planner</h1>
       <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
         Describe a change and get a plan grounded in the repository index. Every claim is marked verified, inferred or unknown and cites the evidence it rests on; references to files
-        or symbols that do not exist are flagged. Planning only: no code is changed or run.
+        or symbols that do not exist are flagged. Planning changes nothing; once you approve a plan, the code engine can propose the change as a
+        reviewable diff and, with a second approval, run the tests in an isolated sandbox. Nothing is committed or pushed.
       </p>
       <PlannerView analyses={analyses} initialAnalysisId={requested.success ? requested.data : null} />
     </div>

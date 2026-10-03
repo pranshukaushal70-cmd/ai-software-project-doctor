@@ -363,6 +363,26 @@ full design is in [engineering-agent.md](engineering-agent.md).
 - `engineering-service.ts` in the web tier owns persistence and authorization; planning runs in the worker
   (engineering queue, `executePlanJob` in `@pd/engine`) after the `202` response. The **Planner** page lists tasks per analysis and renders plans with their evidence.
 
+## Code engine (Phase 8)
+
+Turns an approved plan into a reviewed change; details in [code-engine.md](code-engine.md).
+
+```text
+Planner page ─► POST /api/engineering/plans/:id/approve            (gate 1)
+             ─► POST /api/engineering/plans/:id/runs ─► engineering queue ─► worker "start" job:
+                  rebuild analysed source (exact commit / retained ZIP / demo) → verify File.contentHash
+                  → edit context (in-scope files, redacted) → model → validateEdits → checkChanges → apply → patch
+                  → AWAITING_APPROVAL (allowlisted test command)   or READY_FOR_REVIEW (sandbox off / no setup)
+             ─► POST /api/engineering/runs/:id/execute             (gate 2) ─► worker "execute" job:
+                  rebuild → git apply stored patch → [install] → tests in disposable Docker container
+                  → repair within budget → READY_FOR_REVIEW
+             ─► GET /api/engineering/runs/:id/patch (download) · POST …/discard
+```
+
+Every status change goes through `transitionRun` (compare-and-set with the approval gates in its `WHERE` clause and an
+audit event). Workspaces live for one job; a run waiting for the user is rebuilt from stored data. The planner's job
+runs on the same engineering queue since Phase 8.
+
 ## Web API and UI (Phase 4)
 
 `GET /api/analysis/:id/dependencies` and `GET /api/analysis/:id/architecture` ([api.md](api.md)) follow the findings
