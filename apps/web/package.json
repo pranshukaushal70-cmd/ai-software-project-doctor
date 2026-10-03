@@ -15,6 +15,7 @@
     "@pd/analyzer": "*",
     "@pd/db": "*",
     "@pd/engine": "*",
+    "@pd/sandbox": "*",
     "@pd/shared": "*",
     "bullmq": "^6.3.9",
     "class-variance-authority": "^0.7.1",

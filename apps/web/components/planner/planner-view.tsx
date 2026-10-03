@@ -9,6 +9,7 @@ import { FormError, Input, Label } from "@/components/ui/form";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { PlanView, type PlanDto } from "./plan-view";
+import { RunPanel } from "./run-panel";
 
 export interface PlannableAnalysis {
   id: string;
@@ -176,7 +177,9 @@ export function PlannerView({ analyses, initialAnalysisId }: { analyses: Plannab
                 {pending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
                 Plan this task
               </Button>
-              <p className="text-xs text-muted-foreground">Planning only: nothing is changed, run or committed. The planner sees repository index facts, never file contents or secrets.</p>
+              <p className="text-xs text-muted-foreground">
+                Planning changes nothing: the planner sees repository index facts, never file contents or secrets. After you approve a plan, the code engine can propose the change as a diff.
+              </p>
             </form>
           </CardContent>
         </Card>
@@ -233,6 +236,7 @@ export function PlannerView({ analyses, initialAnalysisId }: { analyses: Plannab
               </div>
             )}
             {plan ? <PlanView plan={plan} /> : <p className="text-sm text-muted-foreground">No plan yet.</p>}
+            {plan?.status === "COMPLETED" && plan.plan && <RunPanel key={plan.id} planId={plan.id} approvedAt={plan.approvedAt} />}
           </div>
         )}
       </div>

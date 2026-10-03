@@ -109,6 +109,11 @@ export function fakeDb(f: Fixture) {
         return ownsPlan(plan, where.plan?.task) ? runView(r, select) : null;
       },
       findMany: async ({ where }: { where: Row }) => runs.filter((r) => matches(r, where)).map((r) => ({ ...r })),
+      findUniqueOrThrow: async ({ where }: { where: Row }) => {
+        const r = runs.find((x) => x.id === where.id);
+        if (!r) throw new Error("not found");
+        return { ...r };
+      },
       update: async ({ where, data }: { where: Row; data: Row }) => {
         const r = runs.find((x) => x.id === where.id)!;
         apply(r, data);
@@ -120,19 +125,26 @@ export function fakeDb(f: Fixture) {
         return { count: hits.length };
       },
     },
-    engineeringRunEvent: { create: async ({ data }: { data: Row }) => void events.push({ id: id("ev"), ...data }) },
+    engineeringRunEvent: {
+      create: async ({ data }: { data: Row }) => void events.push({ id: id("ev"), createdAt: new Date(), ...data }),
+      findMany: async ({ where }: { where: Row }) => events.filter((e) => e.runId === where.runId).map((e) => ({ ...e })),
+    },
     engineeringChange: {
       createMany: async ({ data }: { data: Row[] }) => {
         changes.push(...data.map((d) => ({ id: id("ch"), ...d })));
         return { count: data.length };
       },
+      findMany: async ({ where }: { where: Row }) => changes.filter((c) => c.runId === where.runId).map((c) => ({ ...c })),
       updateMany: async ({ where, data }: { where: Row; data: Row }) => {
         const hits = changes.filter((c) => matches(c, where));
         for (const c of hits) Object.assign(c, data);
         return { count: hits.length };
       },
     },
-    sandboxExecution: { create: async ({ data }: { data: Row }) => void executions.push({ id: id("ex"), ...data }) },
+    sandboxExecution: {
+      create: async ({ data }: { data: Row }) => void executions.push({ id: id("ex"), startedAt: new Date(), ...data }),
+      findMany: async ({ where }: { where: Row }) => executions.filter((e) => e.runId === where.runId).map((e) => ({ ...e })),
+    },
     file: { findMany: async ({ where }: { where: Row }) => fileRows.filter((x) => x.analysisId === where.analysisId) },
     fileDependency: { findMany: async () => [] },
     codeSymbol: { findMany: async () => [] },

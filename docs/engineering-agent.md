@@ -207,7 +207,7 @@ All cascade from the user and the analysis. Migration: `20261005120000_engineeri
   reported at once) and created again in the worker, so both need the AI provider settings.
 - Shell-command detection is pattern-based and errs on the side of removing text that names a command.
 
-## Phase 8: the code engine (in progress)
+## Phase 8: the code engine
 
 The planner is the first stage of the code engine:
 
@@ -218,6 +218,5 @@ task → plan (Phase 7, validated) → plan approval → edits generated, valida
 
 The approved plan's files and tests scope what the engine may change, every step that runs repository code needs an
 explicit approval, and tests run only in a disposable container without network or secrets. No branch, push or pull
-request is created; the result is a patch the user downloads. Implemented so far: the run lifecycle and plan approval,
-rebuilding the analysed source, edit generation and validation, the sandbox, and the worker orchestration
-(`@pd/engine`). The run API and UI and the full documentation follow.
+request is created; the result is a patch the user downloads. Design, security boundaries, configuration and the
+end-to-end verification: [code-engine.md](code-engine.md); endpoints: [api.md](api.md#code-engine-phase-8).

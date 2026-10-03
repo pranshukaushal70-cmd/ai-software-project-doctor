@@ -327,9 +327,14 @@ class RunJob {
 
       if (test.exitCode === 0) return void (await this.move("READY_FOR_REVIEW", "Tests passed. Ready for review."));
       const why = test.timedOut ? "The tests timed out." : `The tests failed (exit code ${test.exitCode}).`;
-      // A failed install is an environment problem a code change cannot fix.
-      const canRepair = !installFailed && this.iteration < this.run.maxIterations && this.tokens < this.run.tokenBudget && Date.now() < this.deadline;
-      if (!canRepair) return void (await this.move("READY_FOR_REVIEW", `${why} Ready for review${installFailed ? " (the dependency install failed)" : ", no repair attempts left"}.`));
+      // Missing or failed dependencies are an environment problem a code change cannot fix: no repair round is spent on them.
+      const environment = installFailed
+        ? "the dependency install failed"
+        : setup.needsInstall && !this.run.installApproved
+          ? "the tests need their dependencies, and the install step was not approved"
+          : null;
+      const canRepair = !environment && this.iteration < this.run.maxIterations && this.tokens < this.run.tokenBudget && Date.now() < this.deadline;
+      if (!canRepair) return void (await this.move("READY_FOR_REVIEW", `${why} Ready for review${environment ? ` (${environment}; not repaired)` : ", no repair attempts left"}.`));
 
       const repaired = await this.generate({ iteration: this.iteration, previousDiff: truncate(this.patch ?? "", REPAIR_DIFF_BYTES), problems: [why], testOutput: tail(test.output, REPAIR_OUTPUT_BYTES) });
       if (!repaired) return;

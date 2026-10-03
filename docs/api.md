@@ -75,7 +75,7 @@ requests share the `ai` rate limit (30 per user per hour). Design: [engineering-
 
 Plans in progress for more than 15 minutes are reported as `FAILED` (`failureReason: "timeout"`).
 
-### Code engine (Phase 8, in progress)
+### Code engine (Phase 8)
 
 Approving a plan is the first gate of the code engine: no change is generated for a plan its owner has not approved.
 The endpoint records the approval only; nothing is generated, executed or changed. Plan responses above include
@@ -84,6 +84,17 @@ The endpoint records the approval only; nothing is generated, executed or change
 | Method | Path | Notes |
 |---|---|---|
 | POST | `/api/engineering/plans/:id/approve` | Approves the task's latest plan once it is `COMPLETED`: `200` with `{ id, approvedAt }`; approving again returns the original time. `409` for plans that are in progress, failed or superseded by a newer plan of the same task; `404` for other users' plans. Requires a session and the same-origin `Origin` header |
+| POST | `/api/engineering/plans/:id/runs` | Starts a run for an approved plan: optional JSON `{ maxIterations?: 1–3, tokenBudget?: 10000–400000, maxDurationSeconds?: 60–3600 }` (unknown keys rejected). `201` with the run (`QUEUED`). `409` when the plan is not approved, already has a run in progress or waiting for approval, its source cannot be rebuilt (no recorded commit, ZIP archive no longer stored) or no AI model that can write code is configured (`AI_PROVIDER=baseline`). Rate limit `engine` (10 per user per hour) |
+| GET | `/api/engineering/plans/:id/runs` | The plan's runs, newest first (20), summaries with `inProgress` |
+| GET | `/api/engineering/runs/:id` | The run: `status`, `inProgress`, budgets and usage (`iteration`, `inputTokens`, `outputTokens`), `summary`, `notes`, `hasPatch`, `testSetup` (`test.command`, `install.command` or `null`, `image`, `needsInstall`, `notes`; command lines only, never the container environment), `sandbox` (`enabled`, `installEnabled`), `events` (audit log), `changes` (per iteration and file: `operation`, `status` `APPLIED`/`REJECTED`, `flags`, `additions`, `deletions`, `diff`) and `executions` (`kind`, `command`, `image`, `network`, `exitCode`, `timedOut`, `durationMs`, redacted `output`) |
+| POST | `/api/engineering/runs/:id/execute` | Second gate: `{ install: boolean }` approves running the shown test command in the sandbox and, with `install: true`, the separate network-enabled install step. `409` unless the run is `AWAITING_APPROVAL`, the sandbox is enabled and (for `install`) the install step is enabled and part of the setup. Rate limit `engine` |
+| POST | `/api/engineering/runs/:id/skip-tests` | Review without running anything: `AWAITING_APPROVAL` → `READY_FOR_REVIEW` |
+| POST | `/api/engineering/runs/:id/cancel` | Cancels a queued or waiting run at once; a run the worker is processing stops at its next step (`cancelRequestedAt`). `409` once finished |
+| POST | `/api/engineering/runs/:id/discard` | Discards a result ready for review; the stored patch and diffs are deleted |
+| GET | `/api/engineering/runs/:id/patch` | The cumulative git-format patch as an attachment (`text/x-diff`, `Content-Disposition: attachment`, `Cache-Control: private, no-store`); apply with `git apply`. `409` until the run is `READY_FOR_REVIEW` |
+
+All run endpoints require a session and return `404` for other users' runs and plans; POSTs need the same-origin
+`Origin` header. Nothing creates a branch, commit, push or pull request.
 
 `mode` is `LOCAL_ONLY` (default) or `AI`; it is reserved and affects neither the analysis nor the planner.
 

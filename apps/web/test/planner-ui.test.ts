@@ -66,6 +66,7 @@ function dto(extra: Partial<PlanDto> = {}): PlanDto {
     outputTokens: 900,
     durationMs: 12300,
     evidence: CONTEXT.evidence.map(({ id, ...e }) => ({ ref: id, ...e })),
+    approvedAt: null,
     ...extra,
   };
 }
@@ -126,7 +127,7 @@ describe("PlannerView", () => {
     expect(html).toContain('name="task"');
     expect(html).toContain('maxLength="2000"');
     expect(html).toContain("Plan this task");
-    expect(html).toContain("Planning only: nothing is changed, run or committed.");
+    expect(html).toContain("Planning changes nothing: the planner sees repository index facts, never file contents or secrets.");
   });
 
   it("explains what to do when nothing has been analysed", () => {

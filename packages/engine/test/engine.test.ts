@@ -266,6 +266,18 @@ describe("execute job", () => {
     expect(db.events.at(-1)!.message).toMatch(/no repair attempts left/);
   });
 
+  it("does not spend a repair round when the tests lack their dependencies", async () => {
+    const fake = new FakeSandbox({ test: [{ exitCode: 127, output: "sh: 1: vitest: not found\n" }] });
+    const provider = new ScriptedProvider([FIRST, SECOND]);
+    const id = await awaiting(provider, fake, { maxIterations: 2 });
+    run().testSetup = { ...(run().testSetup as TestSetup), needsInstall: true };
+    await approveExecution(control(), "u1", id, { install: false });
+    await runEngineJob(id, "execute", engine(provider, fake));
+    expect(run()).toMatchObject({ status: "READY_FOR_REVIEW", iteration: 1 });
+    expect(provider.editCalls).toHaveLength(1);
+    expect(db.events.at(-1)!.message).toBe("The tests failed (exit code 127). Ready for review (the tests need their dependencies, and the install step was not approved; not repaired).");
+  });
+
   it("never runs tests without the user's approval", async () => {
     const fake = new FakeSandbox({ test: [{ exitCode: 0 }] });
     const id = await awaiting(new ScriptedProvider([FIRST]), fake);

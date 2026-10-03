@@ -10,8 +10,9 @@ explain, prioritise and recommend, and it must cite the evidence it uses.
 **Status: Phase 1 (foundation) complete. Phases 2 (code metrics & static analysis), 3 (secret & insecure-pattern
 detection), 4 (dependency & architecture analysis) and 5 (API, database, testing and documentation analysis, an
 explainable health score and a demo project), 6 (repository intelligence: manifest, symbol index, dependency graph,
-impact analysis and an agent context API) and 7 (an AI engineering planner that turns a task into an evidence-backed,
-validated plan) are implemented and tested.** See [Roadmap](#roadmap) and
+impact analysis and an agent context API), 7 (an AI engineering planner that turns a task into an evidence-backed,
+validated plan) and 8 (a code engine that turns an approved plan into a validated change, runs the repository's tests in
+an isolated sandbox after a second approval, and hands over a patch) are implemented and tested.** See [Roadmap](#roadmap) and
 [Verification status](#verification-status). Nothing described as "planned" below is implemented yet.
 
 ## Problem statement
@@ -34,17 +35,25 @@ Browser ─► Next.js (UI + /api) ─► PostgreSQL
           ingest (hardened clone / safe ZIP) → scan → code metrics → security → dependencies (+ OSV.dev)
           → architecture → API / database / tests / docs → health score → repository index
           → [git → redaction → AI reasoning → report]   (bracketed: planned)
+
+Planner / code engine (Phase 7–8), engineering queue in the same worker:
+  task → plan (index evidence, validated) → plan approval → rebuild analysed source → edits (validated, re-checked)
+       → test-command approval → disposable Docker sandbox (repair within budget) → patch for review (no commit/push)
 ```
 
 | Path | Purpose |
 |---|---|
 | `apps/web` | Next.js 16 app: landing page, auth, dashboard, API route handlers |
-| `apps/worker` | BullMQ worker that runs the analysis pipeline |
+| `apps/worker` | BullMQ worker: the analysis pipeline, and planner and code-engine jobs |
 | `packages/analyzer` | Pure deterministic engine: no database; network only for `git clone` and the OSV.dev lookup, which uses a `fetch` passed in by the worker |
 | `packages/db` | Prisma 7 schema, migrations and client |
-| `packages/shared` | Types, zod schemas, errors, URL validation, logger |
+| `packages/shared` | Types, zod schemas, errors, URL validation, logger, code-engine run lifecycle |
+| `packages/agent` | Engineering planner and code-engine editing: context, providers, schemas, validation, diffs |
+| `packages/engine` | Planner and code-engine jobs, run controls, source rebuilding |
+| `packages/sandbox` | Disposable Docker sandbox for approved test runs |
 
-More detail: [docs/architecture.md](docs/architecture.md), [docs/security.md](docs/security.md), [docs/api.md](docs/api.md).
+More detail: [docs/architecture.md](docs/architecture.md), [docs/security.md](docs/security.md), [docs/api.md](docs/api.md),
+[docs/code-engine.md](docs/code-engine.md).
 
 ## What it analyses today
 
@@ -59,7 +68,7 @@ Each completed analysis has one tab per module:
 | Architecture | Import graph (Phase 4) | File and module import graph (SVG), import cycles, module coupling and instability, inferred layers and violations, hubs, high fan-out |
 | Practices | API, database, testing & documentation (Phase 5) | HTTP endpoints (Express, Fastify, Koa, Hono, NestJS, Next.js, Flask, FastAPI, Django, Spring) with auth/validation checks, permissive CORS, leaked stack traces, unthrottled login; Prisma/SQL/ORM schemas with unindexed foreign keys, missing primary keys, missing migrations and automatic schema sync; test files, test cases, test-to-code ratio, committed coverage reports, CI test runs, focused/skipped tests; README completeness, license, undocumented environment variables, broken links |
 | Health | Explainable health score (Phase 5) | 0–100 score and grade from eight weighted dimensions, with every deduction listed; triaged findings excluded; capped while critical/high security findings are open |
-| Planner | AI engineering planner (Phase 7) | Planner page: describe a task, get a plan (affected files and symbols, steps, test plan, configuration and dependency changes, security, performance, risks, validation plan) generated from repository-index evidence; every claim marked VERIFIED, INFERRED or UNKNOWN with cited evidence; nonexistent files and symbols flagged, secrets and shell commands removed. Planning only, nothing executed. See [docs/engineering-agent.md](docs/engineering-agent.md) |
+| Planner | AI engineering planner (Phase 7) | Planner page: describe a task, get a plan (affected files and symbols, steps, test plan, configuration and dependency changes, security, performance, risks, validation plan) generated from repository-index evidence; every claim marked VERIFIED, INFERRED or UNKNOWN with cited evidence; nonexistent files and symbols flagged, secrets and shell commands removed. See [docs/engineering-agent.md](docs/engineering-agent.md). **Code engine (Phase 8):** approve a plan, and the engine proposes the change in an isolated copy of the analysed source: per-file diffs with validation flags; with a second approval it runs the repository's tests in a disposable sandbox and repairs failures within a budget; download the patch or discard it. Nothing is committed or pushed. See [docs/code-engine.md](docs/code-engine.md) |
 | Intelligence | Repository intelligence (Phase 6) | Repository manifest (languages, frameworks, runtimes, manifests, Docker, CI, infrastructure), symbol search with callers, resolved file dependencies, deterministic impact analysis (dependants, tests, routes, config, modules), most depended-upon files, external packages, unresolved imports, file tree. See [docs/repository-intelligence.md](docs/repository-intelligence.md) |
 | All findings | — | Every finding with evidence, impact and recommendation, filterable by severity and type |
 
@@ -101,9 +110,13 @@ See [.env.example](.env.example). The important ones:
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Used by `docker-compose.yml` to create the database. `POSTGRES_PASSWORD` is required (no default); it only takes effect when the database volume is first created. PostgreSQL and Redis are published on `127.0.0.1` only |
 | `REDIS_URL` | Redis for the job queue and rate limiting |
 | `JWT_SECRET` | ≥32-char secret used to HMAC session tokens before storage |
-| `AI_PROVIDER` | Engineering planner provider: `anthropic` (default; needs `ANTHROPIC_API_KEY`) or `baseline` (deterministic evidence-only plans, no LLM) |
-| `ANTHROPIC_API_KEY` | Optional. Enables LLM planning (Phase 7). Read from the environment only; never stored, logged or sent to the browser |
-| `ANTHROPIC_MODEL` | Planner model, default `claude-opus-5-5` |
+| `AI_PROVIDER` | Planner and code-engine provider: `anthropic` (default; needs `ANTHROPIC_API_KEY`) or `baseline` (deterministic evidence-only plans, no LLM; cannot write code, so code-engine runs are refused) |
+| `ANTHROPIC_API_KEY` | Optional. Enables LLM planning (Phase 7) and code editing (Phase 8). Needed by the web app (checked) and the worker (used). Read from the environment only; never stored, logged or sent to the browser |
+| `ANTHROPIC_MODEL` | Model for planning and editing, default `claude-opus-5-5` |
+| `SANDBOX_ENABLED` | `false` (default): code-engine runs end with a diff and no repository code runs. `true`: approved test runs execute in disposable Docker containers (the worker needs Docker with Linux containers; see [security.md](docs/security.md#known-limitations)) |
+| `SANDBOX_INSTALL_ENABLED` | `false` (default). `true` offers a separately approved, network-enabled dependency install (`npm ci --ignore-scripts`, pip wheels only) |
+| `SANDBOX_RUNTIME`, `SANDBOX_IMAGE_*`, `SANDBOX_*_SECONDS`, `SANDBOX_MEMORY_MB`, `SANDBOX_CPUS`, `SANDBOX_PIDS` | Sandbox runtime (`runc`/`runsc`), digest-pinned images and limits; see [docs/code-engine.md](docs/code-engine.md#configuration) |
+| `ENGINE_CONCURRENCY` | Planner and code-engine jobs the worker runs at once (default 1) |
 | `WORKSPACE_DIR` | Where uploads and clones are stored temporarily (default: OS temp dir) |
 | `MAX_UPLOAD_MB`, `MAX_EXTRACTED_MB`, `MAX_ZIP_ENTRIES`, `MAX_COMPRESSION_RATIO`, `MAX_FILE_KB` | Ingest safety limits |
 | `CLONE_TIMEOUT_SECONDS`, `CLONE_DEPTH` | Clone limits |
@@ -114,14 +127,15 @@ See [.env.example](.env.example). The important ones:
 
 | Command | What it does |
 |---|---|
-| `npm test` | All unit tests (Vitest, all workspaces) |
+| `npm test` | All unit tests (Vitest, all workspaces); the real-Docker sandbox tests are skipped |
+| `PD_DOCKER_TESTS=1 npx vitest run packages/sandbox` | Also runs the sandbox tests against a real Docker engine (pinned images are pulled if missing) |
 | `npm run typecheck` | `tsc` across all workspaces |
 | `npm run build` | Production build of the web app |
 | `npm run db:migrate` | Create a new migration during development |
 
 ## Security considerations
 
-Repositories are untrusted input. Code is **never executed**: no installs, builds or scripts. Clones run with
+Repositories are untrusted input. The analysis **never executes** repository code: no installs, builds or scripts. Clones run with
 hooks, submodules, LFS and non-https transports disabled; ZIPs are checked for traversal, symlinks,
 bombs and size limits before anything is written. Manifests and lockfiles are parsed as data, never installed.
 
@@ -138,6 +152,15 @@ output is treated as untrusted: it is schema-checked, every file and symbol is c
 shell commands are removed before storage. Nothing it produces is executed. With `AI_PROVIDER=baseline` no external
 request is made. See [docs/engineering-agent.md](docs/engineering-agent.md#security-boundaries).
 
+The code engine (Phase 8) is the one place where file contents reach the LLM and where repository code can run, both
+narrowly. The model sees only the redacted contents of files the approved plan names (never secret files; bounded),
+and its edits must pass scope, policy and exact-match checks plus the analyzer's syntax and security re-inspection.
+Repository code runs only after the user approves the exact, allowlisted command, and only in a disposable container
+without network, secrets or host mounts, as an unprivileged user with resource limits; the network-enabled install
+step is a separate switch and approval, off by default. Nothing is committed or pushed; the result is a patch. Enabling
+the sandbox gives the worker Docker access, which is root-equivalent on the Docker host. See
+[docs/code-engine.md](docs/code-engine.md#security-boundaries).
+
 ## Roadmap
 
 | Phase | Scope | Status |
@@ -151,13 +174,35 @@ request is made. See [docs/engineering-agent.md](docs/engineering-agent.md#secur
 | — | Git history insights (previously planned as Phase 6) | Planned |
 | 7 | AI engineering planner: provider layer (Anthropic default, deterministic baseline), evidence retrieval from the index, validated evidence-cited plans, Planner page | Implemented and tested |
 | — | Evidence-cited recommendations and fix suggestions on findings | Planned |
-| 8 | Reports (PDF/JSON/Markdown/HTML) | Planned |
-| 9 | Dockerised web/worker, CI, E2E tests, benchmark & evaluation | Planned |
+| 8 | Code engine: plan approval, rebuilt analysed source, validated edits, approved tests in a disposable Docker sandbox with repair, patch download (no commit/push); planner moved to the worker | Implemented and tested (E2E with a stub model) |
+| 9 | Reports (PDF/JSON/Markdown/HTML) | Planned |
+| 10 | Dockerised web/worker, CI, E2E tests, benchmark & evaluation | Planned |
 
 ## Verification status
 
-`npm test` (Vitest, all workspaces): **544 tests in 30 files, all passing**; `npm run typecheck` is clean for all five
-workspaces and `npm run build` succeeds.
+`npm test` (Vitest, all workspaces): **715 tests in 45 files passing**, plus 4 real-Docker sandbox tests that run only
+with `PD_DOCKER_TESTS=1` (all passing on 2026-10-03); `npm run typecheck` is clean for all eight workspaces and
+`npm run build` succeeds.
+
+| Area (Phase 8) | Tests |
+|---|---|
+| Run lifecycle and gated status changes (`@pd/shared`, `@pd/db`) | 6 + 8 |
+| Rebuilding the analysed source (exact-commit fetch, size limit, hash verification), archive retention | 8 + 4 + 4 + 5 |
+| Edit scope, context, validation, re-inspection, diffs verified with `git apply`, providers | 38 + 7 + 4 |
+| Sandbox (configuration, command allowlist, container flags, driver) and real Docker (isolation probe, network only for install, Python image, timeout and clean-up) | 19 + 4 |
+| Worker orchestration (start/execute jobs, repair, budgets, cancellation, forged jobs, controls, stale sweep) | 16 |
+| Run API (full flow with the real engine, validation, auth/ownership/Origin/rate limit) and run UI | 5 + 8 |
+
+**End to end (Phase 8, on 2026-10-03)** with the production build, the worker, PostgreSQL, Redis and Docker, the sandbox
+enabled and a **local stub of the model API** (no API key was configured; the real provider code ran over HTTP with
+scripted responses): the demo project was analysed and planned in the worker; the gates held (run before plan approval
+409, other user 404, cross-site POST 403, install while disabled 409, patch before review 409); the run rebuilt and
+verified the source, applied two changes, waited for approval, ran `npm test` in the sandbox without network, and went to
+review; the downloaded patch applied with `git apply` to a pristine copy; discard removed it. The demo's planted password
+never reached the model, logs contained no task text, code or keys, and no containers, volumes or workspaces were left.
+The UI flow passed in headless Chrome (dark mode, 390 px, no console errors). Two problems found on the way were fixed (a
+wasted repair round when dependencies were missing; the run timeline at 390 px). Details:
+[docs/code-engine.md](docs/code-engine.md#end-to-end-verification-2026-10-03).
 
 | Area | Tests |
 |---|---|
