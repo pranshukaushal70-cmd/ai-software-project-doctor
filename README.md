@@ -3,17 +3,19 @@
 > Diagnose your software before it breaks.
 
 An engineering-analysis platform that takes a GitHub/GitLab repository URL or a ZIP upload and produces an
-evidence-based health report. Deterministic analysis (parsing, metrics, secret detection, dependency and
-architecture graphs) comes first; an LLM is used only afterwards, over structured and redacted findings, to
-explain, prioritise and recommend, and it must cite the evidence it uses.
+evidence-based health report, then helps fix what it found. Deterministic analysis (parsing, metrics, secret detection,
+dependency and architecture graphs, a repository index) comes first; an LLM is used only afterwards, over that index, to
+plan an engineering task with cited evidence and, after the user approves the plan, to write the change. The user approves
+again before the repository's tests run in an isolated sandbox, and the result is a patch and a report, never a commit.
 
-**Status: Phase 1 (foundation) complete. Phases 2 (code metrics & static analysis), 3 (secret & insecure-pattern
+**Status: Phases 1 (foundation), 2 (code metrics & static analysis), 3 (secret & insecure-pattern
 detection), 4 (dependency & architecture analysis) and 5 (API, database, testing and documentation analysis, an
 explainable health score and a demo project), 6 (repository intelligence: manifest, symbol index, dependency graph,
 impact analysis and an agent context API), 7 (an AI engineering planner that turns a task into an evidence-backed,
 validated plan), 8 (a code engine that turns an approved plan into a validated change, runs the repository's tests in
 an isolated sandbox after a second approval, and hands over a patch) and 9 (reports: immutable, redacted snapshots of
-what was found, planned, changed, validated and tested) are implemented and tested.** See [Roadmap](#roadmap) and
+what was found, planned, changed, validated and tested) and 10 (production images, CI, end-to-end tests and benchmarks)
+are implemented and tested.** See [Roadmap](#roadmap) and
 [Verification status](#verification-status). Nothing described as "planned" below is implemented yet.
 
 ## Problem statement
@@ -35,11 +37,12 @@ Browser ─► Next.js (UI + /api) ─► PostgreSQL
                                    │
           ingest (hardened clone / safe ZIP) → scan → code metrics → security → dependencies (+ OSV.dev)
           → architecture → API / database / tests / docs → health score → repository index
-          → [git → redaction → AI reasoning → report]   (bracketed: planned)
 
 Planner / code engine (Phase 7–8), engineering queue in the same worker:
   task → plan (index evidence, validated) → plan approval → rebuild analysed source → edits (validated, re-checked)
        → test-command approval → disposable Docker sandbox (repair within budget) → patch for review (no commit/push)
+
+Reports (Phase 9), on demand: immutable, redacted snapshots of an analysis, a plan or a run, built from stored data.
 ```
 
 | Path | Purpose |
@@ -55,7 +58,8 @@ Planner / code engine (Phase 7–8), engineering queue in the same worker:
 | `packages/reports` | Report snapshots: collection, deterministic building, redaction, storage, Markdown export |
 
 More detail: [docs/architecture.md](docs/architecture.md), [docs/security.md](docs/security.md), [docs/api.md](docs/api.md),
-[docs/code-engine.md](docs/code-engine.md), [docs/reports.md](docs/reports.md).
+[docs/code-engine.md](docs/code-engine.md), [docs/reports.md](docs/reports.md), [docs/deployment.md](docs/deployment.md),
+[docs/testing.md](docs/testing.md), [docs/benchmark.md](docs/benchmark.md), [docs/demo.md](docs/demo.md).
 
 ## What it analyses today
 
@@ -103,6 +107,14 @@ npm run db:deploy           # applies migrations
 npm run dev                 # web app on http://localhost:3000
 npm run worker              # in a second terminal: the analysis worker
 ```
+
+Analysis works without any API key. The planner and code engine need one: add `ANTHROPIC_API_KEY` to `.env` (or set
+`AI_PROVIDER=baseline` for evidence-only plans without an LLM; the baseline cannot write code, so code-engine runs are
+refused). Running the repository's tests also needs the sandbox (`SANDBOX_ENABLED=true` and Docker); the simplest way is
+the container stack with `docker-compose.sandbox.yml` ([docs/deployment.md](docs/deployment.md)).
+
+To present the whole workflow, follow the [demo runbook](docs/demo.md): which repository to use for each part, what to
+check beforehand, and an offline fallback with a model stub.
 
 ## Environment variables
 
@@ -188,88 +200,19 @@ the sandbox gives the worker Docker access, which is root-equivalent on the Dock
 
 ## Verification status
 
-`npm test` (Vitest, all workspaces): **769 tests passing**, plus 4 real-Docker sandbox tests that run only with
-`PD_DOCKER_TESTS=1` (all passing on 2026-10-08); `npm run typecheck` is clean for all eleven workspaces and
-`npm run build` succeeds.
+Every push to `main` and every pull request runs [CI](docs/ci.md): typecheck, unit tests, the production build,
+migrations against an empty database, the sandbox against real Docker, and the Playwright end-to-end suite against the
+production images with the sandbox off and on.
 
-| Area (Phase 10) | Tests |
+| Check | Result (2026-10-08) |
 |---|---|
-| Health check (ok, degraded without details, missing Redis, hanging dependency) | 3 |
-| Model stub against the real prompt builders and output schemas (request kinds, plan, determinism, scoped exact edits, redacted lines, scripted failures) and the e2e ZIP writer | 6 + 2 |
-| Benchmark scorer (matching by rule, file and line span, duplicates, acceptable and out-of-scope findings, order independence, rates, aggregation, schema), agent-evaluation summary, fixtures valid, detection results reproduce the committed ones exactly | 9 + 1 + 2 |
+| `npm test` (Vitest, all workspaces) | **771 tests passing**, plus 4 real-Docker sandbox tests that run with `PD_DOCKER_TESTS=1` (passing) |
+| `npm run typecheck`, `npm run build`, `npm audit` | Clean for all eleven workspaces; build succeeds; 0 known vulnerabilities |
+| End to end (Playwright, production images, model stub) | 33 of 33 specs with the sandbox off, 33 of 33 with it on |
+| Detection benchmark | Precision 97.3 %, recall 97.3 % ([results](benchmarks/results/detection.md)) |
+| Planner and code-engine evaluation | Stub: 5 of 6 tasks. Real model: not run yet ([docs/benchmark.md](docs/benchmark.md)) |
 
-**End to end (Phase 10, on 2026-10-08)**, automated with Playwright against the production images (compose: PostgreSQL 17,
-Redis 7, migrate, web, worker, model stub; OSV.dev off), on Docker 29.8 (Linux engine): **33 of 33 specs passed** with the
-sandbox off (the default deployment) and **33 of 33** with `docker-compose.sandbox.yml` (the fixture's `npm test` ran in a
-sandbox container without network and passed; no sandbox containers or volumes left). Service logs contained no keys,
-passwords, task text or patch content. Detection benchmark: precision 97.3 %, recall 97.3 % (36 of 37 planted issues, one
-false positive; [results](benchmarks/results/detection.md)). Planner/code-engine evaluation against the stub: 5 of 6 tasks
-(the stub's planner picks the wrong file of the import cycle, as expected of a script). The real-model evaluation has not
-been run (no API key was available); see [docs/benchmark.md](docs/benchmark.md). Found and fixed by the end-to-end run:
-the sandbox override enabled the sandbox only in the worker, so the web tier refused test execution; it now sets the
-switches (never the socket) for the web tier too.
+The planner and code engine have been verified end to end only against the model stub, which runs the real provider code
+over HTTP with scripted responses; the manual real-model evaluation has not been run yet.
 
-| Area (Phase 9) | Tests |
-|---|---|
-| Report building and storage: analysis (completed, failed, in progress), plan (approved, superseded, rejected), run (tests passed, failed, not run, skipped, awaiting approval, in progress, failed, cancelled, discarded), no secrets/evidence/code in snapshots, hostile content, Markdown escaping, determinism, de-duplication (also under a race), historical snapshots, ownership, list filters and pagination | 16 |
-| Report API (generate, list, filters, pagination, latest, export; validation, 401/403/404/429, other users' reports) and report UI (sections, statuses, partial reports, security findings, escaping, large reports, list, empty and failure states) | 6 + 8 |
-| Code engine: a cancel requested while changes are applied is honoured (bug found by the Phase 9 end-to-end check) | 1 |
-
-**End to end (Phase 9, on 2026-10-03)** with the production build, the worker, PostgreSQL, Redis and Docker (sandbox and
-install step enabled; local model stub, no API key): reports were generated for an analysis, for a plan before and after
-its approval, and for runs whose tests passed (a dependency-free project: `npm test` exit 0 in the sandbox → `TESTS_PASSED`,
-every chain step passed), failed (the demo: exit 127 → `TESTS_FAILED`), were cancelled, waited for approval (`PARTIAL`) and
-were discarded (the earlier report kept its result, the new one says `DISCARDED`). Regenerating unchanged data returned the
-same report; another user got 404 everywhere; cross-site and unauthenticated requests were refused. No report contained a
-secret, code or a diff, and logs carried ids and outcomes only. The Reports pages passed in headless Chrome (list and filter,
-detail sections, a diff loaded from the run, the "diff no longer stored" case, generation from the analysis page, Markdown
-download, dark mode, 390 px, no console errors). Details: [docs/reports.md](docs/reports.md).
-
-| Area (Phase 8) | Tests |
-|---|---|
-| Run lifecycle and gated status changes (`@pd/shared`, `@pd/db`) | 6 + 8 |
-| Rebuilding the analysed source (exact-commit fetch, size limit, hash verification), archive retention | 8 + 4 + 4 + 5 |
-| Edit scope, context, validation, re-inspection, diffs verified with `git apply`, providers | 38 + 7 + 4 |
-| Sandbox (configuration, command allowlist, container flags, driver) and real Docker (isolation probe, network only for install, Python image, timeout and clean-up) | 19 + 4 |
-| Worker orchestration (start/execute jobs, repair, budgets, cancellation, forged jobs, controls, stale sweep) | 16 |
-| Run API (full flow with the real engine, validation, auth/ownership/Origin/rate limit) and run UI | 5 + 8 |
-
-**End to end (Phase 8, on 2026-10-03)** with the production build, the worker, PostgreSQL, Redis and Docker, the sandbox
-enabled and a **local stub of the model API** (no API key was configured; the real provider code ran over HTTP with
-scripted responses): the demo project was analysed and planned in the worker; the gates held (run before plan approval
-409, other user 404, cross-site POST 403, install while disabled 409, patch before review 409); the run rebuilt and
-verified the source, applied two changes, waited for approval, ran `npm test` in the sandbox without network, and went to
-review; the downloaded patch applied with `git apply` to a pristine copy; discard removed it. The demo's planted password
-never reached the model, logs contained no task text, code or keys, and no containers, volumes or workspaces were left.
-The UI flow passed in headless Chrome (dark mode, 390 px, no console errors). Two problems found on the way were fixed (a
-wasted repair round when dependencies were missing; the run timeline at 390 px). Details:
-[docs/code-engine.md](docs/code-engine.md#end-to-end-verification-2026-10-03).
-
-| Area | Tests |
-|---|---|
-| Analyzer: repository intelligence (TS/JS/Python symbol extraction incl. CommonJS, default exports and `__all__`, malformed files, file roles, manifest and runtimes, untrusted version strings, secret files never read, ingestion of ignored/gitignored/binary/oversized/symlinked files, content hashing, imports escaping the root, internal/external/builtin/unresolved resolution, call resolution, cycles, PageRank, modules, importers/callers, file/symbol/module impact, depth limits, name-matched tests, unknown targets, keyword search) | 20 |
-| Analyzer: practices (API endpoints for every supported framework, auth/validation/CORS/stack-trace/rate-limit rules, Prisma/SQL/SQLAlchemy schemas, auto schema sync, test counting, coverage reports incl. `coverage/`, CI, README/license/env vars/links, fingerprints) | 24 |
-| Analyzer: scoring (penalties and caps, per-1,000-line dimensions, fixed penalties, duplication, applicability, security cap, triage exclusion, caveats, grades, weights) | 13 |
-| Analyzer: dependencies, architecture, metrics, security, scanner, ZIP, clone | 53, 32, 31, 155, 18, 23, 7 |
-| Worker: pipeline (fake Prisma and OSV.dev: ZIP upload, stages incl. `PRACTICES` and `INDEXING`, persisted score and repository index, OSV outage/disabled, demo project end to end, missing demo, triaged findings excluded from the score, retry clean-up) and row mapping (incl. index rows) | 10 + 17 |
-| Web API: repository intelligence (manifest, modules, symbols, references, imports, impact, agent context; validation incl. path traversal, Origin check, 401/404 on every endpoint, unindexed analyses, graph cache) | 13 |
-| Web API: analysis modules, triage, demo endpoint (auth, Origin check, rate limit, one demo repository per user, `scoreBreakdown` owner-only), services, HTTP helpers, session tokens | 13 + 7 + 4 + 20 + 7 + 7 |
-| Web UI (server-rendered markup): Intelligence panel and impact view | 6 |
-| Web UI (server-rendered markup): tabs incl. Practices, Health and Intelligence, Health and Practices panels, security, dependencies and architecture panels, graph layout | 10 + 7 + 8 + 8 + 6 + 6 |
-| Shared: URL validation, schemas | 15 + 4 |
-
-**End to end (Phase 6, on 2026-10-03)** against PostgreSQL 17 and Redis 7 with the production build and the worker: the
-`20261004120000_repository_intelligence` migration applied with no schema drift; this repository (328 files) indexed to
-1,115 symbols and 2,449 call references (1,805 resolved, including across workspace packages) with correct answers for
-definitions, callers, importers and impact; a generated 2,701-file repository indexed to exactly the expected 17,500 symbols
-and 7,700 internal imports (index built in 0.3 s; impact query 1.4 s cold, 0.16 s cached); the Intelligence tab worked in
-headless Chromium (search, callers, impact graph, dark mode, 390 px); and the Phase 5 and earlier end-to-end checks passed
-unchanged.
-
-**End to end (Phase 5, on 2026-10-03)** against PostgreSQL 17 and Redis 7 in Docker with the production build and the
-worker: the `20261003120000_practices_stage` migration applied with no schema drift (`prisma migrate diff`); the demo
-project analysed through `POST /api/analysis/demo` passed every stage including `PRACTICES` and found the planted issues in
-every category (with a live OSV.dev lookup); the score, breakdown and weights were persisted and served; triaging the open
-high security findings excluded them from the next run's score; a ZIP upload, every analysis endpoint and cross-user
-isolation (404) still worked; and the Overview, Practices and Health tabs, the dashboard score and the demo entry points
-rendered in headless Chromium without console errors, in dark mode and at 390 px width without horizontal scrolling.
+What each phase was verified with, test by test and with its end-to-end check: [docs/verification.md](docs/verification.md).

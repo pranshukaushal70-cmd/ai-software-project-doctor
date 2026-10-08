@@ -74,10 +74,15 @@ export async function readJson(req: NextRequest): Promise<unknown> {
   }
 }
 
+/**
+ * The client address that IP-based rate limits key on. Forwarding headers are trusted only with
+ * TRUST_PROXY=true (a proxy that overwrites them); otherwise any client could pick its own key per
+ * request. Without a trusted proxy every client shares one key, so the IP limits are global.
+ */
 export function clientIp(req: NextRequest): string {
   if (process.env.TRUST_PROXY === "true") {
-    const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip")?.trim();
     if (forwarded) return forwarded;
   }
-  return req.headers.get("x-real-ip") ?? "local";
+  return "local";
 }

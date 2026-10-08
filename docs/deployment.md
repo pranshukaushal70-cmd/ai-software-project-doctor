@@ -42,6 +42,8 @@ The web port is published on `127.0.0.1` only (`WEB_PORT`, default 3000). Put a 
 for anything beyond the local machine and set `APP_URL` to the public origin: in production the session cookie is
 `Secure` (browsers keep it over plain http only for `localhost`) and every POST is checked against `APP_URL`'s origin.
 Set `TRUST_PROXY=true` only behind a proxy that overwrites `X-Forwarded-For` (rate limits key on the client address).
+Without it, forwarding headers are ignored and the per-IP limits on login and sign-up apply to all clients together
+([security.md](security.md#rate-limiting)).
 
 Uploads go to the `workspace` volume, shared by `web` (writes archives) and `worker` (reads and keeps them for the code
 engine); both run as uid 1000, which owns the volume.
