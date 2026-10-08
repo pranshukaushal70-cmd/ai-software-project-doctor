@@ -1,0 +1,21 @@
+{
+  "name": "py-inventory",
+  "description": "Flask inventory service with planted security problems next to safe variants of the same calls (parameterised SQL, argument-list subprocess, json, sha256, secrets, TLS verification on), so false positives on the safe code are measured.",
+  "source": { "dir": "repo" },
+  "labeledCategories": ["SECURITY", "SECRET"],
+  "expected": [
+    { "ruleId": "injection/sql", "path": "app/db.py", "lines": [13, 13], "why": "f-string SQL with user input" },
+    { "ruleId": "injection/os-command", "path": "app/tools.py", "lines": [8, 8], "why": "shell=True with a concatenated argument" },
+    { "ruleId": "unsafe/deserialization", "path": "app/tools.py", "lines": [16, 16], "why": "pickle.loads of external data" },
+    { "ruleId": "injection/dynamic-code-execution", "path": "app/tools.py", "lines": [24, 24], "why": "eval of an expression" },
+    { "ruleId": "crypto/weak-hash", "path": "app/security.py", "lines": [9, 9], "why": "MD5 checksum" },
+    { "ruleId": "crypto/tls-verification-disabled", "path": "app/security.py", "lines": [21, 21], "why": "requests with verify=False" },
+    { "ruleId": "config/debug-mode", "path": "app/main.py", "lines": [20, 20], "why": "Flask debug mode" },
+    { "ruleId": "secret/hardcoded-credential", "path": "app/settings.py", "lines": [8, 8], "why": "Hard-coded admin password" }
+  ],
+  "acceptable": [],
+  "tasks": [
+    { "id": "py-parameterise-search", "task": "Fix the SQL injection in find_item in app/db.py by using a parameterised query.", "expectedFiles": ["app/db.py"], "forbiddenFiles": ["requirements.txt"] },
+    { "id": "py-safe-export", "task": "Make export_report in app/tools.py run tar without a shell, passing the file name as an argument.", "expectedFiles": ["app/tools.py"], "forbiddenFiles": ["requirements.txt"] }
+  ]
+}

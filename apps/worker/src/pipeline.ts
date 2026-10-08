@@ -1,20 +1,8 @@
 import { rm } from "node:fs/promises";
 import path from "node:path";
-import {
-  ANALYZER_VERSION,
-  cloneRepository,
-  createWorkspace,
-  scanRepository,
-  uploadPath,
-  type Workspace,
-} from "@pd/analyzer";
-import { analyzeArchitecture } from "@pd/analyzer/architecture";
-import { analyzeDependencies } from "@pd/analyzer/dependencies";
-import { buildRepositoryIndex, createSymbolCollector } from "@pd/analyzer/intelligence";
-import { analyzeCode } from "@pd/analyzer/metrics";
-import { analyzePractices } from "@pd/analyzer/practices";
-import { computeHealthScore, scoringWeights } from "@pd/analyzer/scoring";
-import { createSecurityScanner } from "@pd/analyzer/security";
+import { ANALYZER_VERSION, cloneRepository, createWorkspace, uploadPath, type Workspace } from "@pd/analyzer";
+import { runAnalyzers } from "@pd/analyzer/run";
+import { scoringWeights } from "@pd/analyzer/scoring";
 import type { AnalysisStage, Prisma, PrismaClient } from "@pd/db";
 import { AppError, stageProgress, type AnalyzerLimits } from "@pd/shared";
 import type { Logger } from "@pd/shared/logger";
@@ -132,28 +120,18 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
       throw new AppError("VALIDATION_ERROR", "Unsupported repository source");
     }
 
-    await setStage("SCANNING");
-    const scan = await scanRepository(root, { maxFileBytes: limits.maxFileBytes });
-    log.info({ files: scan.totals.files, ms: Date.now() - started }, "scan complete");
-
-    await setStage("PARSING");
     const parseStart = stageProgress("PARSING");
     const parseSpan = stageProgress("SECURITY") - parseStart - 1;
     let lastProgressAt = 0;
-    // Insecure-pattern rules and symbol extraction run on the same syntax trees as the metrics (one parse per file).
-    const security = createSecurityScanner();
-    const symbolCollector = createSymbolCollector();
-    const code = await analyzeCode(scan.files, {
-      onTree: (ctx) => {
-        security.inspectTree(ctx);
-        // A symbol-extraction failure must not cost the file its security inspection, and vice versa.
-        try {
-          symbolCollector.inspectTree(ctx);
-        } catch (err) {
-          log.warn({ err, path: ctx.path }, "symbol extraction failed");
-        }
-      },
-      onProgress: async (done, total) => {
+    const { scan, code, security: sec, dependencies: dep, architecture: arch, practices, findings: allFindings, health, index } = await runAnalyzers(root, {
+      name: repo.name,
+      maxFileBytes: limits.maxFileBytes,
+      osv: limits.osvEnabled ? { fetch: deps.fetch ?? globalThis.fetch, budgetMs: limits.osvBudgetMs } : undefined,
+      // Findings the user already marked Expected or Ignored for this repository do not lower the score.
+      excludedFingerprints: async () =>
+        new Set((await prisma.findingTriage.findMany({ where: { repositoryId: repo.id }, select: { fingerprint: true } })).map((t) => t.fingerprint)),
+      onStage: setStage,
+      onParseProgress: async (done, total) => {
         if (Date.now() - lastProgressAt < PROGRESS_INTERVAL_MS) return;
         lastProgressAt = Date.now();
         await prisma.analysis.update({
@@ -161,83 +139,8 @@ export async function runAnalysis(analysisId: string, deps: PipelineDeps): Promi
           data: { progress: parseStart + Math.floor((done / Math.max(total, 1)) * parseSpan) },
         });
       },
+      log,
     });
-    log.info(
-      { files: code.summary.totals.filesAnalyzed, findings: code.summary.findings.total, ms: code.summary.durationMs },
-      "code metrics complete",
-    );
-
-    await setStage("SECURITY");
-    const sec = await security.finish(scan);
-    log.info(
-      { findings: sec.summary.totals.findings, secrets: sec.summary.totals.secrets, ms: sec.summary.durationMs },
-      "security analysis complete",
-    );
-
-    const fileImports = code.files.map((f) => ({ path: f.path, language: f.language, imports: f.metrics.imports, codeLines: f.metrics.codeLines }));
-
-    await setStage("DEPENDENCIES");
-    // The OSV.dev lookup never throws: an outage is recorded in the summary and the analysis continues.
-    const dep = await analyzeDependencies(scan.files, {
-      osv: limits.osvEnabled ? { fetch: deps.fetch ?? globalThis.fetch, budgetMs: limits.osvBudgetMs } : undefined,
-      imports: fileImports,
-    });
-    log.info(
-      {
-        dependencies: dep.summary.totals.dependencies,
-        vulnerable: dep.summary.totals.vulnerable,
-        osv: dep.summary.vulnerabilityScan.status,
-        ms: dep.summary.durationMs,
-      },
-      "dependency analysis complete",
-    );
-
-    await setStage("ARCHITECTURE");
-    const arch = await analyzeArchitecture(scan.files, fileImports, new Map(scan.files.map((f) => [f.path, f.kind])));
-    log.info(
-      { files: arch.summary.totals.files, edges: arch.summary.totals.edges, cycles: arch.summary.totals.cycles, ms: arch.summary.durationMs },
-      "architecture analysis complete",
-    );
-
-    await setStage("PRACTICES");
-    const practices = await analyzePractices(scan, code, { root });
-    log.info(
-      {
-        endpoints: practices.summary.api.endpoints,
-        testFiles: practices.summary.testing.testFiles,
-        findings: practices.summary.findings.total,
-        ms: practices.summary.durationMs,
-      },
-      "API, database, testing and documentation analysis complete",
-    );
-
-    // Findings the user already marked Expected or Ignored for this repository do not lower the score.
-    const allFindings = [...code.findings, ...sec.findings, ...dep.findings, ...arch.findings, ...practices.findings];
-    const triaged = await prisma.findingTriage.findMany({ where: { repositoryId: repo.id }, select: { fingerprint: true } });
-    const health = computeHealthScore({
-      findings: allFindings,
-      excludedFingerprints: new Set(triaged.map((t) => t.fingerprint)),
-      productionCodeLines: practices.summary.testing.sourceCodeLines,
-      duplicationPercent: code.summary.totals.duplicationPercent,
-      present: {
-        code: code.summary.totals.sourceFiles > 0,
-        dependencies: dep.summary.manifests.length > 0,
-        architecture: arch.summary.totals.files > 0,
-        api: practices.summary.api.endpoints > 0,
-        database: practices.summary.database.detected,
-      },
-      vulnerabilityScan: dep.summary.vulnerabilityScan,
-      coverageMeasured: practices.summary.testing.coverage !== null,
-    });
-    log.info({ score: health.score, grade: health.grade, excluded: health.excludedFindings }, "health score computed");
-
-    await setStage("INDEXING");
-    const index = await buildRepositoryIndex(scan, code, symbolCollector.files(), { name: repo.name, moduleDepth: arch.summary.moduleDepth });
-    log.info(
-      { symbols: index.summary.totals.symbols, references: index.summary.totals.references, dependencies: index.summary.totals.dependencies, ms: index.summary.durationMs },
-      "repository index built",
-    );
-
     await insertInBatches(buildFileRows(analysisId, scan, code), (data) => prisma.file.createMany({ data }));
     const fileIds = new Map(
       (await prisma.file.findMany({ where: { analysisId }, select: { id: true, path: true } })).map((f) => [f.path, f.id]),

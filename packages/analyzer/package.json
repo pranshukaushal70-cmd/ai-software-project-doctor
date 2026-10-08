@@ -14,7 +14,8 @@
     "./intelligence": "./src/intelligence/index.ts",
     "./evidence": "./src/metrics/evidence.ts",
     "./classify": "./src/classify.ts",
-    "./inspect": "./src/inspect/index.ts"
+    "./inspect": "./src/inspect/index.ts",
+    "./run": "./src/run.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

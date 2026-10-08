@@ -1,0 +1,10 @@
+{
+  "name": "clean-lib",
+  "version": "1.0.0",
+  "description": "Small string and number helpers.",
+  "license": "MIT",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "clean-lib",
+  "description": "A small, tidy library (tests for every file, README, license, CI, lockfile, no dependencies). Nothing is planted: every finding in a labelled category is a false positive.",
+  "source": { "dir": "repo" },
+  "labeledCategories": ["CODE_QUALITY", "SECURITY", "SECRET", "DEPENDENCY", "ARCHITECTURE", "API", "DATABASE", "TESTING", "DOCUMENTATION"],
+  "expected": [],
+  "acceptable": [],
+  "tasks": [
+    { "id": "clean-range-validate", "task": "Make range in src/range.js throw a TypeError when start, end or step is not a finite number, and add a test for it.", "expectedFiles": ["src/range.js"], "forbiddenFiles": ["package.json", "package-lock.json"] }
+  ]
+}

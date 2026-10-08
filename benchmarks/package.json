@@ -1,0 +1,19 @@
+{
+  "name": "@pd/benchmarks",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fixed benchmark repositories with ground truth: analyzer precision/recall, planner and code-engine success rates.",
+  "scripts": {
+    "detection": "tsx src/detection-cli.ts",
+    "agent": "tsx src/agent-cli.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@pd/analyzer": "*",
+    "@pd/e2e": "*",
+    "@pd/shared": "*",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.5"
+  }
+}

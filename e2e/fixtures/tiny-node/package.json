@@ -1,0 +1,9 @@
+{
+  "name": "tiny-node",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dependency-free fixture for the end-to-end tests: its tests pass in the sandbox without an install step.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

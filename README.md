@@ -91,6 +91,7 @@ argon2id (`@node-rs/argon2`) · zod 4 · pino · Vitest 5.
 - **Node.js 24 LTS** (`.nvmrc` pins it)
 - **Docker Desktop** (for PostgreSQL and Redis)
 - **Git** (the worker clones repositories)
+- For the end-to-end tests: Chromium for Playwright (`cd e2e && npx playwright install chromium`)
 
 ## Getting started
 
@@ -130,11 +131,15 @@ See [.env.example](.env.example). The important ones:
 
 | Command | What it does |
 |---|---|
-| `npm test` | All unit tests (Vitest, all workspaces); the real-Docker sandbox tests are skipped |
-| `PD_DOCKER_TESTS=1 npx vitest run packages/sandbox` | Also runs the sandbox tests against a real Docker engine (pinned images are pulled if missing) |
+| `npm test` | All unit tests (Vitest, all workspaces), including the e2e tooling and the detection-benchmark regression check; the real-Docker sandbox tests are skipped |
+| `PD_DOCKER_TESTS=1 npx vitest run --project sandbox` | Also runs the sandbox tests against a real Docker engine (pinned images are pulled if missing) |
 | `npm run typecheck` | `tsc` across all workspaces |
 | `npm run build` | Production build of the web app |
 | `npm run db:migrate` | Create a new migration during development |
+| `docker compose --profile app up -d --build` | The whole application in containers: migrations, web, worker ([docs/deployment.md](docs/deployment.md)) |
+| `npm run e2e:up`, `npm run e2e`, `npm run e2e:down` | End-to-end tests (Playwright) against the production images with a model stub; `E2E_SANDBOX=1` adds the Docker sandbox ([docs/testing.md](docs/testing.md)) |
+| `npm run bench:detection` | Issue-detection benchmark: precision and recall on the benchmark fixtures ([docs/benchmark.md](docs/benchmark.md)) |
+| `npm run bench:agent -- --label stub` | Planner and code-engine evaluation against a running stack (stub or real model) |
 
 ## Security considerations
 
@@ -169,9 +174,9 @@ the sandbox gives the worker Docker access, which is root-equivalent on the Dock
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Workspace, schema, auth, hardened ingest, repository scanner, job queue, base UI | ✅ Done |
-| 2 | Tree-sitter adapters (JS/TS/Python/Java/C/C++), LOC, complexity, smells | Implemented; E2E pending |
-| 3 | Secret detection, insecure-pattern rules, security dashboard | Implemented; E2E pending |
-| 4 | Dependencies + OSV.dev, import graph, cycles, architecture view (API + Dependencies/Architecture tabs) | Implemented and unit-tested; E2E pending |
+| 2 | Tree-sitter adapters (JS/TS/Python/Java/C/C++), LOC, complexity, smells | Implemented and tested (automated E2E since Phase 10) |
+| 3 | Secret detection, insecure-pattern rules, security dashboard | Implemented and tested (automated E2E since Phase 10) |
+| 4 | Dependencies + OSV.dev, import graph, cycles, architecture view (API + Dependencies/Architecture tabs) | Implemented and tested (automated E2E with OSV.dev off since Phase 10) |
 | 5 | API/DB/test/docs analyzers, explainable health score, demo project (Practices and Health tabs) | Implemented and tested |
 | 6 | Repository intelligence layer: manifest, symbol index, dependency graph, impact analysis, agent context API (Intelligence tab) | Implemented and tested |
 | — | Git history insights (previously planned as Phase 6) | Planned |
@@ -179,13 +184,30 @@ the sandbox gives the worker Docker access, which is root-equivalent on the Dock
 | — | Evidence-cited recommendations and fix suggestions on findings | Planned |
 | 8 | Code engine: plan approval, rebuilt analysed source, validated edits, approved tests in a disposable Docker sandbox with repair, patch download (no commit/push); planner moved to the worker | Implemented and tested (E2E with a stub model) |
 | 9 | Reports: analysis, plan and run reports as immutable redacted snapshots, Reports page and report view, Markdown/JSON export, report API | Implemented and tested (E2E with a stub model) |
-| 10 | Dockerised web/worker, CI, E2E tests, benchmark & evaluation | Planned |
+| 10 | Production images (web, worker, migrate) and compose, opt-in sandbox Docker access, GitHub Actions CI, Playwright E2E against the compose stack with a model stub, benchmark fixtures with ground truth (detection precision/recall, planner and code-engine success rates), manual real-model evaluation | Implemented and tested |
 
 ## Verification status
 
-`npm test` (Vitest, all workspaces): **746 tests in 48 files passing**, plus 4 real-Docker sandbox tests that run only
-with `PD_DOCKER_TESTS=1` (all passing on 2026-10-03); `npm run typecheck` is clean for all nine workspaces and
+`npm test` (Vitest, all workspaces): **769 tests passing**, plus 4 real-Docker sandbox tests that run only with
+`PD_DOCKER_TESTS=1` (all passing on 2026-10-08); `npm run typecheck` is clean for all eleven workspaces and
 `npm run build` succeeds.
+
+| Area (Phase 10) | Tests |
+|---|---|
+| Health check (ok, degraded without details, missing Redis, hanging dependency) | 3 |
+| Model stub against the real prompt builders and output schemas (request kinds, plan, determinism, scoped exact edits, redacted lines, scripted failures) and the e2e ZIP writer | 6 + 2 |
+| Benchmark scorer (matching by rule, file and line span, duplicates, acceptable and out-of-scope findings, order independence, rates, aggregation, schema), agent-evaluation summary, fixtures valid, detection results reproduce the committed ones exactly | 9 + 1 + 2 |
+
+**End to end (Phase 10, on 2026-10-08)**, automated with Playwright against the production images (compose: PostgreSQL 17,
+Redis 7, migrate, web, worker, model stub; OSV.dev off), on Docker 29.8 (Linux engine): **33 of 33 specs passed** with the
+sandbox off (the default deployment) and **33 of 33** with `docker-compose.sandbox.yml` (the fixture's `npm test` ran in a
+sandbox container without network and passed; no sandbox containers or volumes left). Service logs contained no keys,
+passwords, task text or patch content. Detection benchmark: precision 97.3 %, recall 97.3 % (36 of 37 planted issues, one
+false positive; [results](benchmarks/results/detection.md)). Planner/code-engine evaluation against the stub: 5 of 6 tasks
+(the stub's planner picks the wrong file of the import cycle, as expected of a script). The real-model evaluation has not
+been run (no API key was available); see [docs/benchmark.md](docs/benchmark.md). Found and fixed by the end-to-end run:
+the sandbox override enabled the sandbox only in the worker, so the web tier refused test execution; it now sets the
+switches (never the socket) for the web tier too.
 
 | Area (Phase 9) | Tests |
 |---|---|

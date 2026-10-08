@@ -1,0 +1,42 @@
+# OPT-IN: lets the worker run approved repository tests in disposable sandbox containers.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile app up -d --build
+#
+# READ docs/deployment.md#sandbox-docker-access FIRST. Mounting the Docker socket gives the
+# worker container control of the Docker engine, which is root-equivalent on the Docker host:
+# anyone who takes over the worker process can start privileged containers and mount the
+# host filesystem. A read-only mount does not change that (the socket is an API, not a file).
+# Use a dedicated host or VM for the worker, prefer rootless Docker, and set
+# SANDBOX_RUNTIME=runsc where gVisor is installed.
+#
+# What does not change: each test command still runs in its own container with no network,
+# a read-only root filesystem, an unprivileged user, every capability dropped, resource limits
+# and no Docker socket (packages/sandbox/src/docker.ts). The worker copies the workspace into a
+# per-run volume with `docker cp`; no host directory is mounted into a sandbox container.
+services:
+  # The web tier gets the same switches, never the socket: it uses them to offer the test
+  # step, to refuse execution requests while the sandbox is off and to show the setup.
+  web:
+    environment:
+      SANDBOX_ENABLED: "true"
+      SANDBOX_INSTALL_ENABLED: ${SANDBOX_INSTALL_ENABLED:-false}
+
+  worker:
+    environment:
+      SANDBOX_ENABLED: "true"
+      # The network-enabled install step stays a separate switch and a separate approval per run.
+      SANDBOX_INSTALL_ENABLED: ${SANDBOX_INSTALL_ENABLED:-false}
+      SANDBOX_RUNTIME: ${SANDBOX_RUNTIME:-runc}
+      SANDBOX_IMAGE_NODE: ${SANDBOX_IMAGE_NODE:-}
+      SANDBOX_IMAGE_PYTHON: ${SANDBOX_IMAGE_PYTHON:-}
+      SANDBOX_TIMEOUT_SECONDS: ${SANDBOX_TIMEOUT_SECONDS:-}
+      SANDBOX_INSTALL_TIMEOUT_SECONDS: ${SANDBOX_INSTALL_TIMEOUT_SECONDS:-}
+      SANDBOX_MEMORY_MB: ${SANDBOX_MEMORY_MB:-}
+      SANDBOX_CPUS: ${SANDBOX_CPUS:-}
+      SANDBOX_PIDS: ${SANDBOX_PIDS:-}
+    volumes:
+      - ${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock
+    # The worker runs as the unprivileged `node` user; it reaches the socket through the
+    # socket's group only. Linux: `stat -c %g /var/run/docker.sock`. Docker Desktop: 0.
+    group_add:
+      - "${DOCKER_SOCKET_GID:?Set DOCKER_SOCKET_GID to the group id owning the Docker socket (docs/deployment.md)}"

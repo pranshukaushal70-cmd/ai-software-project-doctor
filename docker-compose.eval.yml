@@ -1,0 +1,20 @@
+# Real-model evaluation stack (docs/benchmark.md): the production images with the real
+# Anthropic API, for `npm run bench:agent -- --label real-model`. Started only on purpose:
+#
+#   PD_STACK=eval npm run e2e:up      (scripts/e2e.mjs: project "pd-eval", e2e/stack.env)
+#
+# ANTHROPIC_API_KEY (and optionally ANTHROPIC_MODEL) come from the shell or CI secret
+# environment only: never from a file, never printed. Each run costs money.
+services:
+  postgres:
+    ports: !reset []
+  redis:
+    ports: !reset []
+  web:
+    environment: &eval-env
+      AI_PROVIDER: anthropic
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?The real-model evaluation needs ANTHROPIC_API_KEY in the environment}
+      # Deterministic analysis input: no OSV.dev lookups.
+      OSV_ENABLED: "false"
+  worker:
+    environment: *eval-env
