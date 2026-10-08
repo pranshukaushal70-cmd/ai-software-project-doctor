@@ -1,0 +1,59 @@
+# End-to-end test stack: the production images with the deterministic model stub in place of
+# the Anthropic API. Started by `npm run e2e:up` (scripts/e2e.mjs), which uses project name
+# "pd-e2e" and e2e/stack.env, never the developer's .env, so no real API key is ever used:
+#
+#   docker compose -p pd-e2e --env-file e2e/stack.env \
+#     -f docker-compose.yml -f docker-compose.e2e.yml --profile app up -d --build --wait
+#
+# Add -f docker-compose.sandbox.yml (E2E_SANDBOX=1) to run the fixtures' tests in the sandbox.
+# Deterministic by design: OSV.dev is off (no network lookups) and the "model" is a script.
+services:
+  # The database and Redis are reached only inside the compose network here, so the stack
+  # can run next to the development services (`npm run services:up`).
+  postgres:
+    ports: !reset []
+  redis:
+    ports: !reset []
+
+  model-stub:
+    profiles: ["app"]
+    image: ${NODE_IMAGE:-node:24-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6}
+    user: node
+    working_dir: /stub
+    command: ["node", "server.mjs"]
+    environment:
+      STUB_PORT: "4010"
+    volumes:
+      - ./e2e/model-stub:/stub:ro
+    # Published on localhost so the tests can read what the stub received.
+    ports:
+      - "127.0.0.1:${STUB_PORT:-4010}:4010"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4010/__stub/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  web:
+    environment: &stub-env
+      AI_PROVIDER: anthropic
+      # Not a credential: the stub only checks that a key is sent, like the real API.
+      ANTHROPIC_API_KEY: e2e-stub-key-not-a-secret
+      ANTHROPIC_BASE_URL: http://model-stub:4010
+      ANTHROPIC_MODEL: e2e-model-stub
+      OSV_ENABLED: "false"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    depends_on:
+      model-stub: { condition: service_healthy }
+
+  worker:
+    environment: *stub-env
+    depends_on:
+      model-stub: { condition: service_healthy }

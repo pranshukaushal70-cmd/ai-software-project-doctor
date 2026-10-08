@@ -9,7 +9,9 @@
 4. **Reproducible.** Each `Analysis` row stores `analyzerVersion` and `commitSha`, and the scoring weights
    (`weightsUsed`) next to the score.
 5. **Pure engine.** `packages/analyzer` has no database or HTTP dependencies, so it can be unit-tested and run
-   from a CLI for the evaluation benchmark.
+   from a CLI for the evaluation benchmark. `runAnalyzers` (`@pd/analyzer/run`) runs every module in pipeline order;
+   the worker persists its result and the detection benchmark ([benchmark.md](benchmark.md)) scores it, so what is
+   benchmarked is exactly what users get.
 
 ## Request flow
 

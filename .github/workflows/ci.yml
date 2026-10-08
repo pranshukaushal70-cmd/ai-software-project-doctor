@@ -1,0 +1,141 @@
+# Continuous integration (Phase 10): deterministic checks only. Nothing here uses a real
+# model or any secret; the real-model evaluation is a separate, manually started workflow
+# (real-model-eval.yml). Operations guide: docs/ci.md.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  checks:
+    name: Typecheck, unit tests, build, migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ci:ci-only-password@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Generated Prisma client is up to date
+        run: |
+          npm run db:generate
+          git diff --exit-code -- packages/db
+      - run: npm run typecheck
+      # Includes the detection benchmark's regression check (benchmarks/test/detection.test.ts)
+      # and the e2e tooling tests; the real-Docker sandbox tests are skipped here (job below).
+      - run: npm test
+      - run: npm run build
+      - name: Migrations apply to an empty database and match the schema
+        working-directory: packages/db
+        run: |
+          npx prisma migrate deploy
+          npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+      - name: Compose files are valid
+        env:
+          POSTGRES_PASSWORD: compose-config-check
+          JWT_SECRET: compose-config-check-0123456789abcdefghijkl
+          DOCKER_SOCKET_GID: "0"
+          ANTHROPIC_API_KEY: compose-config-check
+        # `config --quiet` validates without printing the resolved environment.
+        run: |
+          docker compose -f docker-compose.yml --profile app config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile app config --quiet
+          docker compose -p pd-e2e --env-file e2e/stack.env -f docker-compose.yml -f docker-compose.e2e.yml --profile app config --quiet
+          docker compose -p pd-eval --env-file e2e/stack.env -f docker-compose.yml -f docker-compose.eval.yml --profile app config --quiet
+
+  sandbox-docker:
+    name: Sandbox against real Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Docker integration tests (no network, read-only, limits, clean-up)
+        env:
+          PD_DOCKER_TESTS: "1"
+        run: npx vitest run --project sandbox
+
+  e2e:
+    name: End to end (sandbox ${{ matrix.sandbox }})
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # off: the default deployment (no Docker access for the worker).
+        # on:  docker-compose.sandbox.yml, the approved tests run in sandbox containers.
+        sandbox: [off, on]
+    env:
+      E2E_SANDBOX: ${{ matrix.sandbox == 'on' && '1' || '0' }}
+      CI: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium for Playwright
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+      - name: Build the images and start the stack
+        run: npm run e2e:up
+      - name: Playwright
+        run: npm run e2e
+      - name: Planner and code-engine evaluation against the model stub
+        run: npm run bench:agent -- --label stub --out results/ci ${{ matrix.sandbox == 'on' && '--run-tests' || '' }}
+      - name: Service logs
+        if: failure()
+        run: npm run e2e:logs
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-sandbox-${{ matrix.sandbox }}
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            benchmarks/results/ci
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Stop the stack
+        if: always()
+        run: npm run e2e:down

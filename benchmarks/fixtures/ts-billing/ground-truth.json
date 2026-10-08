@@ -1,0 +1,19 @@
+{
+  "name": "ts-billing",
+  "description": "TypeScript billing service with planted architecture and code-quality problems, and security-sensitive calls used safely (sha256, randomBytes, execFile with an argument list, parameterised SQL), which must not be reported.",
+  "source": { "dir": "repo" },
+  "labeledCategories": ["CODE_QUALITY", "ARCHITECTURE", "SECURITY", "SECRET"],
+  "expected": [
+    { "ruleId": "architecture/circular-dependency", "paths": ["src/billing/invoice.ts", "src/billing/tax.ts"], "why": "invoice.ts and tax.ts import each other" },
+    { "ruleId": "complexity/high-cyclomatic", "path": "src/rules/eligibility.ts", "lines": [11, 22], "why": "isEligibleForCredit: about 18 decision points" },
+    { "ruleId": "complexity/deep-nesting", "path": "src/rules/eligibility.ts", "lines": [24, 39], "why": "shippingLane: five nested ifs" },
+    { "ruleId": "duplication/duplicate-block", "paths": ["src/reports/monthly.ts", "src/reports/quarterly.ts"], "why": "The summary loop is copied between the two reports" },
+    { "ruleId": "smell/long-parameter-list", "path": "src/util/format.ts", "lines": [1, 3], "why": "formatAddress takes seven parameters" },
+    { "ruleId": "smell/empty-catch", "path": "src/api/client.ts", "lines": [2, 6], "why": "Errors are swallowed by an empty catch" }
+  ],
+  "acceptable": [],
+  "tasks": [
+    { "id": "ts-break-cycle", "task": "Break the import cycle between src/billing/invoice.ts and src/billing/tax.ts so that tax.ts no longer imports invoice.ts.", "expectedFiles": ["src/billing/tax.ts"], "forbiddenFiles": ["package.json", "package-lock.json"] },
+    { "id": "ts-log-fetch-errors", "task": "In src/api/client.ts, stop swallowing errors in fetchRates: log the error with console.warn before returning the empty result.", "expectedFiles": ["src/api/client.ts"], "forbiddenFiles": ["package.json", "package-lock.json"] }
+  ]
+}

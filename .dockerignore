@@ -1,0 +1,18 @@
+# Never send local state, secrets or build output into the image build context.
+.git
+.github
+.claude
+**/node_modules
+**/.next
+**/*.tsbuildinfo
+**/coverage
+.env
+.env.*
+!.env.example
+*.log
+
+# Test and evaluation output
+e2e/test-results
+e2e/playwright-report
+e2e/.auth
+benchmarks/results/local

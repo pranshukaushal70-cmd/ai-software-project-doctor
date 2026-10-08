@@ -36,9 +36,91 @@ services:
       timeout: 5s
       retries: 10
 
-  # "web" and "worker" services are added in Phase 10 (Dockerised web/worker, CI),
-  # once their Dockerfiles exist.
+  # ---------------------------------------------------------------- application (Phase 10)
+  # Started only with the "app" profile: `docker compose --profile app up -d --build`.
+  # `npm run services:up` still starts just postgres and redis for local development.
+  # Operations guide: docs/deployment.md.
+
+  # Applies pending migrations once; web and worker start only after it succeeded.
+  migrate:
+    profiles: ["app"]
+    build: { context: ., target: migrate }
+    image: project-doctor-migrate:local
+    restart: "no"
+    environment:
+      DATABASE_URL: &database-url postgresql://${POSTGRES_USER:-doctor}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (see .env.example)}@postgres:5432/${POSTGRES_DB:-project_doctor}
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  web:
+    profiles: ["app"]
+    build: { context: ., target: web }
+    image: project-doctor-web:local
+    restart: unless-stopped
+    environment:
+      <<: &app-env
+        DATABASE_URL: *database-url
+        REDIS_URL: redis://redis:6379
+        JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (node scripts/setup-env.mjs)}
+        WORKSPACE_DIR: /data/workspace
+        LOG_LEVEL: ${LOG_LEVEL:-info}
+        AI_PROVIDER: ${AI_PROVIDER:-anthropic}
+        # Read from the environment only; never baked into an image, stored or logged.
+        ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+        ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+        MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-}
+        MAX_EXTRACTED_MB: ${MAX_EXTRACTED_MB:-}
+        MAX_ZIP_ENTRIES: ${MAX_ZIP_ENTRIES:-}
+        MAX_COMPRESSION_RATIO: ${MAX_COMPRESSION_RATIO:-}
+        MAX_FILE_KB: ${MAX_FILE_KB:-}
+        CLONE_TIMEOUT_SECONDS: ${CLONE_TIMEOUT_SECONDS:-}
+        CLONE_DEPTH: ${CLONE_DEPTH:-}
+        OSV_ENABLED: ${OSV_ENABLED:-}
+        OSV_TIMEOUT_SECONDS: ${OSV_TIMEOUT_SECONDS:-}
+        # The base stack never gives any container Docker access, so the sandbox is off here.
+        # docker-compose.sandbox.yml turns it on for the worker (opt-in; read docs/deployment.md first).
+        SANDBOX_ENABLED: "false"
+        SANDBOX_INSTALL_ENABLED: "false"
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      # Only behind a reverse proxy that overwrites X-Forwarded-For (docs/deployment.md).
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+    # Published on localhost only: put a TLS-terminating reverse proxy in front for anything else.
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    volumes:
+      # Uploaded archives: written by web, read and retained by worker.
+      - workspace:/data/workspace
+    read_only: true
+    tmpfs: ["/tmp", "/app/apps/web/.next/cache:uid=1000,gid=1000"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  worker:
+    profiles: ["app"]
+    build: { context: ., target: worker }
+    image: project-doctor-worker:local
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      ENGINE_CONCURRENCY: ${ENGINE_CONCURRENCY:-1}
+    volumes:
+      - workspace:/data/workspace
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
 
 volumes:
   pgdata:
   redisdata:
+  workspace:

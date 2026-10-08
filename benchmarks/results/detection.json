@@ -1,0 +1,687 @@
+{
+  "benchmark": "detection",
+  "analyzerVersion": "0.6.0",
+  "osv": "disabled",
+  "fixtures": [
+    {
+      "name": "clean-lib",
+      "description": "A small, tidy library (tests for every file, README, license, CI, lockfile, no dependencies). Nothing is planted: every finding in a labelled category is a false positive.",
+      "labeledCategories": [
+        "CODE_QUALITY",
+        "SECURITY",
+        "SECRET",
+        "DEPENDENCY",
+        "ARCHITECTURE",
+        "API",
+        "DATABASE",
+        "TESTING",
+        "DOCUMENTATION"
+      ],
+      "expected": 0,
+      "findings": 1,
+      "health": {
+        "score": 100,
+        "grade": "A"
+      },
+      "score": {
+        "fixture": "clean-lib",
+        "truePositives": 0,
+        "falsePositives": 1,
+        "falseNegatives": 0,
+        "duplicates": 0,
+        "acceptable": 0,
+        "outOfScope": 0,
+        "matched": [],
+        "missed": [],
+        "unexpected": [
+          {
+            "ruleId": "documentation/incomplete-readme",
+            "category": "DOCUMENTATION",
+            "path": "README.md",
+            "line": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "py-inventory",
+      "description": "Flask inventory service with planted security problems next to safe variants of the same calls (parameterised SQL, argument-list subprocess, json, sha256, secrets, TLS verification on), so false positives on the safe code are measured.",
+      "labeledCategories": [
+        "SECURITY",
+        "SECRET"
+      ],
+      "expected": 8,
+      "findings": 10,
+      "health": {
+        "score": 69,
+        "grade": "C"
+      },
+      "score": {
+        "fixture": "py-inventory",
+        "truePositives": 8,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "duplicates": 0,
+        "acceptable": 0,
+        "outOfScope": 2,
+        "matched": [
+          {
+            "ruleId": "injection/sql",
+            "path": "app/db.py",
+            "line": 13
+          },
+          {
+            "ruleId": "injection/os-command",
+            "path": "app/tools.py",
+            "line": 8
+          },
+          {
+            "ruleId": "unsafe/deserialization",
+            "path": "app/tools.py",
+            "line": 16
+          },
+          {
+            "ruleId": "injection/dynamic-code-execution",
+            "path": "app/tools.py",
+            "line": 24
+          },
+          {
+            "ruleId": "crypto/weak-hash",
+            "path": "app/security.py",
+            "line": 9
+          },
+          {
+            "ruleId": "crypto/tls-verification-disabled",
+            "path": "app/security.py",
+            "line": 21
+          },
+          {
+            "ruleId": "config/debug-mode",
+            "path": "app/main.py",
+            "line": 20
+          },
+          {
+            "ruleId": "secret/hardcoded-credential",
+            "path": "app/settings.py",
+            "line": 8
+          }
+        ],
+        "missed": [],
+        "unexpected": []
+      }
+    },
+    {
+      "name": "storefront",
+      "description": "The deliberately flawed demo web shop (demo/README.md). Labels are the planted issues listed there, located in the code. Dependency advisories need OSV.dev, so DEPENDENCY is not labelled (the benchmark runs offline).",
+      "labeledCategories": [
+        "SECURITY",
+        "SECRET",
+        "CODE_QUALITY",
+        "ARCHITECTURE",
+        "API",
+        "DATABASE",
+        "TESTING",
+        "DOCUMENTATION"
+      ],
+      "expected": 23,
+      "findings": 25,
+      "health": {
+        "score": 69,
+        "grade": "C"
+      },
+      "score": {
+        "fixture": "storefront",
+        "truePositives": 22,
+        "falsePositives": 0,
+        "falseNegatives": 1,
+        "duplicates": 0,
+        "acceptable": 1,
+        "outOfScope": 2,
+        "matched": [
+          {
+            "ruleId": "secret/hardcoded-credential",
+            "path": "src/config.js",
+            "line": 12
+          },
+          {
+            "ruleId": "injection/sql",
+            "path": "src/db.js",
+            "line": 7
+          },
+          {
+            "ruleId": "injection/sql",
+            "path": "src/db.js",
+            "line": 12
+          },
+          {
+            "ruleId": "crypto/weak-hash",
+            "path": "src/auth.js",
+            "line": 6
+          },
+          {
+            "ruleId": "architecture/circular-dependency",
+            "path": "src/orders.js",
+            "line": null
+          },
+          {
+            "ruleId": "complexity/high-cyclomatic",
+            "path": "src/pricing.js",
+            "line": 5
+          },
+          {
+            "ruleId": "api/permissive-cors",
+            "path": "src/server.js",
+            "line": 10
+          },
+          {
+            "ruleId": "api/unauthenticated-mutation",
+            "path": "src/server.js",
+            "line": 25
+          },
+          {
+            "ruleId": "api/missing-input-validation",
+            "path": "src/server.js",
+            "line": 20
+          },
+          {
+            "ruleId": "api/missing-input-validation",
+            "path": "src/server.js",
+            "line": 30
+          },
+          {
+            "ruleId": "api/error-details-exposed",
+            "path": "src/server.js",
+            "line": 38
+          },
+          {
+            "ruleId": "api/auth-without-rate-limit",
+            "path": "src/server.js",
+            "line": 30
+          },
+          {
+            "ruleId": "database/unindexed-foreign-key",
+            "path": "prisma/schema.prisma",
+            "line": 30
+          },
+          {
+            "ruleId": "database/unindexed-foreign-key",
+            "path": "prisma/schema.prisma",
+            "line": 39
+          },
+          {
+            "ruleId": "database/unindexed-foreign-key",
+            "path": "prisma/schema.prisma",
+            "line": 41
+          },
+          {
+            "ruleId": "database/no-migrations",
+            "path": "prisma/schema.prisma",
+            "line": null
+          },
+          {
+            "ruleId": "testing/skipped-test",
+            "path": "tests/pricing.test.js",
+            "line": 9
+          },
+          {
+            "ruleId": "testing/tests-not-in-ci",
+            "path": "",
+            "line": null
+          },
+          {
+            "ruleId": "documentation/incomplete-readme",
+            "path": "README.md",
+            "line": null
+          },
+          {
+            "ruleId": "documentation/broken-link",
+            "path": "README.md",
+            "line": 9
+          },
+          {
+            "ruleId": "documentation/missing-license",
+            "path": "",
+            "line": null
+          },
+          {
+            "ruleId": "documentation/undocumented-env-vars",
+            "path": "src/config.js",
+            "line": 5
+          }
+        ],
+        "missed": [
+          {
+            "ruleId": "testing/low-test-ratio",
+            "path": null,
+            "lines": null,
+            "why": "Few tests: one test file for six source files"
+          }
+        ],
+        "unexpected": []
+      }
+    },
+    {
+      "name": "ts-billing",
+      "description": "TypeScript billing service with planted architecture and code-quality problems, and security-sensitive calls used safely (sha256, randomBytes, execFile with an argument list, parameterised SQL), which must not be reported.",
+      "labeledCategories": [
+        "CODE_QUALITY",
+        "ARCHITECTURE",
+        "SECURITY",
+        "SECRET"
+      ],
+      "expected": 6,
+      "findings": 8,
+      "health": {
+        "score": 93,
+        "grade": "A"
+      },
+      "score": {
+        "fixture": "ts-billing",
+        "truePositives": 6,
+        "falsePositives": 0,
+        "falseNegatives": 0,
+        "duplicates": 0,
+        "acceptable": 0,
+        "outOfScope": 2,
+        "matched": [
+          {
+            "ruleId": "architecture/circular-dependency",
+            "path": "src/billing/invoice.ts",
+            "line": null
+          },
+          {
+            "ruleId": "complexity/high-cyclomatic",
+            "path": "src/rules/eligibility.ts",
+            "line": 11
+          },
+          {
+            "ruleId": "complexity/deep-nesting",
+            "path": "src/rules/eligibility.ts",
+            "line": 29
+          },
+          {
+            "ruleId": "duplication/duplicate-block",
+            "path": "src/reports/quarterly.ts",
+            "line": 4
+          },
+          {
+            "ruleId": "smell/long-parameter-list",
+            "path": "src/util/format.ts",
+            "line": 1
+          },
+          {
+            "ruleId": "smell/empty-catch",
+            "path": "src/api/client.ts",
+            "line": 5
+          }
+        ],
+        "missed": [],
+        "unexpected": []
+      }
+    }
+  ],
+  "overall": {
+    "truePositives": 36,
+    "falsePositives": 1,
+    "falseNegatives": 1,
+    "precision": 0.973,
+    "recall": 0.973,
+    "f1": 0.973
+  },
+  "categories": [
+    {
+      "category": "API",
+      "truePositives": 6,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "category": "ARCHITECTURE",
+      "truePositives": 2,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "category": "CODE_QUALITY",
+      "truePositives": 6,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "category": "DATABASE",
+      "truePositives": 4,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "category": "DOCUMENTATION",
+      "truePositives": 4,
+      "falsePositives": 1,
+      "falseNegatives": 0,
+      "precision": 0.8,
+      "recall": 1,
+      "f1": 0.8889
+    },
+    {
+      "category": "SECRET",
+      "truePositives": 2,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "category": "SECURITY",
+      "truePositives": 10,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "category": "TESTING",
+      "truePositives": 2,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "precision": 1,
+      "recall": 0.6667,
+      "f1": 0.8
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "api/auth-without-rate-limit",
+      "category": "API",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "api/error-details-exposed",
+      "category": "API",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "api/missing-input-validation",
+      "category": "API",
+      "truePositives": 2,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "api/permissive-cors",
+      "category": "API",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "api/unauthenticated-mutation",
+      "category": "API",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "architecture/circular-dependency",
+      "category": "ARCHITECTURE",
+      "truePositives": 2,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "complexity/deep-nesting",
+      "category": "CODE_QUALITY",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "complexity/high-cyclomatic",
+      "category": "CODE_QUALITY",
+      "truePositives": 2,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "config/debug-mode",
+      "category": "SECURITY",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "crypto/tls-verification-disabled",
+      "category": "SECURITY",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "crypto/weak-hash",
+      "category": "SECURITY",
+      "truePositives": 2,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "database/no-migrations",
+      "category": "DATABASE",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "database/unindexed-foreign-key",
+      "category": "DATABASE",
+      "truePositives": 3,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "documentation/broken-link",
+      "category": "DOCUMENTATION",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "documentation/incomplete-readme",
+      "category": "DOCUMENTATION",
+      "truePositives": 1,
+      "falsePositives": 1,
+      "falseNegatives": 0,
+      "precision": 0.5,
+      "recall": 1,
+      "f1": 0.6667
+    },
+    {
+      "ruleId": "documentation/missing-license",
+      "category": "DOCUMENTATION",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "documentation/undocumented-env-vars",
+      "category": "DOCUMENTATION",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "duplication/duplicate-block",
+      "category": "CODE_QUALITY",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "injection/dynamic-code-execution",
+      "category": "SECURITY",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "injection/os-command",
+      "category": "SECURITY",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "injection/sql",
+      "category": "SECURITY",
+      "truePositives": 3,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "secret/hardcoded-credential",
+      "category": "SECRET",
+      "truePositives": 2,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "smell/empty-catch",
+      "category": "CODE_QUALITY",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "smell/long-parameter-list",
+      "category": "CODE_QUALITY",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "testing/low-test-ratio",
+      "category": "TESTING",
+      "truePositives": 0,
+      "falsePositives": 0,
+      "falseNegatives": 1,
+      "precision": null,
+      "recall": 0,
+      "f1": null
+    },
+    {
+      "ruleId": "testing/skipped-test",
+      "category": "TESTING",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "testing/tests-not-in-ci",
+      "category": "TESTING",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    {
+      "ruleId": "unsafe/deserialization",
+      "category": "SECURITY",
+      "truePositives": 1,
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    }
+  ]
+}

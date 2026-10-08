@@ -26,6 +26,8 @@ const csp = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // The container image (Phase 10, Dockerfile) builds a self-contained server; local builds keep `next start`.
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
   transpilePackages: ["@pd/shared", "@pd/analyzer", "@pd/db", "@pd/agent"],
   serverExternalPackages: ["@node-rs/argon2", "pino", "bullmq", "ioredis", "pg", "@prisma/client", "@prisma/adapter-pg", "yauzl", "@anthropic-ai/sdk"],

@@ -1,0 +1,21 @@
+{
+  "name": "@pd/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end tests (Playwright) against the compose stack, and the deterministic model stub.",
+  "scripts": {
+    "test": "playwright test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  },
+  "dependencies": {
+    "@pd/agent": "*"
+  },
+  "exports": {
+    "./client": "./lib/client.ts",
+    "./zip": "./lib/zip.ts"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "storefront",
+  "description": "The deliberately flawed demo web shop (demo/README.md). Labels are the planted issues listed there, located in the code. Dependency advisories need OSV.dev, so DEPENDENCY is not labelled (the benchmark runs offline).",
+  "source": { "dir": "../../../demo/storefront", "rename": { "package.json.demo": "package.json", "package-lock.json.demo": "package-lock.json" } },
+  "labeledCategories": ["SECURITY", "SECRET", "CODE_QUALITY", "ARCHITECTURE", "API", "DATABASE", "TESTING", "DOCUMENTATION"],
+  "expected": [
+    { "ruleId": "secret/hardcoded-credential", "path": "src/config.js", "lines": [12, 12], "why": "Hard-coded admin password" },
+    { "ruleId": "injection/sql", "path": "src/db.js", "lines": [7, 7], "why": "Query built by string concatenation (findProduct)" },
+    { "ruleId": "injection/sql", "path": "src/db.js", "lines": [12, 12], "why": "Query built by template interpolation (searchProducts)" },
+    { "ruleId": "crypto/weak-hash", "path": "src/auth.js", "lines": [6, 6], "why": "MD5 password hashing" },
+    { "ruleId": "architecture/circular-dependency", "paths": ["src/orders.js", "src/pricing.js"], "why": "Import cycle between orders and pricing" },
+    { "ruleId": "complexity/high-cyclomatic", "path": "src/pricing.js", "lines": [5, 22], "why": "Very complex discount function" },
+    { "ruleId": "api/permissive-cors", "path": "src/server.js", "lines": [10, 10], "why": "CORS reflects any origin with credentials" },
+    { "ruleId": "api/unauthenticated-mutation", "path": "src/server.js", "lines": [25, 28], "why": "DELETE /products/:id without authentication" },
+    { "ruleId": "api/missing-input-validation", "path": "src/server.js", "lines": [20, 23], "why": "POST /orders uses req.body.items unvalidated" },
+    { "ruleId": "api/missing-input-validation", "path": "src/server.js", "lines": [30, 35], "why": "POST /login uses req.body unvalidated" },
+    { "ruleId": "api/error-details-exposed", "path": "src/server.js", "lines": [37, 39], "why": "Stack traces returned to clients" },
+    { "ruleId": "api/auth-without-rate-limit", "path": "src/server.js", "lines": [30, 35], "why": "Login without rate limiting" },
+    { "ruleId": "database/unindexed-foreign-key", "path": "prisma/schema.prisma", "lines": [29, 30], "why": "Order.customerId has no index" },
+    { "ruleId": "database/unindexed-foreign-key", "path": "prisma/schema.prisma", "lines": [38, 39], "why": "OrderItem.orderId has no index" },
+    { "ruleId": "database/unindexed-foreign-key", "path": "prisma/schema.prisma", "lines": [40, 41], "why": "OrderItem.productId has no index" },
+    { "ruleId": "database/no-migrations", "why": "Prisma schema without migrations" },
+    { "ruleId": "testing/low-test-ratio", "why": "Few tests: one test file for six source files" },
+    { "ruleId": "testing/skipped-test", "path": "tests/pricing.test.js", "lines": [9, 9], "why": "it.skip" },
+    { "ruleId": "testing/tests-not-in-ci", "why": "No CI configuration runs the tests" },
+    { "ruleId": "documentation/incomplete-readme", "path": "README.md", "why": "Thin README" },
+    { "ruleId": "documentation/broken-link", "path": "README.md", "lines": [9, 9], "why": "Link to the missing docs/deploy.md" },
+    { "ruleId": "documentation/missing-license", "why": "No license" },
+    { "ruleId": "documentation/undocumented-env-vars", "path": "src/config.js", "why": "Environment variables not documented" }
+  ],
+  "acceptable": [
+    { "ruleId": "api/no-specification", "why": "True (the API has no specification) but not one of the planted issues" }
+  ],
+  "tasks": [
+    { "id": "demo-login-rate-limit", "task": "Add rate limiting to the login endpoint.", "expectedFiles": ["src/server.js"], "forbiddenFiles": ["package-lock.json"] }
+  ]
+}

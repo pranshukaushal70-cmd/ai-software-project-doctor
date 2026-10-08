@@ -27,3 +27,10 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# End-to-end test output and sessions
+e2e/.auth/
+e2e/test-results/
+e2e/playwright-report/
+benchmarks/results/local/
+benchmarks/results/ci/

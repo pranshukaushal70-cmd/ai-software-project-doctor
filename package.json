@@ -9,7 +9,9 @@
   },
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "apps/*",
+    "e2e",
+    "benchmarks"
   ],
   "scripts": {
     "dev": "npm run dev -w @pd/web",
@@ -23,7 +25,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "services:up": "docker compose up -d postgres redis",
-    "services:down": "docker compose down"
+    "services:down": "docker compose down",
+    "e2e:up": "node scripts/e2e.mjs up",
+    "e2e": "node scripts/e2e.mjs test",
+    "e2e:logs": "node scripts/e2e.mjs logs",
+    "e2e:down": "node scripts/e2e.mjs down",
+    "bench:detection": "npm run detection -w @pd/benchmarks --",
+    "bench:agent": "npm run agent -w @pd/benchmarks --"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

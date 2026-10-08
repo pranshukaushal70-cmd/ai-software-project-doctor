@@ -1,0 +1,4 @@
+# Test and benchmark fixtures are analysed byte for byte: keep LF on every platform so results
+# (line numbers, hashes, patches) do not depend on the checkout's line-ending settings.
+e2e/fixtures/** text eol=lf
+benchmarks/fixtures/** text eol=lf
