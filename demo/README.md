@@ -19,6 +19,10 @@ The flaws are intentional and documented here so the demo's results can be check
 
 The secret is a made-up value, not a real credential.
 
+The analysis never runs the demo. A code-engine run on it can reach the sandbox test step, but the tests cannot pass
+there: `package-lock.json.demo` is abbreviated (no transitive packages), so `vitest` is never installed and `npm test`
+exits 127. To show a passing test run, use the dependency-free `e2e/fixtures/tiny-node` ([docs/demo.md](../docs/demo.md)).
+
 `package.json` and `package-lock.json` are stored as `*.demo` so that GitHub's dependency graph and Dependabot do not
 raise alerts for the intentionally outdated packages in this repository. The worker copies the project into the
 analysis workspace and restores the original file names there.

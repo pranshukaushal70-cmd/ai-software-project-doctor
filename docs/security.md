@@ -137,6 +137,21 @@ owner of their analysis's repository, with the same 404 behaviour.
 AI (engineering task creation and plan requests, 30 per user per hour), engine (code-engine runs started and test runs approved,
 10 per user per hour) and report generation (30 per user per hour).
 
+The per-IP limits (login, signup) key on the client address only when `TRUST_PROXY=true`, from the first
+`X-Forwarded-For` entry (or `X-Real-IP`), which the reverse proxy must overwrite. Without it, forwarding headers are
+ignored, because any client could set them to get a fresh budget per request, and all clients share one key: the per-IP
+limits then act as global limits (5 sign-ups per hour and 10 login attempts per 15 minutes for the whole instance), while the
+per-email and per-user limits are unchanged. That suits the default deployment (web published on `127.0.0.1` only); to
+reset the counters, for example between demo rehearsals, see [demo.md](demo.md#before-the-demo).
+
+## Dependency advisories
+
+`npm audit` is clean. Two transitive dependencies of the Prisma CLI are pinned to patched releases with `overrides` in
+the root `package.json` until Prisma updates them: `mysql2` 3.24.5 (unused here; Prisma ships it for MySQL) and
+`deepmerge-ts` 8.0.2 (used to merge Prisma's own configuration). The Prisma CLI runs only for `generate` and in the
+`migrate` image; CI checks that the generated client is unchanged and that migrations apply. Remove the overrides once
+Prisma's own versions are patched.
+
 ## HTTP hardening
 
 CSP, `X-Frame-Options: DENY`, `nosniff`, strict referrer policy, permissions policy, HSTS in production,

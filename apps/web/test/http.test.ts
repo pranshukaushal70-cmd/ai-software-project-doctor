@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { AppError } from "@pd/shared";
-import { ok, readJson, route } from "@/server/http";
+import { clientIp, ok, readJson, route } from "@/server/http";
 
 const ctx = { params: Promise.resolve({}) };
 
@@ -82,5 +82,24 @@ describe("route wrapper", () => {
     })(request("GET"), ctx);
     expect(res.status).toBe(429);
     expect(res.headers.get("retry-after")).toBe("42");
+  });
+});
+
+describe("clientIp", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  const spoofed = { "x-forwarded-for": "203.0.113.7, 10.0.0.1", "x-real-ip": "198.51.100.9" };
+
+  it("ignores forwarding headers without a trusted proxy, so clients cannot choose their rate-limit key", () => {
+    vi.stubEnv("TRUST_PROXY", "false");
+    expect(clientIp(request("POST", spoofed))).toBe("local");
+    expect(clientIp(request("POST", { "x-real-ip": "198.51.100.9" }))).toBe("local");
+    expect(clientIp(request("POST"))).toBe("local");
+  });
+
+  it("uses the proxy-set client address with TRUST_PROXY=true", () => {
+    vi.stubEnv("TRUST_PROXY", "true");
+    expect(clientIp(request("POST", spoofed))).toBe("203.0.113.7");
+    expect(clientIp(request("POST", { "x-real-ip": "198.51.100.9" }))).toBe("198.51.100.9");
+    expect(clientIp(request("POST"))).toBe("local");
   });
 });
