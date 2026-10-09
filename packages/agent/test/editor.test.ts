@@ -9,6 +9,7 @@ import {
   createEditProvider,
   deriveEditScope,
   EDIT_LIMITS,
+  EDIT_TIMEOUT_MS,
   EDITOR_SYSTEM_PROMPT,
   forbiddenReason,
   ProviderError,
@@ -385,11 +386,17 @@ describe("edit providers", () => {
   it("asks Anthropic for schema-constrained edits with the cached system prompt, sending only the context", async () => {
     const { context } = await setup();
     const calls: Array<Record<string, any>> = [];
-    const client = { beta: { messages: { create: async (params: Record<string, any>) => (calls.push(params), message(JSON.stringify(output([])))) } } } as unknown as AnthropicClientLike;
+    const options: unknown[] = [];
+    const client = {
+      beta: { messages: { create: async (params: Record<string, any>, opts?: unknown) => (calls.push(params), options.push(opts), message(JSON.stringify(output([])))) } },
+    } as unknown as AnthropicClientLike;
     const result = await new AnthropicProvider({ client }).generateEdits(context);
     expect(result).toMatchObject({ model: "claude-test", inputTokens: 10, outputTokens: 5, output: { changes: [] } });
     const p = calls[0]!;
     expect(p.max_tokens).toBe(32000);
+    // Large non-streaming outputs: 10 minutes per attempt, one retry (fits the run's default time budget).
+    expect(options[0]).toEqual({ timeout: EDIT_TIMEOUT_MS, maxRetries: 1 });
+    expect(EDIT_TIMEOUT_MS).toBe(10 * 60 * 1000);
     expect(p.system).toEqual([{ type: "text", text: EDITOR_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }]);
     expect(p.output_config.format.type).toBe("json_schema");
     expect(Object.keys(p.output_config.format.schema.properties)).toEqual(["summary", "changes", "notes", "confidence"]);

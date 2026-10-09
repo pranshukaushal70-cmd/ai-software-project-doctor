@@ -94,10 +94,37 @@ Manual only, never part of pass/fail CI:
   ([docker-compose.eval.yml](../docker-compose.eval.yml), project `pd-eval`) requires the key from the environment and
   never uses the stub; the e2e stack never uses a real key.
 
+#### A first, single-task run
+
+Before a full run, measure one small task: `--fixture clean-lib` selects only `clean-range-validate` (a dozen files of a
+few hundred bytes), which costs well under a dollar with `claude-opus-5-5`. Use a dedicated key with a low spend limit,
+and revoke it afterwards. In PowerShell (Windows), prompt for the key so it never appears in the command history, and
+remove it from the shell once the containers have it (compose hands it over only on `up`):
+
+```powershell
+$env:PD_STACK = "eval"; $env:ANTHROPIC_MODEL = "claude-opus-5-5"
+$env:ANTHROPIC_API_KEY = [System.Net.NetworkCredential]::new("", (Read-Host "Anthropic API key" -AsSecureString)).Password
+npm run e2e:up
+Remove-Item Env:ANTHROPIC_API_KEY
+npm run bench:agent -- --label real-model --fixture clean-lib --repetitions 1
+npm run e2e:logs   # worker log: plan/run tokens, and providerError (status, type, request id) if a call failed
+npm run e2e:down
+```
+
+In bash: `read -rs ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY`, then the same commands with `PD_STACK=eval` and
+`unset ANTHROPIC_API_KEY` after `up`. Add `--run-tests` (with `E2E_SANDBOX=1`, which gives the worker the Docker socket:
+read [deployment.md](deployment.md) first) only after a run without tests looked right.
+
+When a model call fails, the plan or run shows only a short user-safe message (e.g. "The AI provider returned an error
+(400)."); the worker log's `providerError` field has the API's status, error type, request id and its (truncated) error
+message, never the prompt or the key. Timeouts: 5 minutes per plan request (two retries), 10 minutes per edit request
+(one retry, so a run stays within its default 20-minute time budget).
+
 Reading the results: model output varies between runs, so report rates over several repetitions (the workflow allows up to 3: each repetition of the 6 tasks
 uses a fresh user because of the per-user rate limits, and sign-ups are limited to five per hour) and compare runs only with the same models, fixtures
 digest and repetitions. A rate is evidence about one configuration at one time, not a guarantee. Costs: every attempt
-makes at least two model calls (plan, edit) and up to `maxIterations` repair calls.
+makes at least two model calls (plan, edit); edit calls, repairs included, are capped by the run's `maxIterations`
+(default 2), and the SDK may retry a failed call.
 
 ## Adding a fixture
 

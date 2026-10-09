@@ -6,12 +6,15 @@ export {
   createEditProvider,
   createProvider,
   DEFAULT_ANTHROPIC_MODEL,
+  EDIT_TIMEOUT_MS,
+  PLAN_TIMEOUT_MS,
   ProviderError,
   ScriptedProvider,
   type AnthropicClientLike,
   type CodeEditProvider,
   type LLMProvider,
   type ProviderEnv,
+  type ProviderErrorDetail,
   type ProviderResult,
 } from "./providers";
 export { runPlanner, type PlanRunMetadata, type PlanRunResult } from "./planner";

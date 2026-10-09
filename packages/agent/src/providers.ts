@@ -39,20 +39,46 @@ export interface CodeEditProvider extends LLMProvider {
   generateEdits(context: EditContext): Promise<ProviderResult>;
 }
 
+/**
+ * What the AI provider's API said about a failed request, for the worker log only (never
+ * stored on the plan or run, never shown to users): enough to look the request up, no
+ * prompt and no key. `message` is the API's own error text, which describes the request
+ * shape (e.g. an unsupported schema keyword), truncated.
+ */
+export interface ProviderErrorDetail {
+  status: number | null;
+  type: string | null;
+  requestId: string | null;
+  message: string | null;
+}
+
 /** A provider failure whose message is safe to store and show (no prompt, no key). */
 export class ProviderError extends Error {
   constructor(
     readonly reason: "not-configured" | "refused" | "truncated" | "invalid-json" | "api-error" | "rate-limited",
     message: string,
+    readonly detail: ProviderErrorDetail | null = null,
   ) {
     super(message);
     this.name = "ProviderError";
   }
 }
 
+const DETAIL_MESSAGE_CHARS = 300;
+
+/** The loggable facts of an SDK API error. */
+function apiErrorDetail(err: InstanceType<typeof Anthropic.APIError>): ProviderErrorDetail {
+  const body = err.error as { error?: { message?: unknown } } | undefined;
+  const message = typeof body?.error?.message === "string" ? body.error.message.slice(0, DETAIL_MESSAGE_CHARS) : null;
+  return { status: err.status ?? null, type: err.type ?? null, requestId: err.requestID ?? null, message };
+}
+
 // ---------------------------------------------------------------- Anthropic
 
 export const DEFAULT_ANTHROPIC_MODEL = "claude-opus-5-5";
+/** Per-request timeouts. Explicit, so the SDK's non-streaming guard (10 min for 32k tokens) does not apply. */
+export const PLAN_TIMEOUT_MS = 5 * 60 * 1000;
+export const EDIT_TIMEOUT_MS = 10 * 60 * 1000;
 const PLAN_FORMAT = zodOutputFormat(PlanOutputSchema);
 const EDIT_FORMAT = zodOutputFormat(EditOutputSchema);
 
@@ -67,7 +93,7 @@ export class AnthropicProvider implements CodeEditProvider {
   constructor(opts: { apiKey?: string; model?: string; client?: AnthropicClientLike } = {}) {
     this.model = opts.model || DEFAULT_ANTHROPIC_MODEL;
     // The key is only handed to the SDK; it is never logged, stored or returned.
-    this.client = opts.client ?? new Anthropic({ apiKey: opts.apiKey, maxRetries: 2, timeout: 5 * 60 * 1000 });
+    this.client = opts.client ?? new Anthropic({ apiKey: opts.apiKey, maxRetries: 2, timeout: PLAN_TIMEOUT_MS });
   }
 
   generatePlan(context: PlanningContext): Promise<ProviderResult> {
@@ -75,30 +101,50 @@ export class AnthropicProvider implements CodeEditProvider {
   }
 
   generateEdits(context: EditContext): Promise<ProviderResult> {
-    // Edits carry whole new files and replacement blocks: a larger output budget than plans.
-    return this.request({ system: EDITOR_SYSTEM_PROMPT, user: buildEditUserMessage(context), schema: EDIT_FORMAT.schema, maxTokens: 32000, what: "change" });
+    // Edits carry whole new files and replacement blocks: a larger output budget than plans,
+    // and so more time per (non-streaming) request. One retry, not two: three timed-out
+    // attempts would outlast the run's default time budget.
+    return this.request({
+      system: EDITOR_SYSTEM_PROMPT,
+      user: buildEditUserMessage(context),
+      schema: EDIT_FORMAT.schema,
+      maxTokens: 32000,
+      what: "change",
+      options: { timeout: EDIT_TIMEOUT_MS, maxRetries: 1 },
+    });
   }
 
   /** One structured-output request; failures become ProviderErrors with user-safe messages. */
-  private async request(r: { system: string; user: string; schema: Record<string, unknown>; maxTokens: number; what: "plan" | "change" }): Promise<ProviderResult> {
+  private async request(r: {
+    system: string;
+    user: string;
+    schema: Record<string, unknown>;
+    maxTokens: number;
+    what: "plan" | "change";
+    options?: { timeout: number; maxRetries: number };
+  }): Promise<ProviderResult> {
     let response: Anthropic.Beta.BetaMessage;
     try {
-      response = (await this.client.beta.messages.create({
-        model: this.model,
-        max_tokens: r.maxTokens,
-        // A safety-classifier decline is retried server-side on Anthropic's recommended fallback model.
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-        output_config: { effort: "high", format: { type: "json_schema", schema: r.schema } },
-        system: [{ type: "text", text: r.system, cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: r.user }],
-      })) as Anthropic.Beta.BetaMessage;
+      response = (await this.client.beta.messages.create(
+        {
+          model: this.model,
+          max_tokens: r.maxTokens,
+          // A safety-classifier decline is retried server-side on Anthropic's recommended fallback model.
+          betas: ["server-side-fallback-2026-07-01"],
+          fallbacks: "default",
+          output_config: { effort: "high", format: { type: "json_schema", schema: r.schema } },
+          system: [{ type: "text", text: r.system, cache_control: { type: "ephemeral" } }],
+          messages: [{ role: "user", content: r.user }],
+        },
+        r.options,
+      )) as Anthropic.Beta.BetaMessage;
     } catch (err) {
-      if (err instanceof Anthropic.RateLimitError) throw new ProviderError("rate-limited", "The AI provider is rate limiting requests; try again later.");
+      const detail = err instanceof Anthropic.APIError ? apiErrorDetail(err) : null;
+      if (err instanceof Anthropic.RateLimitError) throw new ProviderError("rate-limited", "The AI provider is rate limiting requests; try again later.", detail);
       if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
-        throw new ProviderError("not-configured", "The AI provider rejected the configured credentials.");
+        throw new ProviderError("not-configured", "The AI provider rejected the configured credentials.", detail);
       }
-      if (err instanceof Anthropic.APIError) throw new ProviderError("api-error", `The AI provider returned an error (${err.status ?? "network"}).`);
+      if (err instanceof Anthropic.APIError) throw new ProviderError("api-error", `The AI provider returned an error (${err.status ?? "network"}).`, detail);
       throw new ProviderError("api-error", "The AI provider could not be reached.");
     }
     const usage = { inputTokens: response.usage?.input_tokens ?? null, outputTokens: response.usage?.output_tokens ?? null };

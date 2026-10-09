@@ -1,4 +1,4 @@
-import { ProviderError, type LLMProvider } from "./providers";
+import { ProviderError, type LLMProvider, type ProviderErrorDetail } from "./providers";
 import type { PlanningContext } from "./schema";
 import { validatePlan, type RepositoryFacts, type ValidatedPlan, type ValidationReport } from "./validate";
 
@@ -14,8 +14,8 @@ export interface PlanRunMetadata {
 
 export type PlanRunResult =
   | { ok: true; plan: ValidatedPlan; report: ValidationReport; meta: PlanRunMetadata }
-  /** No usable plan: the provider failed, or its output was rejected by validation. */
-  | { ok: false; reason: string; message: string; report: ValidationReport | null; meta: PlanRunMetadata };
+  /** No usable plan: the provider failed (`detail`: what its API said, for the log only), or its output was rejected by validation. */
+  | { ok: false; reason: string; message: string; report: ValidationReport | null; meta: PlanRunMetadata; detail?: ProviderErrorDetail | null };
 
 /** Context in, validated plan out. The provider sees only the context; the plan is checked against the index. */
 export async function runPlanner(context: PlanningContext, provider: LLMProvider, facts: RepositoryFacts, now: () => number = () => performance.now()): Promise<PlanRunResult> {
@@ -35,7 +35,8 @@ export async function runPlanner(context: PlanningContext, provider: LLMProvider
   } catch (err) {
     const reason = err instanceof ProviderError ? err.reason : "api-error";
     const message = err instanceof ProviderError ? err.message : "The AI provider failed unexpectedly.";
-    return { ok: false, reason, message, report: null, meta: meta() };
+    const detail = err instanceof ProviderError ? err.detail : null;
+    return { ok: false, reason, message, report: null, meta: meta(), detail };
   }
   const m = meta({ model: result.model, inputTokens: result.inputTokens, outputTokens: result.outputTokens, stopReason: result.stopReason });
   const { plan, report } = validatePlan(result.output, context, facts);

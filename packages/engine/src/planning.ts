@@ -104,6 +104,8 @@ export async function executePlanJob(planId: string, deps: PlanJobDeps): Promise
         errors: issues.filter((i) => i.severity === "error").length,
         warnings: issues.filter((i) => i.severity === "warning").length,
         failureReason: result.ok ? null : result.reason,
+        // The API's status, error type and request id when the provider call failed (no prompt, no key).
+        providerError: result.ok ? null : (result.detail ?? null),
       },
       result.ok ? "plan generated" : "plan failed",
     );
