@@ -1,13 +1,13 @@
 import type { EditContext } from "./edit-schema";
 import { buildReport, validateEdits, type EditIssue, type EditReport, type ProposedChange } from "./edit-validate";
 import type { PlanRunMetadata } from "./planner";
-import { ProviderError, type CodeEditProvider } from "./providers";
+import { ProviderError, type CodeEditProvider, type ProviderErrorDetail } from "./providers";
 import type { RepositoryFacts } from "./validate";
 
 export type EditRunResult =
   | { ok: true; summary: string; notes: string[]; changes: ProposedChange[]; report: EditReport; meta: PlanRunMetadata }
-  /** No usable output: the provider failed, or its output was rejected by schema validation. */
-  | { ok: false; reason: string; message: string; report: EditReport | null; meta: PlanRunMetadata };
+  /** No usable output: the provider failed (`detail`: what its API said, for the log only), or its output was rejected by schema validation. */
+  | { ok: false; reason: string; message: string; report: EditReport | null; meta: PlanRunMetadata; detail?: ProviderErrorDetail | null };
 
 export interface RunEditorOptions {
   /** Checks of the applied result (checkChanges from `@pd/agent/checks` in the worker); may reject changes. */
@@ -45,7 +45,8 @@ export async function runEditor(
   } catch (err) {
     const reason = err instanceof ProviderError ? err.reason : "api-error";
     const message = err instanceof ProviderError ? err.message : "The AI provider failed unexpectedly.";
-    return { ok: false, reason, message, report: null, meta: meta() };
+    const detail = err instanceof ProviderError ? err.detail : null;
+    return { ok: false, reason, message, report: null, meta: meta(), detail };
   }
   const m = () => meta({ model: result.model, inputTokens: result.inputTokens, outputTokens: result.outputTokens, stopReason: result.stopReason });
   const validated = validateEdits(result.output, context, originals, facts);

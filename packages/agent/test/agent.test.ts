@@ -251,11 +251,13 @@ describe("plan validation", () => {
 describe("providers", () => {
   const fakeClient = (respond: (params: Record<string, unknown>) => unknown) => {
     const calls: Array<Record<string, unknown>> = [];
+    const options: Array<Record<string, unknown> | undefined> = [];
     const client = {
       beta: {
         messages: {
-          create: (async (params: Record<string, unknown>) => {
+          create: (async (params: Record<string, unknown>, opts?: Record<string, unknown>) => {
             calls.push(params);
+            options.push(opts);
             const r = respond(params);
             if (r instanceof Error) throw r;
             return r;
@@ -263,7 +265,7 @@ describe("providers", () => {
         },
       },
     };
-    return { client, calls };
+    return { client, calls, options };
   };
   const message = (text: string, stop_reason = "end_turn") => ({
     id: "msg_1",
@@ -304,6 +306,34 @@ describe("providers", () => {
     expect(await reason(() => new Anthropic.RateLimitError(429, undefined, "rate limited", new Headers()))).toBe("rate-limited");
     expect(await reason(() => new Anthropic.AuthenticationError(401, undefined, "bad key", new Headers()))).toBe("not-configured");
     expect(await reason(() => new TypeError("fetch failed"))).toBe("api-error");
+  });
+
+  it("keeps the API's status, error type, request id and (truncated) message for the log, never in the user message", async () => {
+    const ctx = contextFor();
+    const body = { type: "error", error: { type: "invalid_request_error", message: `output_config.format.schema: unsupported keyword ${"x".repeat(500)}` } };
+    const apiError = Anthropic.APIError.generate(400, body, undefined, new Headers({ "request-id": "req_011abc" }));
+    const err = await new AnthropicProvider({ client: fakeClient(() => apiError).client }).generatePlan(ctx).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ProviderError);
+    const pe = err as ProviderError;
+    expect(pe.message).toBe("The AI provider returned an error (400).");
+    expect(pe.detail).toMatchObject({ status: 400, type: "invalid_request_error", requestId: "req_011abc" });
+    expect(pe.detail!.message).toMatch(/^output_config\.format\.schema: unsupported keyword x+$/);
+    expect(pe.detail!.message!.length).toBe(300);
+
+    // Failures that are not API responses carry no detail.
+    const network = await new AnthropicProvider({ client: fakeClient(() => new TypeError("fetch failed")).client }).generatePlan(ctx).catch((e: unknown) => e);
+    expect((network as ProviderError).detail).toBeNull();
+
+    // runPlanner hands the detail to its caller (the worker logs it).
+    const planned = await runPlanner(ctx, new AnthropicProvider({ client: fakeClient(() => apiError).client }), facts);
+    expect(planned).toMatchObject({ ok: false, reason: "api-error", detail: { requestId: "req_011abc" } });
+  });
+
+  it("plans with the client's default timeout and retries (no per-request override)", async () => {
+    const ctx = contextFor();
+    const { client, options } = fakeClient(() => message(JSON.stringify(goodPlan(ctx))));
+    await new AnthropicProvider({ client }).generatePlan(ctx);
+    expect(options[0]).toBeUndefined();
   });
 
   it("is chosen from the environment; the API key is required for Anthropic and never exposed", () => {

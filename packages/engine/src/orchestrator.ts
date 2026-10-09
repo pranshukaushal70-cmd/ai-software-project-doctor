@@ -241,7 +241,16 @@ class RunJob {
         data: { model: result.meta.model, inputTokens: { increment: result.meta.inputTokens ?? 0 }, outputTokens: { increment: result.meta.outputTokens ?? 0 } },
       });
       this.log.info(
-        { iteration: this.iteration, ok: result.ok, accepted: result.ok ? result.report.accepted : 0, rejected: result.ok ? result.report.rejected : 0, inputTokens: result.meta.inputTokens, outputTokens: result.meta.outputTokens },
+        {
+          iteration: this.iteration,
+          ok: result.ok,
+          accepted: result.ok ? result.report.accepted : 0,
+          rejected: result.ok ? result.report.rejected : 0,
+          inputTokens: result.meta.inputTokens,
+          outputTokens: result.meta.outputTokens,
+          // The API's status, error type and request id when the provider call failed (no prompt, no key).
+          providerError: result.ok ? null : (result.detail ?? null),
+        },
         "changes generated",
       );
       await this.checkCancel();
