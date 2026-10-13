@@ -9,6 +9,7 @@ import {
   skipExecution as skipExecutionControl,
   type ControlDeps,
 } from "@pd/engine/control";
+import { providerEnvFrom } from "@pd/agent";
 import { getPrisma } from "@pd/db";
 import { loadSandboxConfig, type TestSetup } from "@pd/sandbox";
 import { ACTIVE_RUN_STATUSES, AppError, loadLimits, type EngineeringRunInput, type EngineeringRunStatus, type ExecutionApproval } from "@pd/shared";
@@ -66,7 +67,7 @@ function controlDeps(): ControlDeps {
     limits: loadLimits(),
     sandbox: { enabled: sandbox.enabled, installEnabled: sandbox.installEnabled },
     // Credentials come only from the environment; the run controls only check that a model is configured.
-    env: { AI_PROVIDER: process.env.AI_PROVIDER, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY, ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL },
+    env: providerEnvFrom(process.env),
     enqueue: enqueueEngineering,
   };
 }

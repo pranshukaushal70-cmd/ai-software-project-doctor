@@ -20,4 +20,4 @@ const env = template
   .replace(/^JWT_SECRET=.*$/m, `JWT_SECRET=${secret}`)
   .replaceAll("change-me-local-db-password", dbPassword);
 writeFileSync(target, env, { mode: 0o600 });
-console.log("Created .env with a generated JWT_SECRET and database password. Add ANTHROPIC_API_KEY when you enable AI mode.");
+console.log("Created .env with a generated JWT_SECRET and database password. To enable AI mode, set AI_PROVIDER and its key (ANTHROPIC_API_KEY, XAI_API_KEY or GEMINI_API_KEY; see .env.example).");

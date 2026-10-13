@@ -104,6 +104,9 @@ jobs:
     env:
       E2E_SANDBOX: ${{ matrix.sandbox == 'on' && '1' || '0' }}
       CI: "true"
+      # Plain build output: the log shows every Docker layer and its timing.
+      BUILDKIT_PROGRESS: plain
+      COMPOSE_PROGRESS: plain
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -117,6 +120,9 @@ jobs:
         working-directory: e2e
         run: npx playwright install --with-deps chromium
       - name: Build the images and start the stack
+        # A normal build takes about 1.5 minutes; a stalled download fails here instead of
+        # holding the job until its 45-minute timeout.
+        timeout-minutes: 15
         run: npm run e2e:up
       - name: Playwright
         run: npm run e2e

@@ -108,7 +108,9 @@ npm run dev                 # web app on http://localhost:3000
 npm run worker              # in a second terminal: the analysis worker
 ```
 
-Analysis works without any API key. The planner and code engine need one: add `ANTHROPIC_API_KEY` to `.env` (or set
+Analysis works without any API key. The planner and code engine need one: add `ANTHROPIC_API_KEY` to `.env`, or
+`AI_PROVIDER=xai` with `XAI_API_KEY` and `XAI_MODEL` for xAI's Grok models (billed per token; set `AI_MAX_REQUESTS` to
+cap the requests), or `AI_PROVIDER=gemini` with `GEMINI_API_KEY` from Google AI Studio (free tier available), or set
 `AI_PROVIDER=baseline` for evidence-only plans without an LLM; the baseline cannot write code, so code-engine runs are
 refused). Running the repository's tests also needs the sandbox (`SANDBOX_ENABLED=true` and Docker); the simplest way is
 the container stack with `docker-compose.sandbox.yml` ([docs/deployment.md](docs/deployment.md)).
@@ -126,9 +128,15 @@ See [.env.example](.env.example). The important ones:
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Used by `docker-compose.yml` to create the database. `POSTGRES_PASSWORD` is required (no default); it only takes effect when the database volume is first created. PostgreSQL and Redis are published on `127.0.0.1` only |
 | `REDIS_URL` | Redis for the job queue and rate limiting |
 | `JWT_SECRET` | ≥32-char secret used to HMAC session tokens before storage |
-| `AI_PROVIDER` | Planner and code-engine provider: `anthropic` (default; needs `ANTHROPIC_API_KEY`) or `baseline` (deterministic evidence-only plans, no LLM; cannot write code, so code-engine runs are refused) |
+| `AI_PROVIDER` | Planner and code-engine provider: `anthropic` (default; needs `ANTHROPIC_API_KEY`), `xai` (needs `XAI_API_KEY` and `XAI_MODEL`), `gemini` (needs `GEMINI_API_KEY`) or `baseline` (deterministic evidence-only plans, no LLM; cannot write code, so code-engine runs are refused) |
 | `ANTHROPIC_API_KEY` | Optional. Enables LLM planning (Phase 7) and code editing (Phase 8). Needed by the web app (checked) and the worker (used). Read from the environment only; never stored, logged or sent to the browser |
 | `ANTHROPIC_MODEL` | Model for planning and editing, default `claude-opus-5-5` |
+| `XAI_API_KEY` | For `AI_PROVIDER=xai`. Read from the environment only, sent only in the request's `Authorization` header; never stored, logged or sent to the browser. xAI bills every request: check the account's credits first |
+| `XAI_MODEL` | For `AI_PROVIDER=xai`, required (no default), e.g. `grok-4.3`; it must support structured outputs |
+| `XAI_BASE_URL` | Optional, default `https://api.x.ai/v1` |
+| `GEMINI_API_KEY` | For `AI_PROVIDER=gemini` (a Google AI Studio key). Read from the environment only, sent only in the `x-goog-api-key` header (never in a URL); never stored, logged or sent to the browser. Free of charge only while the key's Google Cloud project has no billing; on the free tier Google may use prompts to improve its products, so send only code you may share |
+| `GEMINI_MODEL` | For `AI_PROVIDER=gemini`, default `gemini-3.8-flash`; it must support structured outputs |
+| `AI_MAX_REQUESTS` | Optional cap on the xAI or Gemini requests one worker process may send (failed requests count); a restart resets it. Unset: no cap |
 | `SANDBOX_ENABLED` | `false` (default): code-engine runs end with a diff and no repository code runs. `true`: approved test runs execute in disposable Docker containers (the worker needs Docker with Linux containers; see [security.md](docs/security.md#known-limitations)) |
 | `SANDBOX_INSTALL_ENABLED` | `false` (default). `true` offers a separately approved, network-enabled dependency install (`npm ci --ignore-scripts`, pip wheels only) |
 | `SANDBOX_RUNTIME`, `SANDBOX_IMAGE_*`, `SANDBOX_*_SECONDS`, `SANDBOX_MEMORY_MB`, `SANDBOX_CPUS`, `SANDBOX_PIDS` | Sandbox runtime (`runc`/`runsc`), digest-pinned images and limits; see [docs/code-engine.md](docs/code-engine.md#configuration) |
@@ -204,9 +212,9 @@ Every push to `main` and every pull request runs [CI](docs/ci.md): typecheck, un
 migrations against an empty database, the sandbox against real Docker, and the Playwright end-to-end suite against the
 production images with the sandbox off and on.
 
-| Check | Result (2026-10-08) |
+| Check | Result (2026-10-11) |
 |---|---|
-| `npm test` (Vitest, all workspaces) | **771 tests passing**, plus 4 real-Docker sandbox tests that run with `PD_DOCKER_TESTS=1` (passing) |
+| `npm test` (Vitest, all workspaces) | **786 tests passing**, plus 4 real-Docker sandbox tests that run with `PD_DOCKER_TESTS=1` (passing) |
 | `npm run typecheck`, `npm run build`, `npm audit` | Clean for all eleven workspaces; build succeeds; 0 known vulnerabilities |
 | End to end (Playwright, production images, model stub) | 33 of 33 specs with the sandbox off, 33 of 33 with it on |
 | Detection benchmark | Precision 97.3 %, recall 97.3 % ([results](benchmarks/results/detection.md)) |

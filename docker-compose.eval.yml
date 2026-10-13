@@ -14,6 +14,8 @@ services:
     environment: &eval-env
       AI_PROVIDER: anthropic
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?The real-model evaluation needs ANTHROPIC_API_KEY in the environment}
+      XAI_API_KEY: ""
+      GEMINI_API_KEY: ""
       # Deterministic analysis input: no OSV.dev lookups.
       OSV_ENABLED: "false"
   worker:
