@@ -121,7 +121,7 @@ stripped of terminal escapes and control characters, redacted and truncated to t
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | `anthropic`, —, `claude-opus-5-5` | The editing model. `baseline` can plan but cannot edit: starting a run is refused with a clear message. Needed by the web tier (checked when a run starts) and the worker (used) |
+| `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | `anthropic`, —, `claude-opus-5-5` | The editing model; `AI_PROVIDER=xai` uses `XAI_API_KEY` and `XAI_MODEL` instead, `AI_PROVIDER=gemini` uses `GEMINI_API_KEY` and `GEMINI_MODEL` ([engineering-agent.md](engineering-agent.md)). `baseline` can plan but cannot edit: starting a run is refused with a clear message. Needed by the web tier (checked when a run starts) and the worker (used) |
 | `SANDBOX_ENABLED` | `false` | Run approved tests in Docker; the worker needs a Docker engine with Linux containers |
 | `SANDBOX_INSTALL_ENABLED` | `false` | Offer the network-enabled install step |
 | `SANDBOX_RUNTIME` | `runc` | `runsc` for gVisor |

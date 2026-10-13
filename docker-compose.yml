@@ -72,6 +72,13 @@ services:
         # Read from the environment only; never baked into an image, stored or logged.
         ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
         ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+        XAI_API_KEY: ${XAI_API_KEY:-}
+        XAI_MODEL: ${XAI_MODEL:-}
+        XAI_BASE_URL: ${XAI_BASE_URL:-}
+        GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+        GEMINI_MODEL: ${GEMINI_MODEL:-}
+        # Metered providers (xAI, Gemini): most model requests the worker may send until it restarts.
+        AI_MAX_REQUESTS: ${AI_MAX_REQUESTS:-}
         MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-}
         MAX_EXTRACTED_MB: ${MAX_EXTRACTED_MB:-}
         MAX_ZIP_ENTRIES: ${MAX_ZIP_ENTRIES:-}

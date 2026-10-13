@@ -1,5 +1,5 @@
 import "server-only";
-import { createProvider, ProviderError, type LLMProvider } from "@pd/agent";
+import { createProvider, ProviderError, providerEnvFrom, type LLMProvider } from "@pd/agent";
 import { getPrisma, type Prisma } from "@pd/db";
 import { AppError, type EngineeringTaskInput } from "@pd/shared";
 import { enqueueEngineering } from "../queue";
@@ -21,11 +21,11 @@ const STALE_AFTER_MS = 15 * 60 * 1000;
 
 let providerFactory: () => LLMProvider = () =>
   // Credentials come only from the environment; they are handed to the SDK and never stored or logged.
-  createProvider({ AI_PROVIDER: process.env.AI_PROVIDER, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY, ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL });
+  createProvider(providerEnvFrom(process.env));
 
 /** Test hook: plan with a deterministic provider instead of the configured one. */
 export function setProviderFactory(factory: (() => LLMProvider) | null) {
-  providerFactory = factory ?? (() => createProvider({ AI_PROVIDER: process.env.AI_PROVIDER, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY, ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL }));
+  providerFactory = factory ?? (() => createProvider(providerEnvFrom(process.env)));
 }
 
 // ---------------------------------------------------------------- tasks

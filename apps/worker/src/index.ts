@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
 import { Redis } from "ioredis";
-import { createEditProvider, createProvider, type ProviderEnv } from "@pd/agent";
+import { createEditProvider, createProvider, providerEnvFrom } from "@pd/agent";
 import { getPrisma } from "@pd/db";
 import { executePlanJob, runEngineJob, scheduleStaleRunSweep } from "@pd/engine";
 import { createSandbox, loadSandboxConfig } from "@pd/sandbox";
@@ -35,7 +35,7 @@ const worker = new Worker(
 worker.on("ready", () => log.info({ queue: ANALYSIS_QUEUE_NAME, concurrency }, "worker ready"));
 
 // Engineering planner and code engine (Phase 8). Credentials come from this process's environment only.
-const providerEnv = (): ProviderEnv => ({ AI_PROVIDER: process.env.AI_PROVIDER, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY, ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL });
+const providerEnv = () => providerEnvFrom(process.env);
 const sandboxConfig = loadSandboxConfig();
 const sandbox = createSandbox(sandboxConfig);
 const engineConcurrency = Number(process.env.ENGINE_CONCURRENCY ?? 1);

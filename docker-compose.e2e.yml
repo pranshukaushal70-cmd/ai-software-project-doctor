@@ -44,6 +44,9 @@ services:
       ANTHROPIC_API_KEY: e2e-stub-key-not-a-secret
       ANTHROPIC_BASE_URL: http://model-stub:4010
       ANTHROPIC_MODEL: e2e-model-stub
+      # Never hand a real xAI or Gemini key from the shell to the stub stack.
+      XAI_API_KEY: ""
+      GEMINI_API_KEY: ""
       OSV_ENABLED: "false"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]

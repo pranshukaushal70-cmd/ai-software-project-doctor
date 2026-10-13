@@ -110,8 +110,9 @@ or touches git. Its boundaries, in detail in [engineering-agent.md](engineering-
   backslash and `..` paths are removed), VERIFIED claims without valid evidence are downgraded, credential-looking values
   are redacted and text containing shell commands is replaced before anything is stored or shown. The UI renders plan text
   as text.
-- **Credentials:** `ANTHROPIC_API_KEY` is read from the environment only, passed to the SDK, and never stored, logged or
-  returned; provider errors are mapped to fixed messages. Logs carry provider, model, duration, token counts and
+- **Credentials:** `ANTHROPIC_API_KEY`, `XAI_API_KEY` and `GEMINI_API_KEY` are read from the environment only, passed to
+  the SDK or sent in a request header (`Authorization`, `x-goog-api-key`; never in a URL; the xAI and Gemini keys are
+  private fields, removed from logged API error text), and never stored, logged or returned; provider errors are mapped to fixed messages. Logs carry provider, model, duration, token counts and
   validation results, never the task, prompt or plan.
 - **Prompt injection:** repository text reaches the model only as identifiers and indexer-written summaries. A hostile
   repository can still pick misleading names; the effect is limited to a plan that validation confines to existing files
