@@ -24,4 +24,4 @@ export function getPrisma(): PrismaClient {
   return globalForPrisma.__pdPrisma;
 }
 
-export { transitionRun, type RunActor, type RunTransition } from "./engine";
+export { readRepairApproval, readRepairState, transitionRun, type RepairState, type RunActor, type RunTransition } from "./engine";

@@ -2,8 +2,9 @@
 
 The code engine turns an approved engineering plan (Phase 7) into a concrete, reviewable change: it rebuilds the
 analysed source in an isolated workspace, has the model propose edits for exactly the files the plan names, validates
-and applies them, and — only after a second approval — runs the repository's own tests in a disposable sandbox,
-repairing failures within a budget. The result is a patch the user downloads and applies with `git apply`.
+and applies them, and — only after a second approval — runs the repository's own tests in a disposable sandbox. Failing
+tests are repaired only if the user allowed repair attempts at that approval, and then within a budget. The result is a
+patch the user downloads and applies with `git apply`.
 
 It never commits, pushes, creates branches or opens pull requests, never runs a command a model chose, and never runs
 repository code outside a sandbox container. With the sandbox off (the default) no repository code runs at all.
@@ -18,10 +19,12 @@ run QUEUED → MATERIALIZING → GENERATING → VALIDATING → APPLYING         
   └─ AWAITING_APPROVAL (the exact test command, image and notes are shown)
        ├─ the user skips the tests ──────────────────────────────────────→ READY_FOR_REVIEW
        └─ gate 2: the user approves the command ───────────────────────── POST /runs/:id/execute
+          (separate opt-ins, both off by default: install step, repair attempts)
             [INSTALLING →] TESTING                                           (worker, "execute" job)
               ├─ tests pass ──────────────────────────────────────────────→ READY_FOR_REVIEW
               ├─ environment problem (failed install; dependencies needed
               │  but the install step not approved) ─────────────────────→ READY_FOR_REVIEW (not repaired)
+              ├─ repair attempts not allowed by the user ─────────────────→ READY_FOR_REVIEW (not repaired)
               ├─ no iterations, tokens or time left ──────────────────────→ READY_FOR_REVIEW
               └─ REPAIRING → VALIDATING → APPLYING → [INSTALLING →] TESTING → …
 READY_FOR_REVIEW → download the patch, or DISCARDED (stored code deleted)
@@ -33,6 +36,7 @@ any unfinished status → FAILED | CANCELLED
 | A run needs an approved plan | `createRun` (`@pd/engine/control`); approval only for the task's latest completed plan |
 | Repository code runs only after the user approved the command | `transitionRun` (`@pd/db`): a move into `INSTALLING`/`TESTING` matches only a row with `executionApprovedAt` set, or the update that records the approval (allowed only from `AWAITING_APPROVAL`) |
 | The network-enabled install step needs its own approval | `transitionRun`: `INSTALLING` also requires `installApproved`; the server must enable it (`SANDBOX_INSTALL_ENABLED`) |
+| Repairs after failing tests need their own consent | `approveExecution` records the decision (`repair`, default `false`) on the approval event; the worker checks it (`readRepairApproval`) before any repair, and `transitionRun` refuses `TESTING` → `REPAIRING` unless this run's approval recorded consent. The configured `maxIterations` is never changed |
 | One open run per plan | Serializable transaction in `createRun` |
 | Lifecycle | The transition table in `@pd/shared/engine`; every status change is a compare-and-set with an audit event in the same transaction |
 
@@ -95,6 +99,17 @@ or the end of the redacted test output) and the current diff, and proposes furth
 within the run's budgets: iterations (1–3, default 2), tokens (default 200,000) and time per job (default 20 minutes).
 Failures caused by the environment (a failed install; tests that need dependencies when the install step was not
 approved) are not repaired, because no code change can fix them.
+
+**Repair policy after failing tests.** A repair after a test failure applies model-written code the user has not seen and
+runs the approved command (and install step, if approved) on it again, so it happens only with explicit consent: the
+test approval takes `repair` (default `false`; the UI shows it as an unchecked option with the number of attempts the
+budget allows). Without consent, a failed test run goes straight to review — no further model call, no further sandbox
+session — with "The tests failed (exit code N). Ready for review (repair attempts were not approved; not repaired)."
+With consent, repairs run as described above, within the same budgets. The decision is recorded on the approval event,
+shown in the run view with the attempts allowed and used (iterations appear as "N used of M configured"), and included
+in the run report ("Repair attempts after failing tests: allowed, up to N; K used / not allowed; K used / not
+recorded"). Repairs of changes that failed validation (before any test approval) are unchanged: nothing is executed for
+them.
 
 The stored **patch** is cumulative: from the analysed source to the current result, in git format. The execute job
 re-applies it to a freshly rebuilt source with `git apply`, which also proves the downloadable patch applies.

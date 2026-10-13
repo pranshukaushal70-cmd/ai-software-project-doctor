@@ -188,6 +188,16 @@ export interface RunSection {
   execution: {
     approvedAt: string | null;
     installApproved: boolean;
+    /**
+     * The user's decision on repair attempts after failing tests, taken at the test approval:
+     * null when the tests were not approved or the decision was not recorded. Absent in
+     * snapshots stored before the decision existed (treat as null).
+     */
+    repairApproved?: boolean | null;
+    /** Repair attempts the budget allowed when the user consented (0 without consent; null when not recorded). Absent in older snapshots. */
+    repairAttemptsAllowed?: number | null;
+    /** Repair rounds that started after failing tests. Absent in older snapshots. */
+    repairAttemptsUsed?: number;
     testCommand: string | null;
     installCommand: string | null;
     image: string | null;

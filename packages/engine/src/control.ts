@@ -132,8 +132,14 @@ export async function createRun(deps: ControlDeps, userId: string, planId: strin
   return run;
 }
 
-/** Second gate: the user approves running the shown test command (and, separately, the network-enabled install). */
-export async function approveExecution(deps: ControlDeps, userId: string, runId: string, approval: ExecutionApproval) {
+/**
+ * Second gate: the user approves running the shown test command and, separately, the
+ * network-enabled install and repair attempts after failing tests (both default to no).
+ * A repair applies and tests model-written code the user has not seen, so the decision is
+ * recorded on the approval event (readRepairApproval), and both the worker and transitionRun
+ * (TESTING → REPAIRING) refuse a repair without consent. The configured budget is unchanged.
+ */
+export async function approveExecution(deps: ControlDeps, userId: string, runId: string, approval: Pick<ExecutionApproval, "install"> & Partial<Pick<ExecutionApproval, "repair">>) {
   const { prisma } = deps;
   const run = await ownedRun(prisma, userId, runId);
   if (run.status !== "AWAITING_APPROVAL") throw new AppError("CONFLICT", "This run is not waiting for approval.");
@@ -145,13 +151,18 @@ export async function approveExecution(deps: ControlDeps, userId: string, runId:
     if (!setup.install) throw new AppError("CONFLICT", "This test setup has no install step.");
   }
   const to: EngineeringRunStatus = approval.install ? "INSTALLING" : "TESTING";
+  const repair = approval.repair === true;
+  const repairAttempts = repair ? Math.max(0, run.maxIterations - run.iteration) : 0;
+  const repairNote = repair
+    ? ` Repair attempts allowed if the tests fail (up to ${repairAttempts}).`
+    : " Repair attempts not allowed: if the tests fail, the result goes to review unchanged.";
   const moved = await transitionRun(prisma, runId, {
     from: "AWAITING_APPROVAL",
     to,
     actor: "user",
-    message: approval.install ? `Approved: install dependencies (${setup.install!.display}) and run ${setup.test.display}.` : `Approved: run ${setup.test.display}.`,
+    message: (approval.install ? `Approved: install dependencies (${setup.install!.display}) and run ${setup.test.display}.` : `Approved: run ${setup.test.display}.`) + repairNote,
     patch: { executionApprovedAt: new Date(), installApproved: approval.install, testCommand: setup.test.id },
-    data: { install: approval.install ? setup.install!.id : null, test: setup.test.id, image: setup.image },
+    data: { install: approval.install ? setup.install!.id : null, test: setup.test.id, image: setup.image, repair, repairAttempts },
   });
   if (!moved) throw new AppError("CONFLICT", "The run changed in the meantime; reload it.");
   await enqueueOrFail(deps, runId, to, { type: "run", runId, phase: "execute" });

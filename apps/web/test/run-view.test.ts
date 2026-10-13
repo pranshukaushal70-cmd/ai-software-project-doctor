@@ -29,6 +29,7 @@ function run(extra: Partial<RunDto> = {}): RunDto {
     summary: "Trims the user name.",
     notes: ["Check callers that pass padded names."],
     hasPatch: true,
+    repair: { approved: null, attemptsAllowed: null, attemptsUsed: 0 },
     testSetup: {
       id: "npm",
       runtime: "node",
@@ -70,6 +71,39 @@ describe("RunView", () => {
     expect(html).toContain("Cancel run");
     // No download before review.
     expect(html).not.toContain("Download patch");
+  });
+
+  it("offers repair attempts as a separate opt-in, off by default, and says what a repair does", () => {
+    const html = render(run());
+    expect(html).toContain("Allow up to 1 repair attempt if the tests fail");
+    expect(html).toContain("without showing you the");
+    expect(html).toContain("Left off, a test failure goes to review as it is.");
+    // Both opt-ins (install and repair) render unchecked.
+    expect(html.match(/type="checkbox"/g)).toHaveLength(2);
+    expect(html).not.toMatch(/type="checkbox"[^>]*checked/);
+    // No decision is shown before the approval.
+    expect(html).not.toContain("Repair attempts after failing tests");
+
+    expect(render(run({ maxIterations: 3 }))).toContain("Allow up to 2 repair attempts if the tests fail");
+    const noBudget = render(run({ maxIterations: 1 }));
+    expect(noBudget).not.toContain("Allow up to");
+    expect(noBudget).toContain("budget has no repair attempts left");
+  });
+
+  it("shows the recorded repair decision with the attempts allowed and used after the approval", () => {
+    const tested = { status: "TESTING" as const, inProgress: true, executionApprovedAt: "2026-10-03T10:01:00.000Z" };
+    expect(render(run({ ...tested, repair: { approved: false, attemptsAllowed: 0, attemptsUsed: 0 } }))).toContain(
+      "Repair attempts after failing tests: not allowed (0 used). A test failure goes to review as it is.",
+    );
+    expect(render(run({ ...tested, iteration: 2, repair: { approved: true, attemptsAllowed: 1, attemptsUsed: 1 } }))).toContain("Repair attempts after failing tests: allowed by you, up to 1; 1 used.");
+  });
+
+  it("shows iterations used against the configured budget, never a capped or misleading total", () => {
+    // Without repair consent the configured budget stays as configured: "1 used of 2", not "1 of 1".
+    const html = render(run({ status: "READY_FOR_REVIEW", maxIterations: 2, iteration: 1, executionApprovedAt: "2026-10-03T10:01:00.000Z", repair: { approved: false, attemptsAllowed: 0, attemptsUsed: 0 } }));
+    expect(html).toContain("Iterations: 1 used of 2 configured");
+    expect(html).not.toMatch(/Iteration 1 of 1|1 of 1/);
+    expect(render(run({ maxIterations: 3, iteration: 2 }))).toContain("Iterations: 2 used of 3 configured");
   });
 
   it("does not offer the install step when the server disables it, and warns that tests may fail", () => {

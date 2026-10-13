@@ -113,6 +113,37 @@ describe("run reports", () => {
     expect(skipped.data.issues.warnings).toContainEqual({ source: "tests", message: "The changes were not tested: The user skipped the tests; nothing was executed." });
   });
 
+  it("record the user's decision on repair attempts, the attempts allowed and those used, per run", async () => {
+    // Each run's report reads its own approval event and audit log: allowed, not allowed, or not recorded.
+    const failedTests = (await run("run-failed-tests")).data.run!;
+    expect(failedTests.execution).toMatchObject({ repairApproved: true, repairAttemptsAllowed: 1, repairAttemptsUsed: 1 });
+    expect((await run("run-passed")).data.run!.execution).toMatchObject({ repairApproved: false, repairAttemptsAllowed: 0, repairAttemptsUsed: 0 });
+    for (const id of ["run-skipped", "run-untested", "run-awaiting"]) {
+      expect((await run(id)).data.run!.execution).toMatchObject({ repairApproved: null, repairAttemptsAllowed: null, repairAttemptsUsed: 0 });
+    }
+    // The configured budget is reported as configured, next to what was used.
+    expect(failedTests.budgets.maxIterations).toBe(2);
+    expect(failedTests.usage.iterations).toBe(2);
+
+    const md = (r: Awaited<ReturnType<typeof run>>) => renderMarkdown(r.data, { id: r.id, generatedAt: r.generatedAt.toISOString() });
+    const mdFailed = md(await run("run-failed-tests"));
+    expect(mdFailed).toContain("Repair attempts after failing tests: allowed by the user, up to 1; 1 used");
+    expect(mdFailed).toContain("Iterations: 2 used of 2 configured");
+    const mdPassed = md(await run("run-passed"));
+    expect(mdPassed).toContain("Repair attempts after failing tests: not allowed; 0 used");
+    expect(mdPassed).toContain("Iterations: 1 used of 2 configured");
+    expect(mdPassed).not.toMatch(/Iterations: 1 of 1/);
+    expect(md(await run("run-skipped"))).toContain("Repair attempts after failing tests: not recorded");
+    // Snapshots stored before these fields existed: rendered without inventing numbers.
+    const old = await run("run-passed");
+    const x = old.data.run!.execution as { repairApproved?: boolean | null; repairAttemptsAllowed?: number | null; repairAttemptsUsed?: number };
+    delete x.repairAttemptsAllowed;
+    delete x.repairAttemptsUsed;
+    expect(md(old)).toContain("Repair attempts after failing tests: not allowed\n");
+    delete x.repairApproved;
+    expect(md(old)).toContain("Repair attempts after failing tests: not recorded");
+  });
+
   it("report unfinished runs as partial", async () => {
     const awaiting = await run("run-awaiting");
     expect(awaiting).toMatchObject({ status: "PARTIAL", outcome: "AWAITING_APPROVAL" });

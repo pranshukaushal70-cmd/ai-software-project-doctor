@@ -250,6 +250,14 @@ export function ReportView({ report, interactive = true }: { report: ReportDto; 
                 ? ([
                     ["Test command approval", run.execution.approvedAt ? `approved ${when(run.execution.approvedAt)}` : "not given"],
                     ["Install step approval", run.execution.installApproved ? "approved (network access)" : "not approved"],
+                    [
+                      "Repair attempts after failing tests",
+                      run.execution.repairApproved === true
+                        ? `allowed${run.execution.repairAttemptsAllowed == null ? "" : `, up to ${run.execution.repairAttemptsAllowed}`}${run.execution.repairAttemptsUsed === undefined ? "" : `; ${run.execution.repairAttemptsUsed} used`}`
+                        : run.execution.repairApproved === false
+                          ? `not allowed${run.execution.repairAttemptsUsed === undefined ? "" : `; ${run.execution.repairAttemptsUsed} used`}`
+                          : "not recorded",
+                    ],
                     ["Review", run.review.state.replace(/_/g, " ")],
                   ] as Array<[string, React.ReactNode]>)
                 : []),
@@ -265,7 +273,7 @@ export function ReportView({ report, interactive = true }: { report: ReportDto; 
             items={[
               ["Status", <span key="s">{run.status.toLowerCase().replace(/_/g, " ")}{run.error ? ` — ${run.error}` : ""}</span>],
               ["Timing", `${when(run.startedAt ?? run.createdAt)} → ${when(run.finishedAt)} (${ms(run.durationMs)})`],
-              ["Iterations", `${run.usage.iterations} of ${run.budgets.maxIterations}`],
+              ["Iterations", `${run.usage.iterations} used of ${run.budgets.maxIterations} configured`],
               ["Tokens", `${run.usage.inputTokens + run.usage.outputTokens} of ${run.budgets.tokenBudget}`],
               ["Model", `${run.provider} · ${run.model}`],
               ["Commit", run.commitSha ? <Code key="c">{run.commitSha}</Code> : "—"],

@@ -111,6 +111,16 @@ export function fakeReportsDb(d: FakeData) {
           .sort((a, b) => b.createdAt - a.createdAt || b.id.localeCompare(a.id))
           .slice(0, take)
           .map(({ type, actor, fromStatus, toStatus, message, createdAt }) => ({ type, actor, fromStatus, toStatus, message, createdAt })),
+      // The run's test approval event (readRepairApproval): the latest event matching the filter.
+      findFirst: async ({ where }: { where: Row }) => {
+        const hit = d.events
+          .filter((e) => e.runId === where.runId && e.type === where.type && e.actor === where.actor && e.fromStatus === where.fromStatus && (where.toStatus.in as string[]).includes(e.toStatus))
+          .sort((a, b) => b.createdAt - a.createdAt)[0];
+        return hit ? { data: hit.data ?? null } : null;
+      },
+      // Repair rounds after failing tests (readRepairState).
+      count: async ({ where }: { where: Row }) =>
+        d.events.filter((e) => e.runId === where.runId && e.type === where.type && e.fromStatus === where.fromStatus && e.toStatus === where.toStatus).length,
     },
     engineeringChange: {
       findMany: async ({ where, take }: { where: Row; take: number }) =>

@@ -126,7 +126,7 @@ export function RunPanel({ planId, approvedAt: initialApprovedAt }: { planId: st
           run={run}
           busy={busy}
           actions={{
-            approve: (install) => void act(() => post<RunDto>(`/api/engineering/runs/${run.id}/execute`, { install })),
+            approve: (install, repair) => void act(() => post<RunDto>(`/api/engineering/runs/${run.id}/execute`, { install, repair })),
             skip: () => void act(() => post<RunDto>(`/api/engineering/runs/${run.id}/skip-tests`)),
             cancel: () => void act(() => post<RunDto>(`/api/engineering/runs/${run.id}/cancel`)),
             discard: () => void act(() => post<RunDto>(`/api/engineering/runs/${run.id}/discard`)),
