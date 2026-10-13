@@ -85,6 +85,15 @@ const EDIT: EditOutput = {
   notes: ["Check callers that pass padded names."],
   confidence: 0.9,
 };
+/** A repair the model would propose after failing tests. */
+const REPAIR: EditOutput = {
+  summary: "Requires two characters.",
+  changes: [{ path: "src/auth.ts", operation: "modify", reason: "Stricter.", edits: [{ find: "return user.trim().length > 0;", replace: "return user.trim().length > 1;" }], content: null }],
+  notes: [],
+  confidence: 0.7,
+};
+/** A second, different repair (a repeated edit would no longer match the repaired file and be rejected). */
+const REPAIR_2: EditOutput = { ...REPAIR, summary: "Requires three characters.", changes: [{ ...REPAIR.changes[0]!, edits: [{ find: "return user.trim().length > 1;", replace: "return user.trim().length > 2;" }] }] };
 
 let workspaceDir: string;
 const ENV_KEYS = ["WORKSPACE_DIR", "SANDBOX_ENABLED", "SANDBOX_INSTALL_ENABLED", "AI_PROVIDER", "ANTHROPIC_API_KEY"] as const;
@@ -186,11 +195,15 @@ describe("code engine API", () => {
     expect(r.body.data.events.map((e: any) => e.toStatus)).toEqual(["QUEUED", "MATERIALIZING", "GENERATING", "VALIDATING", "APPLYING", "AWAITING_APPROVAL"]);
     // No patch download before review.
     expect((await json(await patch(id))).status).toBe(409);
+    // No repair decision before the approval.
+    expect(r.body.data.repair).toEqual({ approved: null, attemptsAllowed: null, attemptsUsed: 0 });
 
-    // Second gate.
+    // Second gate. Repair attempts default to not allowed; the configured budget is left as it was.
     const approved = await post(executeRoute.POST, id, "execute", { install: false });
     expect(approved.status).toBe(200);
-    expect(approved.body.data).toMatchObject({ status: "TESTING", installApproved: false, testCommand: "npm-test" });
+    expect(approved.body.data).toMatchObject({ status: "TESTING", installApproved: false, testCommand: "npm-test", maxIterations: 2, iteration: 1 });
+    expect(approved.body.data.repair).toEqual({ approved: false, attemptsAllowed: 0, attemptsUsed: 0 });
+    expect(approved.body.data.events.at(-1).message).toMatch(/Repair attempts not allowed/);
     const sandbox = await work(provider);
     expect(sandbox.calls).toEqual(["test", "close"]);
     r = await detail(id);
@@ -241,9 +254,73 @@ describe("code engine API", () => {
     expect((await detail(id)).body.data).toMatchObject({ maxIterations: 2, tokenBudget: 50_000 });
     await work(new ScriptedProvider([EDIT]));
     expect((await post(executeRoute.POST, id, "execute", { install: "yes" })).status).toBe(400);
+    // The repair decision is validated too: a boolean only, and unknown keys are still rejected.
+    for (const body of [{ install: false, repair: "yes" }, { install: false, repair: "true" }, { install: false, repair: 1 }, { install: false, repair: null }, { install: false, repair: true, retries: 3 }, { repair: true, maxIterations: 3 }]) {
+      const bad = await post(executeRoute.POST, id, "execute", body);
+      expect(bad.status).toBe(400);
+      expect(bad.body.error!.code).toBe("VALIDATION_ERROR");
+    }
+    // Nothing was recorded by the refused requests.
+    const unchanged = (await detail(id)).body.data;
+    expect(unchanged).toMatchObject({ status: "AWAITING_APPROVAL", maxIterations: 2, executionApprovedAt: null });
+    expect(unchanged.repair).toEqual({ approved: null, attemptsAllowed: null, attemptsUsed: 0 });
     const refused = await post(executeRoute.POST, id, "execute", { install: true });
     expect(refused.status).toBe(409);
     expect(refused.body.error!.message).toMatch(/install step is disabled/);
+  });
+
+  it("defaults both opt-ins to no when the approval body is empty", async () => {
+    const id = (await start()).body.data.id;
+    await work(new ScriptedProvider([EDIT]));
+    const approved = await post(executeRoute.POST, id, "execute", {});
+    expect(approved.status).toBe(200);
+    expect(approved.body.data).toMatchObject({ status: "TESTING", installApproved: false });
+    expect(approved.body.data.repair).toEqual({ approved: false, attemptsAllowed: 0, attemptsUsed: 0 });
+  });
+
+  it("when the tests fail without repair consent: no further model call or sandbox session, and an accurate result", async () => {
+    const id = (await start({ maxIterations: 3 })).body.data.id;
+    const provider = new ScriptedProvider([EDIT, REPAIR]);
+    await work(provider);
+    expect((await post(executeRoute.POST, id, "execute", { install: false })).status).toBe(200);
+    const sandbox = await work(provider, new FakeSandbox({ test: [{ exitCode: 1, output: "FAIL login\n" }, { exitCode: 0 }] }));
+
+    expect(provider.editCalls).toHaveLength(1); // the original change only
+    expect(sandbox.calls).toEqual(["test", "close"]); // one sandbox session
+    const r = (await detail(id)).body.data;
+    expect(r).toMatchObject({ status: "READY_FOR_REVIEW", iteration: 1, maxIterations: 3, hasPatch: true });
+    expect(r.repair).toEqual({ approved: false, attemptsAllowed: 0, attemptsUsed: 0 });
+    expect(r.executions).toEqual([expect.objectContaining({ kind: "TEST", exitCode: 1, output: "FAIL login\n" })]);
+    expect(r.events.map((e: any) => e.toStatus)).not.toContain("REPAIRING");
+    expect(r.events.at(-1).message).toBe("The tests failed (exit code 1). Ready for review (repair attempts were not approved; not repaired).");
+    // The unrepaired change is what the user reviews and downloads.
+    expect(await (await patch(id)).text()).toContain("+  return user.trim().length > 0;");
+  });
+
+  it("with repair consent: bounded repairs within the configured budget, attempts counted", async () => {
+    const id = (await start({ maxIterations: 3 })).body.data.id;
+    const provider = new ScriptedProvider([EDIT, REPAIR, REPAIR_2]);
+    await work(provider);
+    const approved = await post(executeRoute.POST, id, "execute", { install: false, repair: true });
+    expect(approved.status).toBe(200);
+    expect(approved.body.data).toMatchObject({ status: "TESTING", maxIterations: 3, iteration: 1 });
+    expect(approved.body.data.repair).toEqual({ approved: true, attemptsAllowed: 2, attemptsUsed: 0 });
+    expect(approved.body.data.events.at(-1).message).toMatch(/Repair attempts allowed if the tests fail \(up to 2\)/);
+    // Every test run fails: the engine repairs until the configured budget (3 iterations) is used up.
+    const sandbox = await work(provider, new FakeSandbox({ test: [{ exitCode: 1 }] }));
+
+    expect(provider.editCalls).toHaveLength(3); // the change and two repairs, then the budget stops it
+    expect(sandbox.calls).toEqual(["test", "close", "test", "close", "test", "close"]);
+    const r = (await detail(id)).body.data;
+    expect(r).toMatchObject({ status: "READY_FOR_REVIEW", iteration: 3, maxIterations: 3 });
+    expect(r.executions.map((e: any) => [e.kind, e.iteration, e.exitCode])).toEqual([
+      ["TEST", 1, 1],
+      ["TEST", 2, 1],
+      ["TEST", 3, 1],
+    ]);
+    expect(await (await patch(id)).text()).toContain("+  return user.trim().length > 2;");
+    expect(r.repair).toEqual({ approved: true, attemptsAllowed: 2, attemptsUsed: 2 });
+    expect(r.events.at(-1).message).toBe("The tests failed (exit code 1). Ready for review, no repair attempts left.");
   });
 
   it("enforces authentication, ownership, the Origin check and the rate limit on every endpoint", async () => {

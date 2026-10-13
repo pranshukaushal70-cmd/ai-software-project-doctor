@@ -96,7 +96,7 @@ export function world(): FakeData {
     finishedAt: null,
     ...over,
   });
-  const ev = (runId: string, n: number, toStatus: string | null, message: string, actor = "worker", fromStatus: string | null = null) => ({
+  const ev = (runId: string, n: number, toStatus: string | null, message: string, actor = "worker", fromStatus: string | null = null, data: unknown = null) => ({
     id: `${runId}-e${String(n).padStart(2, "0")}`,
     runId,
     type: toStatus ? "status" : "created",
@@ -104,6 +104,7 @@ export function world(): FakeData {
     fromStatus,
     toStatus,
     message,
+    data,
     createdAt: t(40 + n),
   });
   const applied = (runId: string) => [
@@ -176,12 +177,14 @@ export function world(): FakeData {
     events: [
       ...startEvents("run-passed"),
       ev("run-passed", 5, "AWAITING_APPROVAL", "Waiting for approval to run npm test in the sandbox.", "worker", "APPLYING"),
-      ev("run-passed", 6, "TESTING", "Approved: run npm test.", "user", "AWAITING_APPROVAL"),
+      ev("run-passed", 6, "TESTING", "Approved: run npm test. Repair attempts not allowed: if the tests fail, the result goes to review unchanged.", "user", "AWAITING_APPROVAL", { install: null, test: "npm-test", repair: false, repairAttempts: 0 }),
       ev("run-passed", 7, "READY_FOR_REVIEW", "Tests passed. Ready for review.", "worker", "TESTING"),
       ...startEvents("run-failed-tests"),
       ev("run-failed-tests", 5, "AWAITING_APPROVAL", "Waiting for approval.", "worker", "APPLYING"),
-      ev("run-failed-tests", 6, "TESTING", "Approved: run npm test.", "user", "AWAITING_APPROVAL"),
-      ev("run-failed-tests", 7, "READY_FOR_REVIEW", "The tests failed (exit code 1). Ready for review, no repair attempts left.", "worker", "TESTING"),
+      ev("run-failed-tests", 6, "TESTING", "Approved: run npm test. Repair attempts allowed if the tests fail (up to 1).", "user", "AWAITING_APPROVAL", { install: null, test: "npm-test", repair: true, repairAttempts: 1 }),
+      ev("run-failed-tests", 7, "REPAIRING", "Repair attempt 1.", "worker", "TESTING"),
+      ev("run-failed-tests", 8, "TESTING", "Re-running the approved tests on the repaired change.", "worker", "APPLYING"),
+      ev("run-failed-tests", 9, "READY_FOR_REVIEW", "The tests failed (exit code 1). Ready for review, no repair attempts left.", "worker", "TESTING"),
       ...startEvents("run-untested"),
       ev("run-untested", 5, "READY_FOR_REVIEW", "Ready for review. Tests not run: Sandboxed test runs are disabled on this server.", "worker", "APPLYING"),
       ...startEvents("run-skipped"),

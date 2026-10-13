@@ -47,18 +47,23 @@ It proves plumbing, gates and safety checks, not planning or editing quality.
 | `api/analysis` | 2–5 | Demo analysis through the worker; every planted issue at its file; files, dependencies (OSV off), architecture cycle; triage set and cleared; another user gets 404 everywhere; ZIP upload analysed; path-traversal archive fails safely |
 | `api/intelligence` | 6 | Manifest (no secret values), modules, symbols, references, importers, impact, agent context; path validation; isolation |
 | `api/engine` | 7–8 | Plan via the stub (provider, model, validation; the planner sees no file contents); provider error and refusal end the plan with safe messages; gate 1 (no run before approval, 404/403); edits only to the planned file (the editor sees only the scope); gate 2 (no execution while the sandbox is off; with `E2E_SANDBOX=1`, `npm test` runs without network and passes); install step refused; patch is a private attachment that `git apply` applies to the fixture, whose tests still pass; discard deletes it |
+| `api/repair` | 8 (M1) | Repair policy on the failing fixture: sandbox off, nothing runs and no decision is recorded; with `E2E_SANDBOX=1`, failing tests without consent go to review with no repair model call (stub request log) and one test run, and with consent repairs stop at the configured budget; the run's status, audit messages and report (decision, attempts allowed and used, iterations used of configured) match |
 | `api/reports` | 9 | Analysis, plan and run reports; de-duplication; latest; exports (headers, no secrets, no diffs); isolation; strict validation |
 | `ui/app` | 1, 5, 6, 8, 9 | Sign-up and redirects; demo analysis started from the UI and every tab rendered; Intelligence tab; 390 px without horizontal scrolling; planner shows the reviewed run, report opens, Reports page; no page or console errors |
+| `ui/repair-consent` | 8 (M1) | With `E2E_SANDBOX=1`: the repair checkbox is unticked by default; the approval request carries `{install:false, repair:false}`, or `repair:true` once ticked, and the server records the same decision; no page or console errors |
 
 `E2E_SANDBOX` must match the stack: the engine spec asserts the run's `sandbox.enabled` against it, so a misconfigured
 stack fails rather than silently skipping the sandbox checks.
 
-**Fixture.** [e2e/fixtures/tiny-node](../e2e/fixtures/tiny-node) is a dependency-free Node project whose `npm test`
-passes without the install step. `.gitattributes` keeps fixture files LF on every platform, because the analyzer and the
+**Fixtures.** [e2e/fixtures/tiny-node](../e2e/fixtures/tiny-node) is a dependency-free Node project whose `npm test`
+passes without the install step; [tiny-node-failing](../e2e/fixtures/tiny-node-failing) is the same shape with a planted
+bug, so its tests always fail (the stub's comment-only edits never fix it) and the repair specs' outcomes are
+deterministic. `.gitattributes` keeps fixture files LF on every platform, because the analyzer and the
 code engine see bytes (hashes, line numbers and patches would otherwise differ on Windows checkouts).
 
-**Users and rate limits.** Global setup creates two users (`owner`, `intruder`) and a browser session; the browser spec
-signs up one more. The web tier's rate limits (five sign-ups per hour per client address, per-user budgets for analyses,
+**Users and rate limits.** Global setup creates three users (`owner`, `intruder`, and `repair` for the repair-policy
+specs, whose runs would otherwise exceed the owner's per-user engine budget of 10 per hour) and browser sessions for
+`owner` and `repair`; the browser spec signs up one more. The web tier's rate limits (five sign-ups per hour per client address, per-user budgets for analyses,
 plans and runs) would stop a second run against the same stack, so `npm run e2e` first clears the limiter counters
 (`rl:*` keys) in the e2e stack's own Redis (`node scripts/e2e.mjs reset`); the job queues are not touched, and the
 limits themselves are unchanged and covered by unit tests. Playwright runs with one worker so analyses can be shared

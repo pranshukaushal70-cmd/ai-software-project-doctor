@@ -1,0 +1,9 @@
+{
+  "name": "tiny-node-failing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dependency-free fixture whose own tests fail (a planted bug in subtract): end-to-end checks of the code engine's repair policy.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

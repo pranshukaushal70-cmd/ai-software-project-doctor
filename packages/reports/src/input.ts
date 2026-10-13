@@ -79,6 +79,8 @@ export interface RunInput {
   outputTokens: number;
   testCommand: string | null;
   installApproved: boolean;
+  /** Repairs after failing tests: the decision at the test approval (null when not approved or not recorded), the attempts it allowed, and the attempts used. */
+  repair: { approved: boolean | null; attemptsAllowed: number | null; attemptsUsed: number };
   executionApprovedAt: Date | null;
   cancelRequestedAt: Date | null;
   failureReason: string | null;

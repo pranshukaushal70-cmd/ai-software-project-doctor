@@ -128,6 +128,12 @@ export function fakeDb(f: Fixture) {
     engineeringRunEvent: {
       create: async ({ data }: { data: Row }) => void events.push({ id: id("ev"), createdAt: new Date(), ...data }),
       findMany: async ({ where }: { where: Row }) => events.filter((e) => e.runId === where.runId).map((e) => ({ ...e })),
+      // Latest matching event (events are kept in creation order).
+      findFirst: async ({ where }: { where: Row }) => {
+        const hit = events.filter((e) => matches(e, where)).at(-1);
+        return hit ? { ...hit } : null;
+      },
+      count: async ({ where }: { where: Row }) => events.filter((e) => matches(e, where)).length,
     },
     engineeringChange: {
       createMany: async ({ data }: { data: Row[] }) => {

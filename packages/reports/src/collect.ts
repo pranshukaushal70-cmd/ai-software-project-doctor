@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@pd/db";
+import { readRepairState, type PrismaClient } from "@pd/db";
 import { AppError, type ReportTypeName } from "@pd/shared";
 import type { FindingRow, PlanInput, ReportInput, RunInput } from "./input";
 
@@ -197,9 +197,11 @@ function loadRun(prisma: ReportPrisma, userId: string, runId: string) {
 }
 
 async function loadRunDetails(prisma: ReportPrisma, run: NonNullable<Awaited<ReturnType<typeof loadRun>>>): Promise<RunInput> {
-  const [hasPatch, events, changes, executions] = await Promise.all([
+  const [hasPatch, repair, events, changes, executions] = await Promise.all([
     // Whether a patch is stored, without reading it: reports never copy code.
     prisma.engineeringRun.count({ where: { id: run.id, patch: { not: null } } }),
+    // Read from the approval event and the whole audit log: the event list below may leave them out.
+    readRepairState(prisma, run.id),
     // The most recent events (one extra to detect truncation), restored to chronological order below.
     prisma.engineeringRunEvent.findMany({
       where: { runId: run.id },
@@ -224,6 +226,7 @@ async function loadRunDetails(prisma: ReportPrisma, run: NonNullable<Awaited<Ret
   return {
     ...fields,
     hasPatch: hasPatch > 0,
+    repair,
     events: events.slice(0, RUN_EVENTS).reverse(),
     eventsTruncated: events.length > RUN_EVENTS,
     changes: changes.slice(0, RUN_CHANGES),

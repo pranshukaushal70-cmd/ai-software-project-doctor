@@ -10,7 +10,7 @@ import {
   type ControlDeps,
 } from "@pd/engine/control";
 import { providerEnvFrom } from "@pd/agent";
-import { getPrisma } from "@pd/db";
+import { getPrisma, readRepairState } from "@pd/db";
 import { loadSandboxConfig, type TestSetup } from "@pd/sandbox";
 import { ACTIVE_RUN_STATUSES, AppError, loadLimits, type EngineeringRunInput, type EngineeringRunStatus, type ExecutionApproval } from "@pd/shared";
 import { createLogger } from "@pd/shared/logger";
@@ -104,8 +104,9 @@ export async function listRuns(userId: string, planId: string) {
 export async function getRun(userId: string, runId: string) {
   const prisma = getPrisma();
   const run = await ownedRun(prisma, userId, runId);
-  const [detail, events, changes, executions] = await Promise.all([
+  const [detail, repair, events, changes, executions] = await Promise.all([
     prisma.engineeringRun.findUniqueOrThrow({ where: { id: run.id }, select: { summary: true, notes: true, patch: true } }),
+    readRepairState(prisma, run.id),
     prisma.engineeringRunEvent.findMany({ where: { runId: run.id }, orderBy: { createdAt: "asc" }, take: 300, select: { type: true, actor: true, fromStatus: true, toStatus: true, message: true, createdAt: true } }),
     prisma.engineeringChange.findMany({
       where: { runId: run.id },
@@ -126,6 +127,8 @@ export async function getRun(userId: string, runId: string) {
     summary: detail.summary,
     notes: (detail.notes as string[] | null) ?? [],
     hasPatch: !!detail.patch,
+    /** Repairs after failing tests: the user's decision at the test approval (null before or without one), the attempts it allowed, and the attempts used. */
+    repair,
     testSetup: setupView(testSetup as TestSetup | null),
     sandbox: { enabled: sandbox.enabled, installEnabled: sandbox.installEnabled },
     events,

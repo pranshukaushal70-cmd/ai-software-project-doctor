@@ -49,6 +49,11 @@ export interface RunDto {
   summary: string | null;
   notes: string[];
   hasPatch: boolean;
+  /**
+   * Repairs after failing tests: the user's decision at the test approval (null before, or
+   * without, a recorded decision), the attempts the run's budget allowed then, and those used.
+   */
+  repair: { approved: boolean | null; attemptsAllowed: number | null; attemptsUsed: number };
   testSetup: {
     id: string;
     runtime: string;
@@ -132,7 +137,7 @@ export function Diff({ text }: { text: string }) {
 }
 
 export interface RunActions {
-  approve(install: boolean): void;
+  approve(install: boolean, repair: boolean): void;
   skip(): void;
   cancel(): void;
   discard(): void;
@@ -140,6 +145,7 @@ export interface RunActions {
 
 export function RunView({ run, actions, busy = false }: { run: RunDto; actions?: RunActions; busy?: boolean }) {
   const [install, setInstall] = useState(false);
+  const [repair, setRepair] = useState(false);
   const status = RUN_STATUS[run.status];
   const canCancel = run.inProgress || run.status === "AWAITING_APPROVAL";
   const applied = run.changes.filter((c) => c.status === "APPLIED");
@@ -147,6 +153,7 @@ export function RunView({ run, actions, busy = false }: { run: RunDto; actions?:
   const latestIteration = Math.max(0, ...run.changes.map((c) => c.iteration));
   const setup = run.testSetup;
   const installOffered = !!setup?.install && run.sandbox.installEnabled;
+  const repairsLeft = Math.max(0, run.maxIterations - run.iteration);
 
   return (
     <div className="space-y-4">
@@ -158,7 +165,7 @@ export function RunView({ run, actions, busy = false }: { run: RunDto; actions?:
               {status.label}
             </Badge>
             <span className="text-xs text-muted-foreground">
-              Iteration {run.iteration} of {run.maxIterations} · {run.inputTokens + run.outputTokens} of {run.tokenBudget} tokens · {run.provider} · {run.model}
+              Iterations: {run.iteration} used of {run.maxIterations} configured · {run.inputTokens + run.outputTokens} of {run.tokenBudget} tokens · {run.provider} · {run.model}
             </span>
             {run.cancelRequestedAt && run.inProgress && <Badge tone="medium">Cancelling…</Badge>}
             {canCancel && actions && (
@@ -167,6 +174,13 @@ export function RunView({ run, actions, busy = false }: { run: RunDto; actions?:
               </Button>
             )}
           </div>
+          {run.repair.approved !== null && (
+            <p className="text-xs text-muted-foreground">
+              {run.repair.approved
+                ? `Repair attempts after failing tests: allowed by you, up to ${run.repair.attemptsAllowed ?? 0}; ${run.repair.attemptsUsed} used.`
+                : `Repair attempts after failing tests: not allowed (${run.repair.attemptsUsed} used). A test failure goes to review as it is.`}
+            </p>
+          )}
           {run.summary && <p className="text-sm break-words">{run.summary}</p>}
           {run.status === "FAILED" && (
             <p className="text-sm text-sev-critical break-words" role="alert">
@@ -237,9 +251,25 @@ export function RunView({ run, actions, busy = false }: { run: RunDto; actions?:
             {setup.needsInstall && !install && (
               <p className="text-xs text-sev-medium">{installOffered ? "The tests probably need their dependencies installed." : "The tests probably need dependencies, and the install step is disabled on this server, so they may fail."}</p>
             )}
+            {repairsLeft > 0 ? (
+              <label className="flex items-start gap-2 rounded-md border p-2">
+                <input type="checkbox" className="mt-0.5" checked={repair} onChange={(e) => setRepair(e.target.checked)} />
+                <span className="min-w-0">
+                  <span className="font-medium">
+                    Allow up to {repairsLeft} repair attempt{repairsLeft === 1 ? "" : "s"} if the tests fail
+                  </span>
+                  <span className="mt-1 block text-xs text-sev-medium">
+                    Each attempt asks the model for another change, applies it and runs the approved {installOffered && install ? "install and tests" : "tests"} again in the sandbox, without showing you the
+                    repaired code first. Left off, a test failure goes to review as it is.
+                  </span>
+                </span>
+              </label>
+            ) : (
+              <p className="text-xs text-muted-foreground">This run&apos;s budget has no repair attempts left: a test failure goes to review as it is.</p>
+            )}
             {actions && (
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" disabled={busy} onClick={() => actions.approve(installOffered && install)}>
+                <Button size="sm" disabled={busy} onClick={() => actions.approve(installOffered && install, repairsLeft > 0 && repair)}>
                   <Play className="size-4" /> Approve and run tests
                 </Button>
                 <Button size="sm" variant="outline" disabled={busy} onClick={actions.skip}>

@@ -5,7 +5,7 @@ import { buildEditContext, deriveEditScope, runEditor, unifiedDiff, type CodeEdi
 import { checkChanges } from "@pd/agent/checks";
 import { createWorkspace, fetchCommit, runGit, verifyFiles, type FileKind, type Workspace } from "@pd/analyzer";
 import { redactSecrets } from "@pd/analyzer/evidence";
-import { transitionRun, type Prisma, type PrismaClient } from "@pd/db";
+import { readRepairApproval, transitionRun, type Prisma, type PrismaClient } from "@pd/db";
 import { resolveTestSetup, type ExecutionResult, type SandboxConfig, type SandboxDriver, type TestSetup } from "@pd/sandbox";
 import { isTerminalRunStatus, type AnalyzerLimits, type EngineeringRunStatus } from "@pd/shared";
 import type { Logger } from "@pd/shared/logger";
@@ -23,8 +23,9 @@ import { readWorkspaceFile, writeWorkspaceFile } from "./workspace-files";
  *   supported test setup, hand the result over for review (READY_FOR_REVIEW).
  * - "execute": after the approval, rebuild the source, apply the stored patch with
  *   `git apply` (which also proves the downloadable patch applies), install (if
- *   approved) and run the tests in the sandbox, and repair failures within the run's
- *   iteration, token and time budgets.
+ *   approved) and run the tests in the sandbox. Failing tests are repaired only when
+ *   the user allowed repair attempts at the approval, and then within the run's
+ *   iteration, token and time budgets; otherwise the result goes to review as it is.
  *
  * Workspaces never outlive a job: a run that waits for the user is rebuilt from
  * stored data. Every status change goes through transitionRun (lifecycle and
@@ -349,8 +350,11 @@ class RunJob {
         : setup.needsInstall && !this.run.installApproved
           ? "the tests need their dependencies, and the install step was not approved"
           : null;
-      const canRepair = !environment && this.iteration < this.run.maxIterations && this.tokens < this.run.tokenBudget && Date.now() < this.deadline;
-      if (!canRepair) return void (await this.move("READY_FOR_REVIEW", `${why} Ready for review${environment ? ` (${environment}; not repaired)` : ", no repair attempts left"}.`));
+      // A repair applies and tests model-written code the user has not seen: only with the consent
+      // recorded at the approval. transitionRun refuses TESTING → REPAIRING without it as well.
+      const notRepaired = environment ?? ((await readRepairApproval(this.deps.prisma, this.run.id)) === true ? null : "repair attempts were not approved");
+      const canRepair = !notRepaired && this.iteration < this.run.maxIterations && this.tokens < this.run.tokenBudget && Date.now() < this.deadline;
+      if (!canRepair) return void (await this.move("READY_FOR_REVIEW", `${why} Ready for review${notRepaired ? ` (${notRepaired}; not repaired)` : ", no repair attempts left"}.`));
 
       const repaired = await this.generate({ iteration: this.iteration, previousDiff: truncate(this.patch ?? "", REPAIR_DIFF_BYTES), problems: [why], testOutput: tail(test.output, REPAIR_OUTPUT_BYTES) });
       if (!repaired) return;

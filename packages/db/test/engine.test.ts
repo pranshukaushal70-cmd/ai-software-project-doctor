@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ENGINEERING_RUN_STATUSES } from "@pd/shared/engine";
-import { transitionRun } from "../src/engine";
+import { readRepairApproval, readRepairState, transitionRun } from "../src/engine";
 import { EngineeringRunStatus } from "../src/generated/prisma/enums";
 
 type Row = Record<string, any>;
@@ -9,8 +9,18 @@ type Row = Record<string, any>;
 const matches = (row: Row, where: Row) =>
   Object.entries(where).every(([k, v]) => (v && typeof v === "object" && "not" in v ? row[k] !== v.not && row[k] != null : row[k] === v));
 
-function fakeDb(run: Row) {
-  const events: Row[] = [];
+/** Interprets the event filters of readRepairApproval / readRepairState: equality and `{ in: [...] }`. */
+const matchesEvent = (e: Row, where: Row) =>
+  Object.entries(where).every(([k, v]) => (v && typeof v === "object" && "in" in v ? (v.in as unknown[]).includes(e[k]) : e[k] === v));
+
+function fakeDb(run: Row, seeded: Row[] = []) {
+  const events: Row[] = [...seeded];
+  const eventApi = {
+    create: async ({ data }: { data: Row }) => void events.push(data),
+    // Latest matching event (kept in creation order).
+    findFirst: async ({ where }: { where: Row }) => events.filter((e) => matchesEvent(e, where)).at(-1) ?? null,
+    count: async ({ where }: { where: Row }) => events.filter((e) => matchesEvent(e, where)).length,
+  };
   const tx = {
     engineeringRun: {
       updateMany: async ({ where, data }: { where: Row; data: Row }) => {
@@ -19,10 +29,13 @@ function fakeDb(run: Row) {
         return { count: 1 };
       },
     },
-    engineeringRunEvent: { create: async ({ data }: { data: Row }) => void events.push(data) },
+    engineeringRunEvent: eventApi,
   };
-  return { run, events, client: { $transaction: (fn: (t: typeof tx) => Promise<unknown>) => fn(tx) } as any };
+  return { run, events, client: { $transaction: (fn: (t: typeof tx) => Promise<unknown>) => fn(tx), engineeringRunEvent: eventApi } as any };
 }
+
+/** A user's test approval event, as approveExecution records it. */
+const approvalEvent = (runId: string, data: Row | null, toStatus = "TESTING") => ({ runId, type: "status", actor: "user", fromStatus: "AWAITING_APPROVAL", toStatus, message: "Approved.", data });
 
 const baseRun = (over: Row = {}): Row => ({ id: "r1", status: "QUEUED", executionApprovedAt: null, installApproved: false, finishedAt: null, ...over });
 
@@ -89,5 +102,48 @@ describe("transitionRun", () => {
       expect(db.run).toMatchObject({ status: "INSTALLING", installApproved: true });
       expect(await transitionRun(db.client, "r1", { from: "INSTALLING", to: "TESTING", actor: "worker", message: "Dependencies installed." })).toBe(true);
     });
+
+    it("refuses a repair after failing tests unless this run's test approval recorded consent", async () => {
+      const tested = () => baseRun({ status: "TESTING", executionApprovedAt: new Date(1) });
+      const repair = { from: "TESTING" as const, to: "REPAIRING" as const, actor: "worker" as const, message: "Repair attempt 1." };
+      // Another run's consent does not count, nor does a missing or legacy decision.
+      for (const seeded of [[], [approvalEvent("r2", { repair: true })], [approvalEvent("r1", { repair: false }), approvalEvent("r2", { repair: true })], [approvalEvent("r1", null)], [approvalEvent("r1", { test: "npm-test" })]]) {
+        const db = fakeDb(tested(), seeded);
+        expect(await transitionRun(db.client, "r1", repair)).toBe(false);
+        expect(db.run.status).toBe("TESTING");
+        expect(db.events).toHaveLength(seeded.length); // nothing recorded
+      }
+      const db = fakeDb(tested(), [approvalEvent("r2", { repair: false }), approvalEvent("r1", { repair: true }, "INSTALLING")]);
+      expect(await transitionRun(db.client, "r1", repair)).toBe(true);
+      expect(db.run.status).toBe("REPAIRING");
+      // Repairs of changes that failed validation (no test approval involved) are not affected.
+      const validating = fakeDb(baseRun({ status: "VALIDATING" }));
+      expect(await transitionRun(validating.client, "r1", { from: "VALIDATING", to: "REPAIRING", actor: "worker", message: "Repair attempt 1." })).toBe(true);
+    });
+  });
+});
+
+describe("repair decision and attempts", () => {
+  it("are read from the right run's approval event and audit log only", async () => {
+    const status = (runId: string, from: string, to: string, actor = "worker") => ({ runId, type: "status", actor, fromStatus: from, toStatus: to, message: "x", data: null });
+    const { client } = fakeDb(baseRun(), [
+      approvalEvent("r1", { install: null, test: "npm-test", repair: true, repairAttempts: 2 }),
+      status("r1", "TESTING", "REPAIRING"),
+      status("r1", "REPAIRING", "VALIDATING"),
+      status("r1", "VALIDATING", "REPAIRING"), // a validation repair is not a repair after failing tests
+      // Other runs: a refusal, a skip (not an approval), a worker move out of AWAITING_APPROVAL, extra repairs.
+      approvalEvent("r2", { repair: false, repairAttempts: 0 }),
+      status("r2", "TESTING", "REPAIRING"),
+      { ...status("r3", "AWAITING_APPROVAL", "READY_FOR_REVIEW", "user"), data: { repair: true } },
+      { ...status("r4", "AWAITING_APPROVAL", "CANCELLED", "worker"), data: { repair: true } },
+      approvalEvent("r5", { test: "npm-test" }), // approved before the decision was recorded
+    ]);
+    expect(await readRepairState(client, "r1")).toEqual({ approved: true, attemptsAllowed: 2, attemptsUsed: 1 });
+    expect(await readRepairState(client, "r2")).toEqual({ approved: false, attemptsAllowed: 0, attemptsUsed: 1 });
+    expect(await readRepairState(client, "r3")).toEqual({ approved: null, attemptsAllowed: null, attemptsUsed: 0 });
+    expect(await readRepairState(client, "r4")).toEqual({ approved: null, attemptsAllowed: null, attemptsUsed: 0 });
+    expect(await readRepairState(client, "r5")).toEqual({ approved: null, attemptsAllowed: null, attemptsUsed: 0 });
+    expect(await readRepairState(client, "unknown")).toEqual({ approved: null, attemptsAllowed: null, attemptsUsed: 0 });
+    expect([await readRepairApproval(client, "r1"), await readRepairApproval(client, "r2"), await readRepairApproval(client, "r3")]).toEqual([true, false, null]);
   });
 });

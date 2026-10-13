@@ -230,8 +230,12 @@ export const engineeringRunInputSchema = z
   .strict();
 export type EngineeringRunInput = z.infer<typeof engineeringRunInputSchema>;
 
-/** Approving the sandboxed test run: the separate install step is opted into explicitly. */
-export const executionApprovalSchema = z.object({ install: z.boolean().default(false) }).strict();
+/**
+ * Approving the sandboxed test run. Both extras are opted into explicitly and default to false:
+ * the separate install step (network access), and repair attempts after failing tests (the
+ * model's repaired code is applied and tested without being shown to the user first).
+ */
+export const executionApprovalSchema = z.object({ install: z.boolean().default(false), repair: z.boolean().default(false) }).strict();
 export type ExecutionApproval = z.infer<typeof executionApprovalSchema>;
 
 // ---------------------------------------------------------------- reports (Phase 9)

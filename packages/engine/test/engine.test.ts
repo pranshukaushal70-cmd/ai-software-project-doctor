@@ -244,13 +244,57 @@ describe("execute job", () => {
     expect(statuses().slice(-2)).toEqual(["TESTING", "READY_FOR_REVIEW"]);
   });
 
-  it("repairs failing tests within the budget, re-running install and tests in a fresh sandbox", async () => {
+  /** The user's move out of AWAITING_APPROVAL: the approval event with its recorded decisions. */
+  const approvalEvent = () => db.events.find((e) => e.type === "status" && e.actor === "user" && e.fromStatus === "AWAITING_APPROVAL")!;
+
+  it("does not repair failing tests without the user's consent: no further model call or sandbox session", async () => {
+    const fake = new FakeSandbox({ test: [{ exitCode: 1, output: "FAIL login\n" }, { exitCode: 0 }] });
+    const provider = new ScriptedProvider([FIRST, SECOND]);
+    const id = await awaiting(provider, fake, { maxIterations: 2 });
+    // Consent defaults to no: the API's default, and the control's when the field is absent.
+    await approveExecution(control(), "u1", id, { install: false });
+    expect(approvalEvent().data).toMatchObject({ repair: false, repairAttempts: 0 });
+    expect(approvalEvent().message).toMatch(/Repair attempts not allowed/);
+    // The configured budget is left as it was: the decision, not the budget, blocks repairs.
+    expect(run()).toMatchObject({ maxIterations: 2, iteration: 1 });
+    await runEngineJob(id, "execute", engine(provider, fake));
+
+    expect(run()).toMatchObject({ status: "READY_FOR_REVIEW", iteration: 1, maxIterations: 2 });
+    expect(db.events.at(-1)!.message).toBe("The tests failed (exit code 1). Ready for review (repair attempts were not approved; not repaired).");
+    expect(statuses().slice(-2)).toEqual(["TESTING", "READY_FOR_REVIEW"]);
+    expect(statuses()).not.toContain("REPAIRING");
+    expect(provider.editCalls).toHaveLength(1); // the original generation only
+    expect(fake.calls).toEqual(["test", "close"]); // one sandbox session
+    expect(db.executions.map((e) => [e.kind, e.iteration, e.exitCode])).toEqual([["TEST", 1, 1]]);
+    // The failing change stays reviewable and downloadable, unchanged.
+    expect(await applyDownloadedPatch(run().patch)).toContain("return user.trim().length > 0;");
+  });
+
+  it("does not repair a run whose approval recorded no repair decision, although the budget allows it", async () => {
+    // An approval made before the decision existed has no `repair` in its event: treated as no consent.
+    const fake = new FakeSandbox({ test: [{ exitCode: 1 }, { exitCode: 0 }] });
+    const provider = new ScriptedProvider([FIRST, SECOND]);
+    const id = await awaiting(provider, fake, { maxIterations: 2 });
+    await approveExecution(control(), "u1", id, { install: false });
+    delete approvalEvent().data.repair;
+    expect(run().maxIterations).toBe(2);
+    await runEngineJob(id, "execute", engine(provider, fake));
+    expect(run()).toMatchObject({ status: "READY_FOR_REVIEW", iteration: 1 });
+    expect(provider.editCalls).toHaveLength(1);
+    expect(fake.calls).toEqual(["test", "close"]);
+    expect(db.events.at(-1)!.message).toMatch(/repair attempts were not approved; not repaired/);
+  });
+
+  it("repairs failing tests within the budget when the user allowed it, re-running install and tests in a fresh sandbox", async () => {
     const fake = new FakeSandbox({ install: { output: "added 0 packages\n" }, test: [{ exitCode: 1, output: "FAIL login\n" }, { exitCode: 0 }] }, { installEnabled: true });
     const provider = new ScriptedProvider([FIRST, SECOND]);
     const id = await awaiting(provider, fake, { maxIterations: 2 });
     // The setup has no install step (no dependencies), so pretend the approved setup had one.
     run().testSetup = { ...(run().testSetup as TestSetup), install: { id: "npm-ci", argv: ["npm", "ci"], display: "npm ci", env: {} } };
-    await approveExecution(control(), "u1", id, { install: true });
+    await approveExecution(control(), "u1", id, { install: true, repair: true });
+    expect(approvalEvent().data).toMatchObject({ install: "npm-ci", repair: true, repairAttempts: 1 });
+    expect(approvalEvent().message).toMatch(/Repair attempts allowed if the tests fail \(up to 1\)/);
+    expect(run().maxIterations).toBe(2); // consent keeps the budget
     await runEngineJob(id, "execute", engine(provider, fake));
 
     expect(run()).toMatchObject({ status: "READY_FOR_REVIEW", iteration: 2, installApproved: true });
@@ -267,13 +311,31 @@ describe("execute job", () => {
     expect(await applyDownloadedPatch(run().patch)).toContain("return user.trim().length > 1;");
   });
 
-  it("stops repairing when the iteration budget is used up", async () => {
-    const fake = new FakeSandbox({ test: [{ exitCode: 1 }] });
+  it("stops repairing when the iteration budget is used up, even with consent", async () => {
+    const fake = new FakeSandbox({ test: [{ exitCode: 1 }, { exitCode: 1 }, { exitCode: 0 }] });
     const id = await awaiting(new ScriptedProvider([FIRST]), fake, { maxIterations: 1 });
-    await approveExecution(control(), "u1", id, { install: false });
-    await runEngineJob(id, "execute", engine(new ScriptedProvider([SECOND]), fake));
+    await approveExecution(control(), "u1", id, { install: false, repair: true });
+    expect(approvalEvent().data).toMatchObject({ repair: true, repairAttempts: 0 });
+    const provider = new ScriptedProvider([SECOND]);
+    await runEngineJob(id, "execute", engine(provider, fake));
     expect(run()).toMatchObject({ status: "READY_FOR_REVIEW", iteration: 1 });
     expect(db.events.at(-1)!.message).toMatch(/no repair attempts left/);
+    expect(provider.editCalls).toHaveLength(0);
+    expect(fake.calls).toEqual(["test", "close"]);
+
+    // With consent and a budget of 2, exactly one repair round runs and the budget then stops it.
+    db.runs.length = 0;
+    db.events.length = 0;
+    db.executions.length = 0;
+    const fake2 = new FakeSandbox({ test: [{ exitCode: 1 }, { exitCode: 1 }, { exitCode: 0 }] });
+    const provider2 = new ScriptedProvider([FIRST, SECOND]);
+    const id2 = await awaiting(provider2, fake2, { maxIterations: 2 });
+    await approveExecution(control(), "u1", id2, { install: false, repair: true });
+    await runEngineJob(id2, "execute", engine(provider2, fake2));
+    expect(run()).toMatchObject({ status: "READY_FOR_REVIEW", iteration: 2 });
+    expect(provider2.editCalls).toHaveLength(2);
+    expect(fake2.calls).toEqual(["test", "close", "test", "close"]);
+    expect(db.events.at(-1)!.message).toBe("The tests failed (exit code 1). Ready for review, no repair attempts left.");
   });
 
   it("does not spend a repair round when the tests lack their dependencies", async () => {

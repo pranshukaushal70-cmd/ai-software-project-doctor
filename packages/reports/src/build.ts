@@ -312,6 +312,9 @@ function runSection(r: RunInput): RunSection {
     execution: {
       approvedAt: iso(r.executionApprovedAt),
       installApproved: r.installApproved,
+      repairApproved: r.repair.approved,
+      repairAttemptsAllowed: r.repair.attemptsAllowed,
+      repairAttemptsUsed: r.repair.attemptsUsed,
       testCommand: str(obj(setup?.test)?.display),
       installCommand: str(obj(setup?.install)?.display),
       image: str(setup?.image),

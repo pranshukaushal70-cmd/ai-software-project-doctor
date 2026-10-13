@@ -32,6 +32,13 @@ const STATE: Record<CheckState, string> = {
 
 const e = escapeMarkdown;
 const list = (items: string[], empty = "None.") => (items.length ? items.map((i) => `- ${i}`).join("\n") : empty);
+/** The user's decision on repairs after failing tests, with the attempts allowed and used (older snapshots: decision only, or none). */
+const repairDecision = (x: { repairApproved?: boolean | null; repairAttemptsAllowed?: number | null; repairAttemptsUsed?: number }) => {
+  const used = x.repairAttemptsUsed === undefined ? "" : `; ${x.repairAttemptsUsed} used`;
+  if (x.repairApproved === true) return `allowed by the user${x.repairAttemptsAllowed == null ? "" : `, up to ${x.repairAttemptsAllowed}`}${used}`;
+  if (x.repairApproved === false) return `not allowed${used}`;
+  return "not recorded";
+};
 
 export function renderMarkdown(r: ReportData, meta: { id: string; generatedAt: string }): string {
   const out: string[] = [];
@@ -85,9 +92,10 @@ export function renderMarkdown(r: ReportData, meta: { id: string; generatedAt: s
     out.push(
       list([
         `Status: ${e(run.status.toLowerCase().replace(/_/g, " "))}${run.error ? ` (${e(run.error)})` : ""}`,
-        `Iterations: ${run.usage.iterations} of ${run.budgets.maxIterations}; tokens ${run.usage.inputTokens + run.usage.outputTokens} of ${run.budgets.tokenBudget}`,
+        `Iterations: ${run.usage.iterations} used of ${run.budgets.maxIterations} configured; tokens ${run.usage.inputTokens + run.usage.outputTokens} of ${run.budgets.tokenBudget}`,
         `Review: ${e(run.review.state.replace(/_/g, " "))}`,
         `Test command approved: ${run.execution.approvedAt ? `${e(run.execution.testCommand ?? "unknown")} at ${e(run.execution.approvedAt)}` : "no"}`,
+        `Repair attempts after failing tests: ${repairDecision(run.execution)}`,
       ]),
     );
     if (run.summary) out.push("", `**Model summary:** ${e(run.summary)}`);
