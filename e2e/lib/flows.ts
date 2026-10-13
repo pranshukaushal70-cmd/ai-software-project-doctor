@@ -23,6 +23,12 @@ export function users(): { owner: Session; intruder: Session; ownerUser: StoredU
   };
 }
 
+/** The user of the repair-policy specs (its own per-user code-engine budget). */
+export function repairUser(): Session {
+  const stored = JSON.parse(readFileSync(new URL("users.json", AUTH_DIR), "utf8")) as Record<"repair", StoredUser>;
+  return new Session(stored.repair.cookie, stored.repair);
+}
+
 export async function poll<T>(what: string, read: () => Promise<T>, done: (value: T) => boolean, timeoutMs = 120_000, intervalMs = 750): Promise<T> {
   const deadline = Date.now() + timeoutMs;
   let last: T = await read();
@@ -127,12 +133,16 @@ export interface RunDto {
   status: string;
   inProgress: boolean;
   hasPatch: boolean;
+  maxIterations: number;
+  iteration: number;
+  /** Repairs after failing tests: the decision at the test approval, the attempts it allowed, and those used. */
+  repair: { approved: boolean | null; attemptsAllowed: number | null; attemptsUsed: number };
   summary: string | null;
   testSetup: { test: { command: string } | null; install: { command: string } | null; needsInstall: boolean; image: string | null } | null;
   sandbox: { enabled: boolean; installEnabled: boolean };
   changes: { path: string; operation: string; status: string; diff: string | null }[];
-  executions: { kind: string; command: string; network: boolean; exitCode: number | null; timedOut: boolean; output: string }[];
-  events: { type: string }[];
+  executions: { kind: string; iteration: number; command: string; network: boolean; exitCode: number | null; timedOut: boolean; output: string }[];
+  events: { type: string; actor: string; fromStatus: string | null; toStatus: string | null; message: string }[];
 }
 
 export async function waitForRun(session: Session, runId: string, statuses: string[]): Promise<RunDto> {
@@ -142,6 +152,20 @@ export async function waitForRun(session: Session, runId: string, statuses: stri
     (r) => statuses.includes(r.status) || r.status === "FAILED" || r.status === "CANCELLED",
     240_000,
   );
+}
+
+/**
+ * A run of a freshly planned and approved task on a fixture, with the given iteration budget:
+ * waiting for the test approval (sandbox on) or in review (sandbox off).
+ */
+export async function approvedRun(session: Session, fixture: string, task: string, maxIterations: number): Promise<{ analysisId: string; run: RunDto }> {
+  const analysisId = (await fixtureAnalysis(session, fixture)).id;
+  const { plan } = await plannedTask(session, analysisId, task);
+  if (plan.status !== "COMPLETED") throw new Error(`Plan failed: ${plan.error}`);
+  if ((await session.post(`/api/engineering/plans/${plan.id}/approve`)).status !== 200) throw new Error("Plan not approved");
+  const started = await session.post<RunDto>(`/api/engineering/plans/${plan.id}/runs`, { maxIterations });
+  if (started.status !== 201) throw new Error(`Run not started: ${started.status} ${started.text.slice(0, 200)}`);
+  return { analysisId, run: await waitForRun(session, started.data.id, ["AWAITING_APPROVAL", "READY_FOR_REVIEW"]) };
 }
 
 export interface StubRequest {
