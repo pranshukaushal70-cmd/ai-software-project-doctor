@@ -31,7 +31,6 @@ Local runs on the `feat/gemini-thinking-level` branch, without any real AI reque
 | `PD_DOCKER_TESTS=1 npx vitest run --project sandbox` | 23 of 23, including the 4 real-Docker integration tests; no containers or volumes left |
 | End to end, full suite (38 specs), isolated compose stack (project `pd-m1`, model stub; never the demo stack) | Sandbox off: 34 passed, 4 skipped (the sandbox-only repair specs). Sandbox on: 36 passed, 1 skipped (the sandbox-off variant), 1 failed: `ui/app` "the demo analysis runs in the browser and every tab renders" met all its functional checks but failed its no-console-errors check on 8 × `net::ERR_NETWORK_CHANGED` (a host network change during the run); re-run alone, it passed |
 
-
 ## Final audit follow-ups (2026-10-08)
 
 After the Phase 10 audit: `next` 16.3.6 → 16.4.0 and patched Prisma CLI dependencies (`npm audit`: 0 vulnerabilities;

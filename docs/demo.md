@@ -105,9 +105,17 @@ On the demo machine, from the repository root.
 4. **Approve plan**, then **Run the code engine**. Show the per-file diff and its validation flags.
 5. **Run the tests in the sandbox?** shows the exact command (`npm test`) and the **Allow up to N repair attempts if
    the tests fail** option, unticked by default: without it, a failing run goes to review unrepaired. **Approve and run
-   tests**; the run ends in review with the test output (no network, read-only, unprivileged container). To show the
-   repair policy, upload `e2e/fixtures/tiny-node-failing` (a planted bug; its tests always fail) and approve once
-   without and once with repair attempts.
+   tests**; the run ends in review with the test output (no network, read-only, unprivileged container). The sandbox
+   runs only the repository's own `npm test`: a pass means those tests pass, not that the change is correct beyond
+   what they check.
+
+   To show the repair policy, use the **offline fallback** and upload `e2e/fixtures/tiny-node-failing`: like tiny-node
+   it has no dependencies, but its `subtract` has a planted bug (it adds), so one of its two tests fails until that
+   bug is fixed. The model stub's edits only add a comment and never fix it, so the tests fail after every attempt and
+   the number of attempts shows exactly what the repair policy allowed: approve once without repair attempts (one test
+   run, then review) and once with them (repairs stop at the run's budget). This is what the end-to-end specs verify
+   (`e2e/specs/api/repair.spec.ts`, `e2e/specs/ui/repair-consent.spec.ts`). With a real model the outcome is not
+   fixed: an edit or a repair may fix the bug, and each attempt is another request. That has not been verified.
 6. **Download patch**; mention nothing is committed or pushed.
 7. **Generate report** from the run: the executive summary's chain shows each step passed, and the report never claims
    success without a passing test run. Export it as Markdown.
@@ -130,7 +138,9 @@ docker compose --profile app exec -T worker node -e 'const e=process.env; consol
 sandbox tests). The default, `gemini-3.8-flash`, took 217 s for a plan against the planner's 300 s timeout and its code
 editing is unverified. `GEMINI_THINKING_LEVEL` (optional) accepts only the levels Google documents for the model
 (`gemini-3.8-flash`: `low`, `medium`, `high`; `gemini-3.5-flash-lite`: `minimal`, `low`, `medium`, `high`); unset, the
-model's default applies. A lower level usually answers faster; its effect has not been measured here yet.
+model's default applies and no thinking setting is sent. **It has been tested with mocked requests only**: the request
+field matches Google's documentation, but no real Gemini request has used it, so live API compatibility and any effect
+on speed are unverified. Leave it empty for the demo.
 
 **Requests.** Each plan is one request and each code-engine iteration one more. The provider never retries, and
 `AI_MAX_REQUESTS` stops the worker after that many requests until it restarts (`docker compose --profile app restart
@@ -145,7 +155,7 @@ worker`). Repairs happen only if you tick the repair option at the test approval
 | "The AI request limit for this server (AI_MAX_REQUESTS) has been reached…" | The local cap | Restart the worker, or raise `AI_MAX_REQUESTS` and recreate it |
 | "The AI provider rejected the request: check the API key and its permissions." | Invalid key or permissions | Create a new key in AI Studio and put it in `.env` |
 | "GEMINI_THINKING_LEVEL …" or "GEMINI_MODEL must be…" | Invalid setting | Fix `.env` (or leave `GEMINI_THINKING_LEVEL` empty) and recreate `web` and `worker` |
-| The plan fails with "timeout" | `gemini-3.8-flash` thinking for too long | Use `gemini-3.5-flash-lite`, or `GEMINI_THINKING_LEVEL=low` |
+| The plan fails with "timeout" | `gemini-3.8-flash` thinking for too long | Use `gemini-3.5-flash-lite` (verified end to end). `GEMINI_THINKING_LEVEL=low` is untested against the live API (mocked requests only), so do not rely on it during a demo |
 
 **Back to stub mode** without deleting anything: stop the application stack (`stop` keeps containers and volumes;
 avoid `down -v`), then start the existing end-to-end stack again, whose data is in its own volumes:
