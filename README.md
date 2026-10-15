@@ -154,7 +154,8 @@ See [.env.example](.env.example). The important ones:
 |---|---|
 | `npm test` | All unit tests (Vitest, all workspaces), including the e2e tooling and the detection-benchmark regression check; the real-Docker sandbox tests are skipped |
 | `PD_DOCKER_TESTS=1 npx vitest run --project sandbox` | Also runs the sandbox tests against a real Docker engine (pinned images are pulled if missing) |
-| `npm run typecheck` | `tsc` across all workspaces |
+| `npm run typecheck` | `tsc` across all workspaces (strict, including unused locals and parameters) |
+| `npm run lint` | The same check as `npm run typecheck`; no separate linter is installed |
 | `npm run build` | Production build of the web app |
 | `npm run db:migrate` | Create a new migration during development |
 | `docker compose --profile app up -d --build` | The whole application in containers: migrations, web, worker ([docs/deployment.md](docs/deployment.md)) |

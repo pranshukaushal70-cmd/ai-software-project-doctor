@@ -6,7 +6,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ProviderError, ScriptedProvider, type EditOutput, type ValidatedPlan } from "@pd/agent";
 import { uploadPath, uploadsDir } from "@pd/analyzer";
-import { FakeSandbox, loadSandboxConfig, type ExecutionResult, type SandboxDriver, type TestSetup } from "@pd/sandbox";
+import { FakeSandbox, loadSandboxConfig, type SandboxDriver, type TestSetup } from "@pd/sandbox";
 import { loadLimits, type AnalyzerLimits, type EngineeringJob } from "@pd/shared";
 import { buildZip } from "../../analyzer/test/zip-builder";
 import { approveExecution, cancelRun, createRun, discardRun, patchPaths, runEngineJob, skipExecution, sweepStaleRuns, type ControlDeps, type EngineDeps } from "../src";
