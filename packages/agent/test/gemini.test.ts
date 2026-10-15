@@ -4,10 +4,12 @@ import {
   createEditProvider,
   createProvider,
   EDITOR_SYSTEM_PROMPT,
+  GEMINI_MODEL_THINKING_LEVELS,
   GeminiProvider,
   inlineSchemaRefs,
   PLANNER_SYSTEM_PROMPT,
   ProviderError,
+  providerEnvFrom,
   runPlanner,
   type EditContext,
   type FetchLike,
@@ -237,5 +239,75 @@ describe("Gemini schema and configuration", () => {
     expect(createProvider({ AI_PROVIDER: "baseline", GEMINI_API_KEY: KEY }).name).toBe("baseline");
     expect(createProvider({ ANTHROPIC_API_KEY: "k", GEMINI_API_KEY: KEY }).name).toBe("anthropic");
     expect(createProvider({ AI_PROVIDER: "xai", XAI_API_KEY: "x", XAI_MODEL: "grok-4.3", GEMINI_API_KEY: KEY }).name).toBe("xai");
+  });
+});
+
+describe("Gemini thinking level (GEMINI_THINKING_LEVEL)", () => {
+  const generationConfig = (c: { body: Record<string, unknown> }) => c.body.generationConfig as Record<string, unknown>;
+
+  it("sends no thinking setting when unset, exactly as before", async () => {
+    const { fetch, calls } = fakeFetch(() => ({ body: responseBody("{}") }));
+    const p = provider(fetch);
+    expect(p.thinkingLevel).toBeNull();
+    await p.generatePlan(PLAN_CTX);
+    await p.generateEdits(EDIT_CTX);
+    for (const call of calls) {
+      expect(Object.keys(generationConfig(call)).sort()).toEqual(["maxOutputTokens", "responseJsonSchema", "responseMimeType"]);
+      expect(JSON.stringify(call.body)).not.toMatch(/thinking/i);
+    }
+    // The factory leaves it unset too, for a missing, empty or blank value.
+    for (const level of [undefined, "", "   "]) {
+      expect((createProvider({ AI_PROVIDER: "gemini", GEMINI_API_KEY: KEY, GEMINI_THINKING_LEVEL: level }) as GeminiProvider).thinkingLevel).toBeNull();
+    }
+  });
+
+  it("sends generationConfig.thinkingConfig.thinkingLevel on plan and edit requests when set", async () => {
+    const { fetch, calls } = fakeFetch(() => ({ body: responseBody("{}") }));
+    const p = new GeminiProvider({ apiKey: KEY, model: "gemini-3.5-flash-lite", thinkingLevel: "low", fetch, counter: { used: 0 } });
+    await p.generatePlan(PLAN_CTX);
+    await p.generateEdits(EDIT_CTX);
+    expect(calls).toHaveLength(2);
+    for (const call of calls) {
+      expect(generationConfig(call)).toEqual({ responseMimeType: "application/json", responseJsonSchema: expect.any(Object), maxOutputTokens: expect.any(Number), thinkingConfig: { thinkingLevel: "low" } });
+    }
+    expect(JSON.stringify(calls.map((c) => c.body))).not.toContain(KEY);
+  });
+
+  it("accepts exactly the levels documented for each model, case-insensitively", () => {
+    const level = (model: string | undefined, value: string) =>
+      (createProvider({ AI_PROVIDER: "gemini", GEMINI_API_KEY: KEY, GEMINI_MODEL: model, GEMINI_THINKING_LEVEL: value }) as GeminiProvider).thinkingLevel;
+    for (const [model, levels] of Object.entries(GEMINI_MODEL_THINKING_LEVELS)) {
+      for (const l of levels) expect(level(model, l)).toBe(l);
+    }
+    // The default model (GEMINI_MODEL unset) is gemini-3.8-flash; input is trimmed and lower-cased.
+    expect(level(undefined, " LOW ")).toBe("low");
+    expect(level("models/gemini-3.5-flash-lite", "Minimal")).toBe("minimal");
+    expect(GEMINI_MODEL_THINKING_LEVELS["gemini-3.8-flash"]).toEqual(["low", "medium", "high"]);
+    expect(GEMINI_MODEL_THINKING_LEVELS["gemini-3.5-flash-lite"]).toEqual(["minimal", "low", "medium", "high"]);
+  });
+
+  it("fails clearly on an unknown value, a level the model does not support, or a model without documented levels", () => {
+    const create = (env: Record<string, string>) => () => createProvider({ AI_PROVIDER: "gemini", GEMINI_API_KEY: KEY, ...env });
+    expect(create({ GEMINI_THINKING_LEVEL: "extreme" })).toThrow(/GEMINI_THINKING_LEVEL must be one of minimal, low, medium, high, or unset/);
+    expect(create({ GEMINI_THINKING_LEVEL: "0" })).toThrow(/must be one of/);
+    // gemini-3.8-flash (the default model) does not support "minimal".
+    expect(create({ GEMINI_THINKING_LEVEL: "minimal" })).toThrow("gemini-3.8-flash supports GEMINI_THINKING_LEVEL low, medium, high, not minimal.");
+    expect(create({ GEMINI_MODEL: "gemini-3.8-flash", GEMINI_THINKING_LEVEL: "minimal" })).toThrow(ProviderError);
+    // Gemini 2.5 models use a thinking budget, and unknown models have no documented levels.
+    expect(create({ GEMINI_MODEL: "gemini-2.5-flash", GEMINI_THINKING_LEVEL: "low" })).toThrow(/no documented levels for gemini-2\.5-flash/);
+    expect(create({ GEMINI_MODEL: "gemini-9-unknown", GEMINI_THINKING_LEVEL: "high" })).toThrow(/no documented levels/);
+    // Those models still work without the setting.
+    expect(createProvider({ AI_PROVIDER: "gemini", GEMINI_API_KEY: KEY, GEMINI_MODEL: "gemini-2.5-flash" }).model).toBe("gemini-2.5-flash");
+    // Errors never contain the key.
+    try {
+      create({ GEMINI_THINKING_LEVEL: "extreme" })();
+    } catch (e) {
+      expect(String((e as Error).message)).not.toContain(KEY);
+    }
+  });
+
+  it("is read from the environment with the other provider settings", () => {
+    expect(providerEnvFrom({ AI_PROVIDER: "gemini", GEMINI_THINKING_LEVEL: "low", JWT_SECRET: "s" })).toMatchObject({ AI_PROVIDER: "gemini", GEMINI_THINKING_LEVEL: "low" });
+    expect(providerEnvFrom({ JWT_SECRET: "s" })).not.toHaveProperty("JWT_SECRET");
   });
 });

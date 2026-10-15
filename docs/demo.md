@@ -7,8 +7,13 @@ sandbox → patch → report, and what to check beforehand so that nothing break
 
 | Mode | What runs | Needs |
 |---|---|---|
-| **Real model** (recommended) | The application stack with the Anthropic API planning and writing the change | `ANTHROPIC_API_KEY`, internet, Docker |
+| **Real model: Gemini** (free tier, recommended) | The application stack with the Gemini API planning and writing the change ([Gemini mode](#gemini-mode)) | `GEMINI_API_KEY` from Google AI Studio on a project **without billing**, internet, Docker |
+| **Real model: Anthropic or xAI** | The same, with a paid API (billed per token) | `ANTHROPIC_API_KEY`, or `XAI_API_KEY` and `XAI_MODEL` |
 | **Offline fallback** | The end-to-end stack: the same production images with the deterministic model stub in place of the API | Docker only (after images are built) |
+
+What has been verified with a real model ([verification.md](verification.md#real-model-checks-2026-10-13)): with
+`gemini-3.5-flash-lite`, a plan **and** a code edit on `tiny-node` whose sandbox tests passed; with `gemini-3.8-flash`
+(the default `GEMINI_MODEL`), a plan only (217 s), its code editing is not verified. Anthropic and xAI have not been called.
 
 In the offline fallback the "model" is a script: plans are assembled from the repository index and the change it makes
 is a one-line comment. Every other part (index evidence, plan validation, both approvals, the sandbox, the patch,
@@ -38,8 +43,11 @@ On the demo machine, from the repository root.
 1. **Configuration.** `node scripts/setup-env.mjs` (once) creates `.env`. Add:
 
    ```bash
-   ANTHROPIC_API_KEY=...     # real-model mode only
-   DOCKER_SOCKET_GID=0       # Docker Desktop; Linux: stat -c %g /var/run/docker.sock
+   AI_PROVIDER=gemini                    # Gemini mode (see below); or anthropic with ANTHROPIC_API_KEY
+   GEMINI_API_KEY=...                    # set it yourself; never paste a key into chats or commits
+   GEMINI_MODEL=gemini-3.5-flash-lite    # the model verified end to end; empty means gemini-3.8-flash
+   AI_MAX_REQUESTS=10                    # optional cap per worker process (resets when the worker restarts)
+   DOCKER_SOCKET_GID=0                   # Docker Desktop; Linux: stat -c %g /var/run/docker.sock
    ```
 
    Leave `SANDBOX_INSTALL_ENABLED=false` for the tiny-node run. Set `OSV_ENABLED=false` if the venue's internet is
@@ -68,8 +76,8 @@ On the demo machine, from the repository root.
    ```
 
 5. **Check the model once** (real-model mode): sign in, upload `tiny-node.zip`, generate a plan for the task below and
-   start a run. If the plan fails with "The AI provider rejected the configured credentials" or another provider error,
-   fix the key or fall back to the offline mode.
+   start a run. If the plan fails with "The AI provider rejected the request: check the API key…", a 503/429 message
+   or another provider error, see [Gemini mode](#gemini-mode) or fall back to the offline mode.
 
 6. **Reset the rate-limit counters** after rehearsing. Without a trusted proxy, every visitor shares the per-IP budget,
    so the whole instance allows 5 sign-ups per hour and 10 login attempts per 15 minutes
@@ -95,37 +103,89 @@ On the demo machine, from the repository root.
    *"Add a subtract(a, b) function to src/math.js, export it, and add a test for it in test/math.test.js."*
    Show the plan: affected files, steps, test plan, each claim marked VERIFIED / INFERRED / UNKNOWN with evidence.
 4. **Approve plan**, then **Run the code engine**. Show the per-file diff and its validation flags.
-5. **Run the tests in the sandbox?** shows the exact command (`npm test`). **Approve and run tests**; the run ends in
-   review with the test output (no network, read-only, unprivileged container).
+5. **Run the tests in the sandbox?** shows the exact command (`npm test`) and the **Allow up to N repair attempts if
+   the tests fail** option, unticked by default: without it, a failing run goes to review unrepaired. **Approve and run
+   tests**; the run ends in review with the test output (no network, read-only, unprivileged container). To show the
+   repair policy, upload `e2e/fixtures/tiny-node-failing` (a planted bug; its tests always fail) and approve once
+   without and once with repair attempts.
 6. **Download patch**; mention nothing is committed or pushed.
 7. **Generate report** from the run: the executive summary's chain shows each step passed, and the report never claims
    success without a passing test run. Export it as Markdown.
 8. **Security points**, if asked: sign up a second user in a private window and open the first user's analysis URL (404);
    the sandbox flags in `packages/sandbox/src/docker.ts`; the model never sees `.env` values or secret files.
 
-## Offline fallback
+## Gemini mode
 
-Stop the application stack first; both stacks publish the web app on port 3000 (`down` without `-v` keeps its data):
+**Enable it** in `.env` (step 1 above): `AI_PROVIDER=gemini`, `GEMINI_API_KEY` from Google AI Studio, and optionally
+`GEMINI_MODEL`. Use a key whose Google Cloud project has **no billing account**, so nothing can be charged; check the
+key's project and remaining free quota in AI Studio (the API does not report quota). On the free tier Google may use
+prompts to improve its products, so present with sample code such as `tiny-node`, never private code. Then start (or
+recreate) the application stack as in step 2, and check that the worker sees the settings:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile app down
+docker compose --profile app exec -T worker node -e 'const e=process.env; console.log(e.AI_PROVIDER, e.GEMINI_MODEL || "(default)", e.GEMINI_API_KEY ? "key present" : "KEY MISSING")'
 ```
 
-Then start the end-to-end stack with the sandbox. It uses `e2e/stack.env`, never your `.env`, and has OSV.dev lookups off:
+**Model.** `gemini-3.5-flash-lite` is the model verified end to end (plan in about 6 s, then the code edit and passing
+sandbox tests). The default, `gemini-3.8-flash`, took 217 s for a plan against the planner's 300 s timeout and its code
+editing is unverified. `GEMINI_THINKING_LEVEL` (optional) accepts only the levels Google documents for the model
+(`gemini-3.8-flash`: `low`, `medium`, `high`; `gemini-3.5-flash-lite`: `minimal`, `low`, `medium`, `high`); unset, the
+model's default applies. A lower level usually answers faster; its effect has not been measured here yet.
+
+**Requests.** Each plan is one request and each code-engine iteration one more. The provider never retries, and
+`AI_MAX_REQUESTS` stops the worker after that many requests until it restarts (`docker compose --profile app restart
+worker`). Repairs happen only if you tick the repair option at the test approval.
+
+**When Gemini fails** (the plan or run shows the message; the worker log has the details, without the key):
+
+| Message | Meaning | What to do |
+|---|---|---|
+| "The AI provider returned an error (503)." (`UNAVAILABLE`, "high demand") | Google's capacity, temporarily | Wait (minutes to hours) and generate the plan again; or set `GEMINI_MODEL=gemini-3.5-flash-lite` and recreate `web` and `worker`; or present in the offline mode |
+| "…rate limiting requests or the quota is used up…" (429 `RESOURCE_EXHAUSTED`) | Free-tier rate limit or daily quota | Wait for the limit to reset (see the quota in AI Studio); do not enable billing just for the demo |
+| "The AI request limit for this server (AI_MAX_REQUESTS) has been reached…" | The local cap | Restart the worker, or raise `AI_MAX_REQUESTS` and recreate it |
+| "The AI provider rejected the request: check the API key and its permissions." | Invalid key or permissions | Create a new key in AI Studio and put it in `.env` |
+| "GEMINI_THINKING_LEVEL …" or "GEMINI_MODEL must be…" | Invalid setting | Fix `.env` (or leave `GEMINI_THINKING_LEVEL` empty) and recreate `web` and `worker` |
+| The plan fails with "timeout" | `gemini-3.8-flash` thinking for too long | Use `gemini-3.5-flash-lite`, or `GEMINI_THINKING_LEVEL=low` |
+
+**Back to stub mode** without deleting anything: stop the application stack (`stop` keeps containers and volumes;
+avoid `down -v`), then start the existing end-to-end stack again, whose data is in its own volumes:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile app stop
+docker compose -p pd-e2e start
+```
+
+To return to Gemini, stop `pd-e2e` the same way (`docker compose -p pd-e2e stop`) and start the application stack.
+Both stacks publish port 3000, so only one runs at a time.
+
+## Offline fallback
+
+Stop the application stack first; both stacks publish the web app on port 3000 (`stop` keeps its containers and data):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.sandbox.yml --profile app stop
+```
+
+If the end-to-end stack exists already, `docker compose -p pd-e2e start` brings it back with its data. Otherwise start
+it with the sandbox; it uses `e2e/stack.env`, never your `.env`, and has OSV.dev lookups off (this builds the images and
+recreates the stack's containers; its volumes are kept):
 
 ```bash
 E2E_SANDBOX=1 npm run e2e:up                       # bash
 $env:E2E_SANDBOX = "1"; npm run e2e:up             # PowerShell
 ```
 
-Follow the same script on http://localhost:3000. `node scripts/e2e.mjs reset` clears its rate-limit counters, and
-`npm run e2e:down` stops it and deletes its data.
+Follow the same script on http://localhost:3000. `node scripts/e2e.mjs reset` clears its rate-limit counters.
+**`npm run e2e:down` deletes the stack's volumes, and with them all its data**; to keep the data, use
+`docker compose -p pd-e2e stop`. `npm run e2e` (the Playwright suite) also signs up test users and adds analyses and
+runs to this stack's database.
 
 ## Known pitfalls
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Planner: "No AI provider is configured" | `ANTHROPIC_API_KEY` missing in `.env` | Add it and recreate `web` and `worker` (`up -d` again) |
+| Planner: "No AI provider is configured" | The key for `AI_PROVIDER` (`GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, …) missing in `.env` | Add it and recreate `web` and `worker` (`up -d` again) |
+| Plan fails with a 503 or 429 from Gemini | Google's capacity or the free-tier quota | See [Gemini mode](#gemini-mode) |
 | "Sandboxed test runs are disabled on this server." | Started without `docker-compose.sandbox.yml` | Start with both compose files |
 | `DOCKER_SOCKET_GID` error on start | Required by the sandbox override | Set it in `.env` (Docker Desktop: `0`) |
 | Sign-up or login answers "Too many requests" | Shared per-IP budget used up while rehearsing | Reset the counters (step 6 above) |

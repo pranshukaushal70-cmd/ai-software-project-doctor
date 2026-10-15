@@ -3,6 +3,35 @@
 What has been verified, phase by phase, with the dates of the end-to-end checks. The current totals are in the
 [README](../README.md#verification-status); how to run each suite is in [testing.md](testing.md).
 
+## Real-model checks (2026-10-13)
+
+Manual, single-shot checks with the Gemini API free tier, on isolated compose stacks (never the demo stack), with
+`AI_MAX_REQUESTS` capping the worker's requests. No other provider was called.
+
+| Model | What was checked | Result |
+|---|---|---|
+| `gemini-3.8-flash` (the configured default) | One plan on the uploaded `tiny-node` fixture (task: add `subtract`), sandbox off | **Plan verified**: completed, validation PASSED, confidence 0.95, 751 input / 1,421 output tokens, **217 s** (of the 300 s planner timeout) |
+| `gemini-3.8-flash` | Plan and code edit (`maxIterations: 1`, tests approved with `repair: false`), sandbox on | **Not verified**: both plan requests were rejected with HTTP 503 `UNAVAILABLE` ("This model is currently experiencing high demand"), 24 minutes apart; no edit request was sent |
+| `gemini-3.5-flash-lite` (set for the isolated stack only) | The same plan-and-edit task, sandbox on | **Plan and code edit verified**: plan completed in 6.3 s (validation PASSED, confidence 0.95, 760 / 1,162 tokens); the edit (980 / 488 tokens) changed only the planned files (`src/math.js` +6/−1, `test/math.test.js` +5/−1); the sandbox ran `npm test` without network: **3 of 3 passed**; the downloaded patch applied with `git apply` to a fresh copy of the fixture, and in a locked-down container (no network, read-only, unprivileged) the fixture's tests passed and a hidden assertion the model never saw (`subtract(5, 3) === 2`, `subtract(2, 5) === -3`, `add` and `multiply` unchanged) passed |
+
+Requests: five Gemini generation requests in total (one `gemini-3.8-flash` plan; two `gemini-3.8-flash` plans rejected
+with 503; one `gemini-3.5-flash-lite` plan and one edit). What remains unverified: code editing with
+`gemini-3.8-flash`, real Anthropic and xAI requests, and the real-model benchmark. `GEMINI_THINKING_LEVEL` (added after
+these checks) is covered by mocked tests only: the levels per model and the request field match Google's `generateContent`
+documentation (REST example `"thinkingConfig": { "thinkingLevel": "low" }`), but no real request has used it yet.
+
+## Gemini thinking level and current totals (2026-10-14)
+
+Local runs on the `feat/gemini-thinking-level` branch, without any real AI request:
+
+| Check | Result |
+|---|---|
+| `npm run typecheck`, `npm run build` | Clean, all workspaces; build succeeds |
+| `npm test` | **823 passed**, 4 skipped (the real-Docker sandbox tests); 5 new tests cover `GEMINI_THINKING_LEVEL` (unset sends nothing; set is sent on plan and edit requests; every documented model and level accepted; unknown values, undocumented levels and models refused with clear errors) |
+| `PD_DOCKER_TESTS=1 npx vitest run --project sandbox` | 23 of 23, including the 4 real-Docker integration tests; no containers or volumes left |
+| End to end, full suite (38 specs), isolated compose stack (project `pd-m1`, model stub; never the demo stack) | Sandbox off: 34 passed, 4 skipped (the sandbox-only repair specs). Sandbox on: 36 passed, 1 skipped (the sandbox-off variant), 1 failed: `ui/app` "the demo analysis runs in the browser and every tab renders" met all its functional checks but failed its no-console-errors check on 8 × `net::ERR_NETWORK_CHANGED` (a host network change during the run); re-run alone, it passed |
+
+
 ## Final audit follow-ups (2026-10-08)
 
 After the Phase 10 audit: `next` 16.3.6 → 16.4.0 and patched Prisma CLI dependencies (`npm audit`: 0 vulnerabilities;

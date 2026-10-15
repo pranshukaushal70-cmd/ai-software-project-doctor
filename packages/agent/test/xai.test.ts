@@ -236,7 +236,7 @@ describe("xAI configuration", () => {
 
   it("copies only the provider settings out of the process environment", () => {
     const picked = providerEnvFrom({ ...env, AI_MAX_REQUESTS: "1", JWT_SECRET: "s", DATABASE_URL: "postgres://u:p@h/db", PATH: "/bin" });
-    expect(Object.keys(picked).sort()).toEqual(["AI_MAX_REQUESTS", "AI_PROVIDER", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL", "GEMINI_API_KEY", "GEMINI_MODEL", "XAI_API_KEY", "XAI_BASE_URL", "XAI_MODEL"]);
+    expect(Object.keys(picked).sort()).toEqual(["AI_MAX_REQUESTS", "AI_PROVIDER", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL", "GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_THINKING_LEVEL", "XAI_API_KEY", "XAI_BASE_URL", "XAI_MODEL"]);
     expect(JSON.stringify(picked)).not.toMatch(/JWT_SECRET|postgres|\/bin/);
   });
 });

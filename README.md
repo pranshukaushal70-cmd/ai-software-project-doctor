@@ -136,6 +136,7 @@ See [.env.example](.env.example). The important ones:
 | `XAI_BASE_URL` | Optional, default `https://api.x.ai/v1` |
 | `GEMINI_API_KEY` | For `AI_PROVIDER=gemini` (a Google AI Studio key). Read from the environment only, sent only in the `x-goog-api-key` header (never in a URL); never stored, logged or sent to the browser. Free of charge only while the key's Google Cloud project has no billing; on the free tier Google may use prompts to improve its products, so send only code you may share |
 | `GEMINI_MODEL` | For `AI_PROVIDER=gemini`, default `gemini-3.8-flash`; it must support structured outputs |
+| `GEMINI_THINKING_LEVEL` | Optional: `minimal`, `low`, `medium` or `high`, accepted only where Google documents the level for the model (`gemini-3.8-flash`: low, medium, high; `gemini-3.5-flash-lite`: all four); anything else stops the provider with a clear error. Unset: no thinking setting is sent and the model uses its default |
 | `AI_MAX_REQUESTS` | Optional cap on the xAI or Gemini requests one worker process may send (failed requests count); a restart resets it. Unset: no cap |
 | `SANDBOX_ENABLED` | `false` (default): code-engine runs end with a diff and no repository code runs. `true`: approved test runs execute in disposable Docker containers (the worker needs Docker with Linux containers; see [security.md](docs/security.md#known-limitations)) |
 | `SANDBOX_INSTALL_ENABLED` | `false` (default). `true` offers a separately approved, network-enabled dependency install (`npm ci --ignore-scripts`, pip wheels only) |
@@ -212,15 +213,18 @@ Every push to `main` and every pull request runs [CI](docs/ci.md): typecheck, un
 migrations against an empty database, the sandbox against real Docker, and the Playwright end-to-end suite against the
 production images with the sandbox off and on.
 
-| Check | Result (2026-10-11) |
+| Check | Result (2026-10-14, local runs) |
 |---|---|
-| `npm test` (Vitest, all workspaces) | **786 tests passing**, plus 4 real-Docker sandbox tests that run with `PD_DOCKER_TESTS=1` (passing) |
+| `npm test` (Vitest, all workspaces) | **823 passed**, 4 skipped: the real-Docker sandbox tests, which run with `PD_DOCKER_TESTS=1` (4 of 4 passing) |
 | `npm run typecheck`, `npm run build`, `npm audit` | Clean for all eleven workspaces; build succeeds; 0 known vulnerabilities |
-| End to end (Playwright, production images, model stub) | 33 of 33 specs with the sandbox off, 33 of 33 with it on |
-| Detection benchmark | Precision 97.3 %, recall 97.3 % ([results](benchmarks/results/detection.md)) |
-| Planner and code-engine evaluation | Stub: 5 of 6 tasks. Real model: not run yet ([docs/benchmark.md](docs/benchmark.md)) |
+| End to end (Playwright, production images, model stub; 38 specs) | Sandbox off: **34 passed**, 4 skipped (sandbox-only repair specs). Sandbox on: **36 passed**, 1 skipped (the sandbox-off variant), 1 failed only on transient `net::ERR_NETWORK_CHANGED` browser console errors; that test passed when re-run alone. Both legs also passed in CI on PR #13 (2026-10-13) |
+| Detection benchmark (2026-10-08) | Precision 97.3 %, recall 97.3 % ([results](benchmarks/results/detection.md)) |
+| Planner and code-engine evaluation | Stub: 5 of 6 tasks. Real model: benchmark not run yet ([docs/benchmark.md](docs/benchmark.md)) |
+| Real model, single manual checks (2026-10-13, Gemini free tier) | `gemini-3.5-flash-lite`: plan **and code edit verified** (patch applied, sandbox tests 3 of 3, hidden assertion passed). `gemini-3.8-flash` (the configured default): plan verified once; **code edit not verified** (two 503 overload responses) |
 
-The planner and code engine have been verified end to end only against the model stub, which runs the real provider code
-over HTTP with scripted responses; the manual real-model evaluation has not been run yet.
+The automated planner and code-engine evaluation has run only against the model stub, which runs the real provider code
+over HTTP with scripted responses. Real models have been checked by hand: one complete Gemini code edit with
+`gemini-3.5-flash-lite`, and one plan with `gemini-3.8-flash`, whose code editing remains unverified; Anthropic and xAI
+have not been called ([docs/verification.md](docs/verification.md#real-model-checks-2026-10-13)).
 
 What each phase was verified with, test by test and with its end-to-end check: [docs/verification.md](docs/verification.md).
