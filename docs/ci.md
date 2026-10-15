@@ -44,6 +44,6 @@ npm run e2e:up && npm run e2e && npm run bench:agent -- --label stub && npm run 
 ## Known limitations
 
 - No Docker layer cache between CI runs: each end-to-end leg builds the images from scratch (several minutes).
-- No lint step: the repository has no linter configured. `npm run lint` says so and exits with status 1 rather than
-  reporting a pass; `npm run typecheck` (strict TypeScript) is the only static check.
+- No separate linter: `npm run lint` runs `npm run typecheck` (strict TypeScript with `noUnusedLocals` and
+  `noUnusedParameters`), the only static check; there are no style or import-order rules.
 - The CI e2e legs use GitHub-hosted runners; gVisor (`runsc`) is not exercised in CI.

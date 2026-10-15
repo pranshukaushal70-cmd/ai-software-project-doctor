@@ -317,6 +317,26 @@ export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta
 /** Stable, structured outputs, on the Gemini API free tier (ai.google.dev/gemini-api/docs/models). */
 export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
 
+export const GEMINI_THINKING_LEVELS = ["minimal", "low", "medium", "high"] as const;
+export type GeminiThinkingLevel = (typeof GEMINI_THINKING_LEVELS)[number];
+
+/**
+ * The thinking levels each Gemini model accepts, as documented for generateContent at
+ * ai.google.dev/gemini-api/docs/generate-content/thinking (level table and REST example
+ * `"thinkingConfig": { "thinkingLevel": "low" }`, checked 2026-10-14; gemini-3.1-pro-preview
+ * from ai.google.dev/gemini-api/docs/thinking). GEMINI_THINKING_LEVEL is accepted only for these
+ * models and levels: an unsupported level is an API error, and Gemini 2.5 models use a thinking
+ * budget instead. Unset, no thinking setting is sent and each model uses its own default.
+ */
+export const GEMINI_MODEL_THINKING_LEVELS: Readonly<Record<string, readonly GeminiThinkingLevel[]>> = {
+  "gemini-3.8-flash": ["low", "medium", "high"],
+  "gemini-3.6-flash": ["minimal", "low", "medium", "high"],
+  "gemini-3.5-flash-lite": ["minimal", "low", "medium", "high"],
+  "gemini-3.1-flash-lite": ["minimal", "low", "medium", "high"],
+  "gemini-3.1-pro-preview": ["low", "medium", "high"],
+  "gemini-3-flash-preview": ["minimal", "low", "medium", "high"],
+};
+
 /**
  * The schema with every local `$ref` replaced by its `$defs` entry. Gemini documents `$ref`
  * support, but `$defs` has been reported rejected or expanded unpredictably; our schemas are
@@ -366,13 +386,16 @@ export class GeminiProvider implements CodeEditProvider {
   readonly model: string;
   /** A real private field: not enumerable, not serialised, not shown when the provider is inspected or logged. */
   readonly #apiKey: string;
+  /** GEMINI_THINKING_LEVEL (validated by createGeminiProvider); null sends no thinking setting. */
+  readonly thinkingLevel: GeminiThinkingLevel | null;
   private readonly maxRequests: number | null;
   private readonly fetch: FetchLike;
   private readonly counter: RequestCounter;
 
-  constructor(opts: { apiKey: string; model?: string; maxRequests?: number | null; fetch?: FetchLike; counter?: RequestCounter }) {
+  constructor(opts: { apiKey: string; model?: string; thinkingLevel?: GeminiThinkingLevel | null; maxRequests?: number | null; fetch?: FetchLike; counter?: RequestCounter }) {
     this.model = opts.model || DEFAULT_GEMINI_MODEL;
     this.#apiKey = opts.apiKey;
+    this.thinkingLevel = opts.thinkingLevel ?? null;
     this.maxRequests = opts.maxRequests ?? null;
     this.fetch = opts.fetch ?? ((url, init) => fetch(url, init));
     this.counter = opts.counter ?? meteredRequests;
@@ -397,7 +420,12 @@ export class GeminiProvider implements CodeEditProvider {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: r.system }] },
           contents: [{ role: "user", parts: [{ text: r.user }] }],
-          generationConfig: { responseMimeType: "application/json", responseJsonSchema: r.schema, maxOutputTokens: r.maxTokens },
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseJsonSchema: r.schema,
+            maxOutputTokens: r.maxTokens,
+            ...(this.thinkingLevel ? { thinkingConfig: { thinkingLevel: this.thinkingLevel } } : {}),
+          },
         }),
         signal: AbortSignal.timeout(r.timeoutMs),
       });
@@ -538,14 +566,16 @@ export interface ProviderEnv {
   XAI_BASE_URL?: string;
   GEMINI_API_KEY?: string;
   GEMINI_MODEL?: string;
+  /** Optional thinking level for the Gemini model (GEMINI_MODEL_THINKING_LEVELS); unset keeps the model's default. */
+  GEMINI_THINKING_LEVEL?: string;
   /** Most requests this process may send to a metered provider (xAI, Gemini); unset means no limit. */
   AI_MAX_REQUESTS?: string;
 }
 
 /** The provider settings from a process environment (only these keys; credentials are never copied elsewhere). */
 export function providerEnvFrom(env: Record<string, string | undefined>): ProviderEnv {
-  const { AI_PROVIDER, ANTHROPIC_API_KEY, ANTHROPIC_MODEL, XAI_API_KEY, XAI_MODEL, XAI_BASE_URL, GEMINI_API_KEY, GEMINI_MODEL, AI_MAX_REQUESTS } = env;
-  return { AI_PROVIDER, ANTHROPIC_API_KEY, ANTHROPIC_MODEL, XAI_API_KEY, XAI_MODEL, XAI_BASE_URL, GEMINI_API_KEY, GEMINI_MODEL, AI_MAX_REQUESTS };
+  const { AI_PROVIDER, ANTHROPIC_API_KEY, ANTHROPIC_MODEL, XAI_API_KEY, XAI_MODEL, XAI_BASE_URL, GEMINI_API_KEY, GEMINI_MODEL, GEMINI_THINKING_LEVEL, AI_MAX_REQUESTS } = env;
+  return { AI_PROVIDER, ANTHROPIC_API_KEY, ANTHROPIC_MODEL, XAI_API_KEY, XAI_MODEL, XAI_BASE_URL, GEMINI_API_KEY, GEMINI_MODEL, GEMINI_THINKING_LEVEL, AI_MAX_REQUESTS };
 }
 
 /** The configured provider. Throws ProviderError("not-configured") when the chosen provider cannot run. */
@@ -574,7 +604,24 @@ function createGeminiProvider(env: ProviderEnv): GeminiProvider {
   // Accept the "models/…" form the API's model list uses.
   const model = env.GEMINI_MODEL?.trim().replace(/^models\//, "") || undefined;
   if (model && !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(model)) throw new ProviderError("not-configured", "GEMINI_MODEL must be a model code such as gemini-3.8-flash.");
-  return new GeminiProvider({ apiKey, model, maxRequests: maxRequestsFrom(env) });
+  return new GeminiProvider({ apiKey, model, thinkingLevel: geminiThinkingLevelFrom(env, model || DEFAULT_GEMINI_MODEL), maxRequests: maxRequestsFrom(env) });
+}
+
+/** GEMINI_THINKING_LEVEL, checked against the levels documented for the model; null when unset. */
+function geminiThinkingLevelFrom(env: ProviderEnv, model: string): GeminiThinkingLevel | null {
+  const raw = env.GEMINI_THINKING_LEVEL?.trim().toLowerCase();
+  if (!raw) return null;
+  if (!(GEMINI_THINKING_LEVELS as readonly string[]).includes(raw)) {
+    throw new ProviderError("not-configured", `GEMINI_THINKING_LEVEL must be one of ${GEMINI_THINKING_LEVELS.join(", ")}, or unset.`);
+  }
+  const supported = GEMINI_MODEL_THINKING_LEVELS[model];
+  if (!supported) {
+    throw new ProviderError("not-configured", `GEMINI_THINKING_LEVEL has no documented levels for ${model.slice(0, 60)}; unset it, or use a model with documented levels (${Object.keys(GEMINI_MODEL_THINKING_LEVELS).join(", ")}).`);
+  }
+  if (!(supported as readonly string[]).includes(raw)) {
+    throw new ProviderError("not-configured", `${model} supports GEMINI_THINKING_LEVEL ${supported.join(", ")}, not ${raw}.`);
+  }
+  return raw as GeminiThinkingLevel;
 }
 
 function createXaiProvider(env: ProviderEnv): XaiProvider {

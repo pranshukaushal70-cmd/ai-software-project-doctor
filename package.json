@@ -21,7 +21,7 @@
     "db:migrate": "npm run migrate:dev -w @pd/db",
     "db:deploy": "npm run migrate:deploy -w @pd/db",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "node -e \"console.error('No linter is configured; npm run typecheck is the static check (see docs/ci.md).'); process.exit(1)\"",
+    "lint": "npm run typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
     "services:up": "docker compose up -d postgres redis",
