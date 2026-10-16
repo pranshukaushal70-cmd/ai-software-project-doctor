@@ -1,6 +1,6 @@
 import { access } from "node:fs/promises";
-import { createEditProvider, ProviderError, type ProviderEnv } from "@pd/agent";
-import { uploadPath } from "@pd/analyzer";
+import { createEditProvider, deriveEditScope, hasEditableFiles, ProviderError, type ProviderEnv, type ValidatedPlan } from "@pd/agent";
+import { uploadPath, type FileKind } from "@pd/analyzer";
 import { transitionRun, type Prisma, type PrismaClient } from "@pd/db";
 import type { SandboxConfig, TestSetup } from "@pd/sandbox";
 import {
@@ -75,10 +75,17 @@ export async function createRun(deps: ControlDeps, userId: string, planId: strin
   const { prisma } = deps;
   const plan = await prisma.engineeringPlan.findFirst({
     where: { id: planId, task: { userId, analysis: { repository: { userId } } } },
-    select: { id: true, status: true, approvedAt: true, task: { select: { analysis: { select: { commitSha: true, repository: { select: { source: true, uploadKey: true } } } } } } },
+    select: { id: true, status: true, approvedAt: true, plan: true, task: { select: { analysisId: true, analysis: { select: { commitSha: true, repository: { select: { source: true, uploadKey: true } } } } } } },
   });
   if (!plan) throw new AppError("NOT_FOUND", "Plan not found");
   if (!plan.approvedAt || plan.status !== "COMPLETED") throw new AppError("CONFLICT", "Approve the plan before starting the code engine.");
+
+  // The scope the run would derive (orchestrator.ts): refuse now instead of queueing a run that must fail.
+  const files = await prisma.file.findMany({ where: { analysisId: plan.task.analysisId }, select: { path: true, kind: true } });
+  const facts = { files: new Map(files.map((f) => [f.path, f.kind as FileKind] as const)) };
+  if (!plan.plan || !hasEditableFiles(deriveEditScope(plan.plan as unknown as ValidatedPlan, facts))) {
+    throw new AppError("CONFLICT", 'The approved plan names no files the code engine may change: files marked "review" are only read. Generate a plan that marks the files to change as "modify" or "create".');
+  }
 
   // The analysed source must be rebuildable (see materialize.ts); say so now rather than in a failed run.
   const { analysis } = plan.task;

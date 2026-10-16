@@ -2,6 +2,8 @@ import { fileRole } from "@pd/analyzer/intelligence";
 // The dependency-free redaction module, not "@pd/analyzer/metrics" (which loads the tree-sitter parser).
 import { redactSecrets } from "@pd/analyzer/evidence";
 import type { FileKind } from "@pd/analyzer";
+import { deriveEditScope, hasEditableFiles } from "./edit-policy";
+import { isRepoPath, TEST_PATH } from "./paths";
 import { PlanOutputSchema, type Certainty, type PlanOutput, type PlanningContext } from "./schema";
 
 /**
@@ -35,7 +37,8 @@ export interface ValidationIssue {
     | "implausible-test-path"
     | "unlisted-step-file"
     | "command"
-    | "secret";
+    | "secret"
+    | "no-editable-files";
   /** JSON path of the item, e.g. `affectedFiles[2].path`. */
   field: string;
   message: string;
@@ -68,12 +71,10 @@ export const PLAN_LIMITS = { listItems: 40, text: 2000, evidencePerItem: 12, val
 /** Shell-command shapes the plan must not contain: it describes work, it never prescribes commands to run. */
 export const COMMAND =
   /(?:^|[\s`$>;(|&])(?:sudo|rm\s+-[rf]|curl\s+\S|wget\s+\S|npm\s+(?:i|install|ci|run|exec|uninstall)\b|npx\s+\S|pnpm\s+\S|yarn\s+(?:add|install|run)\b|pip3?\s+install|chmod\s+\d|chown\s+\S|bash\s+-c|sh\s+-c|powershell(?:\.exe)?\s|cmd(?:\.exe)?\s+\/c|git\s+(?:push|commit|reset|clean|checkout|rebase|merge|add)\b|docker\s+(?:run|exec|build)\b|kubectl\s+\S|eval\s*\(|exec\s*\(|child_process|os\.system|subprocess\.)/i;
-export const TEST_PATH = /(?:^|\/)(?:__tests__|tests?|spec|specs|e2e)\/|\.(?:test|spec|e2e)\.[cm]?[jt]sx?$|(?:^|\/)test_[^/]+\.py$|_test\.(?:py|go)$|Tests?\.java$/;
+export { isRepoPath, TEST_PATH };
 export const REMOVED_COMMAND = "[shell command removed by validation]";
 
 export const clamp01 = (n: number) => (Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0);
-export const isRepoPath = (p: string) =>
-  p.length > 0 && p.length <= 1000 && !p.startsWith("/") && !p.startsWith("~") && !/^[A-Za-z]:/.test(p) && !p.includes("\\") && !p.includes("\0") && !p.split("/").includes("..");
 
 export function validatePlan(raw: unknown, context: PlanningContext, facts: RepositoryFacts): { plan: ValidatedPlan | null; report: ValidationReport } {
   const parsed = PlanOutputSchema.safeParse(raw);
@@ -229,6 +230,16 @@ export function validatePlan(raw: unknown, context: PlanningContext, facts: Repo
     unknowns: list(p.unknowns).map((u, i) => clean(u, `unknowns[${i}]`)),
     confidence: clamp01(p.confidence),
   };
+
+  // The same rule the code engine applies: a plan that only reviews files cannot be carried out.
+  if (!hasEditableFiles(deriveEditScope(plan, facts))) {
+    issue(
+      "warning",
+      "no-editable-files",
+      "affectedFiles",
+      'No file in this plan may be changed by the code engine: items marked "review" are only read, and forbidden or nonexistent paths are excluded. Mark the files to change as "modify" or "create" to run the code engine.',
+    );
+  }
 
   const errors = issues.filter((i) => i.severity === "error").length;
   const warnings = issues.length - errors;

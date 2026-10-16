@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { buildEditContext, deriveEditScope, runEditor, unifiedDiff, type CodeEditProvider, type EditIssue, type ProposedChange, type RepairFeedback, type RepositoryFacts, type ValidatedPlan } from "@pd/agent";
+import { buildEditContext, deriveEditScope, hasEditableFiles, runEditor, unifiedDiff, type CodeEditProvider, type EditIssue, type ProposedChange, type RepairFeedback, type RepositoryFacts, type ValidatedPlan } from "@pd/agent";
 import { checkChanges } from "@pd/agent/checks";
 import { createWorkspace, fetchCommit, runGit, verifyFiles, type FileKind, type Workspace } from "@pd/analyzer";
 import { redactSecrets } from "@pd/analyzer/evidence";
@@ -139,7 +139,7 @@ class RunJob {
     await this.move("MATERIALIZING", "Rebuilding the analysed source.", { startedAt: new Date() });
     await this.prepare();
     const scope = deriveEditScope(this.plan, this.facts);
-    if (!scope.modify.length && !scope.create.length && !scope.delete.length) {
+    if (!hasEditableFiles(scope)) {
       return this.fail("empty-scope", "The approved plan names no files the code engine may change.");
     }
     const applied = await this.generate(null);

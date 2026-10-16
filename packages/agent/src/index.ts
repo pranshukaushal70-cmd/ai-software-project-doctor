@@ -34,7 +34,7 @@ export { CERTAINTY, ClaimSchema, EVIDENCE_KINDS, PlanOutputSchema, type Certaint
 export { PLAN_LIMITS, validatePlan, type RepositoryFacts, type ValidatedPlan, type ValidationIssue, type ValidationReport, type ValidationStatus } from "./validate";
 export { unifiedDiff, type FileDiff } from "./diff";
 export { buildEditContext, type BuiltEditContext, type EditContextInput } from "./edit-context";
-export { deriveEditScope, EDIT_LIMITS, forbiddenReason } from "./edit-policy";
+export { deriveEditScope, EDIT_LIMITS, forbiddenReason, hasEditableFiles } from "./edit-policy";
 export { buildEditUserMessage, EDITOR_SYSTEM_PROMPT } from "./edit-prompt";
 export { EDIT_OPERATIONS, EditOutputSchema, type ContextFile, type EditContext, type EditOperation, type EditOutput, type EditScope, type RepairFeedback } from "./edit-schema";
 export { validateEdits, type EditIssue, type EditIssueCode, type EditReport, type EditValidationStatus, type ProposedChange, type ValidatedEdits } from "./edit-validate";

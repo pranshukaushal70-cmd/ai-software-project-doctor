@@ -79,7 +79,9 @@ excluded. New test files that follow the repository's test conventions are also 
 are never editable whatever the plan says: lockfiles; CI, container and deployment files; anything under `.github/`;
 git metadata, `.gitattributes`/`.gitmodules` and hook configuration; package-manager configuration (`.yarnrc*`,
 `.pnpmfile.cjs`, `bunfig.toml`, …); secret files; binary files. Package manifests change only when the plan approves a
-dependency change.
+dependency change. Items marked `review` are context only and never in scope. A plan whose scope is empty (for example
+one that only reviews files) is flagged `no-editable-files` by the plan validation, and starting a run for it is refused
+with 409 before anything is queued; a run that still finds an empty scope when its job starts fails with `empty-scope`.
 
 **Context** (what the model sees) is the only place file contents leave the repository: the files in scope plus files
 the plan names for review, never secret or binary files, at most 20 files, 64 KB each and 400 KB in total, with
