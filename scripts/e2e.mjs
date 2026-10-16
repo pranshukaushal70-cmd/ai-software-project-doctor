@@ -19,6 +19,7 @@ import { spawnSync } from "node:child_process";
 import { statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { portOwnersFrom, stackGuardMessage } from "../e2e/lib/stack-guard.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sandbox = process.env.E2E_SANDBOX === "1";
@@ -42,12 +43,25 @@ if (stack === "eval" && command !== "up" && !env.ANTHROPIC_API_KEY) env.ANTHROPI
 
 const files = ["docker-compose.yml", `docker-compose.${stack}.yml`, ...(sandbox ? ["docker-compose.sandbox.yml"] : [])];
 const services = stack === "e2e" ? ["migrate", "web", "worker", "model-stub"] : ["migrate", "web", "worker"];
+const project = `pd-${stack}`;
+const composeArgs = (args) => ["compose", "-p", project, "--env-file", "e2e/stack.env", ...files.flatMap((f) => ["-f", f]), "--profile", "app", ...args];
 const composeWith = (stdio, args) => {
-  const full = ["compose", "-p", `pd-${stack}`, "--env-file", "e2e/stack.env", ...files.flatMap((f) => ["-f", f]), "--profile", "app", ...args];
-  const r = spawnSync("docker", full, { cwd: root, env, stdio });
+  const r = spawnSync("docker", composeArgs(args), { cwd: root, env, stdio });
   return r.status ?? 1;
 };
 const compose = (...args) => composeWith("inherit", args);
+
+// The specs must reach this stack's own web container (e2e/lib/stack-guard.mjs). Same default
+// as e2e/lib/env.ts.
+const baseUrl = (env.E2E_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const stackGuard = () => {
+  const ps = spawnSync("docker", composeArgs(["ps", "--status", "running", "--quiet", "web"]), { cwd: root, env, encoding: "utf8" });
+  const webRunning = ps.status === 0 && ps.stdout.trim() !== "";
+  const url = new URL(baseUrl);
+  const port = url.port || (url.protocol === "https:" ? "443" : "80");
+  const owners = spawnSync("docker", ["ps", "--filter", `publish=${port}`, "--format", '{{.Label "com.docker.compose.project"}}|{{.Names}}'], { cwd: root, env, encoding: "utf8" });
+  return stackGuardMessage({ project, webRunning, baseUrl, portOwners: owners.status === 0 ? portOwnersFrom(owners.stdout) : [] });
+};
 
 // The web tier's rate limits (sign-ups: 5 per hour per client address) would stop a second
 // run against the same stack. Only this throwaway stack's Redis is touched, and only the
@@ -74,6 +88,13 @@ switch (command) {
     if (stack !== "e2e") {
       console.error("The Playwright specs run against the stub stack only; use `npm run bench:agent` with PD_STACK=eval.");
       status = 2;
+      break;
+    }
+    // Before anything else: no users, analyses or model requests may reach another stack.
+    const refused = stackGuard();
+    if (refused) {
+      console.error(refused);
+      status = 1;
       break;
     }
     if (resetLimits() !== 0) {
