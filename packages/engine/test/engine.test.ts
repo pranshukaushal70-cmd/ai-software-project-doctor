@@ -376,6 +376,28 @@ describe("run controls", () => {
     await expect(createRun(control(), "u1", "p1")).rejects.toMatchObject({ code: "CONFLICT", message: expect.stringMatching(/archive .* no longer stored/) });
   });
 
+  it("refuses to start a run for a plan that names no files it may change, before anything is queued", async () => {
+    // Only "review" items and no test file: what the planner produced for the failed runs.
+    db.plans[0]!.plan = { ...PLAN, affectedFiles: [{ ...PLAN.affectedFiles[0]!, change: "review" }], testPlan: [] };
+    await expect(createRun(control(), "u1", "p1")).rejects.toMatchObject({ code: "CONFLICT", message: expect.stringMatching(/names no files the code engine may change: files marked "review" are only read/) });
+    // A forbidden file does not count either (only package-manager configuration here).
+    db.plans[0]!.plan = { ...PLAN, affectedFiles: [{ ...PLAN.affectedFiles[0]!, path: ".yarnrc.yml", change: "create" }], testPlan: [] };
+    await expect(createRun(control(), "u1", "p1")).rejects.toMatchObject({ code: "CONFLICT", message: expect.stringMatching(/names no files/) });
+    expect(db.runs).toEqual([]);
+    expect(jobs).toEqual([]);
+    // An existing test the plan names is enough to start.
+    db.plans[0]!.plan = { ...PLAN, affectedFiles: [{ ...PLAN.affectedFiles[0]!, change: "review" }] };
+    await expect(createRun(control(), "u1", "p1")).resolves.toMatchObject({ status: "QUEUED" });
+  });
+
+  it("still fails a run whose plan no longer names editable files when the job starts", async () => {
+    const id = await startRun();
+    db.plans[0]!.plan = { ...PLAN, affectedFiles: [{ ...PLAN.affectedFiles[0]!, change: "review" }], testPlan: [] };
+    await runEngineJob(id, "start", engine(new ScriptedProvider([]), new FakeSandbox({}, { unavailable: "x" }), { sandboxConfig: loadSandboxConfig({}) }));
+    expect(run()).toMatchObject({ status: "FAILED", failureReason: "empty-scope", error: "The approved plan names no files the code engine may change." });
+    expect(db.changes).toEqual([]);
+  });
+
   it("fails the run when it cannot be queued", async () => {
     await expect(createRun(control({ enqueue: async () => Promise.reject(new Error("redis down")) }), "u1", "p1")).rejects.toThrow("redis down");
     expect(run()).toMatchObject({ status: "FAILED", failureReason: "queue-error" });

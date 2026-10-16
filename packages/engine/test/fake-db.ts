@@ -44,7 +44,7 @@ export function fakeDb(f: Fixture) {
   const plans: Row[] = [f.plan];
   const fileRows = f.files.map((x, i) => ({ id: `f${i}`, analysisId: f.analysis.id, ...x }));
 
-  const planView = (p: Row) => ({ ...p, task: { ...f.task, analysis: { ...f.analysis, repository: f.repository } } });
+  const planView = (p: Row) => ({ ...p, task: { analysisId: f.analysis.id, ...f.task, analysis: { ...f.analysis, repository: f.repository } } });
   const ownsPlan = (p: Row, w: Row | undefined) =>
     !w || (f.task.userId === w.userId && f.repository.userId === w.analysis?.repository?.userId && p.taskId === f.task.id);
   const runView = (r: Row, select?: Row) => {

@@ -13,6 +13,7 @@ import {
   buildUserMessage,
   CONTEXT_LIMITS,
   createProvider,
+  deriveEditScope,
   PLANNER_SYSTEM_PROMPT,
   ProviderError,
   runPlanner,
@@ -164,6 +165,9 @@ describe("context retrieval", () => {
     expect(msg).toContain("Developer task: Add rate limiting to the login endpoint");
     expect(msg).toMatch(/E\d+ \[ROUTE\] Express route POST \/login is declared in src\/routes\/auth.ts:4\./);
     expect(PLANNER_SYSTEM_PROMPT).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+    // The prompt says which changes the code engine carries out, so files to edit are not marked "review".
+    expect(PLANNER_SYSTEM_PROMPT).toContain('An existing file or symbol the change will edit uses change "modify".');
+    expect(PLANNER_SYSTEM_PROMPT).toMatch(/Use "review" only for files and symbols that are read for context/);
   });
 });
 
@@ -237,6 +241,29 @@ describe("plan validation", () => {
     p.implementationSteps.push({ title: "x", description: "x", files: ["src/somewhere/else.ts"], evidence: [] });
     const codes = validatePlan(p, ctx, facts).report.issues.map((i) => i.code);
     expect(codes).toEqual(["file-exists", "unlisted-step-file", "test-not-found", "implausible-test-path"]);
+  });
+
+  it("warns when no file may be changed by the code engine (review-only or forbidden), and not otherwise", () => {
+    const ctx = contextFor();
+    const route = idOf(ctx, (e) => e.kind === "ROUTE");
+    const p = goodPlan(ctx);
+    // The shape of the plan behind the failed runs: one file and one symbol, both "review", and a test entry without a path.
+    p.affectedFiles = [{ path: "src/routes/auth.ts", change: "review", reason: "Declares POST /login.", certainty: "VERIFIED", evidence: [route] }];
+    p.implementationSteps = [{ title: "Read the route", description: "Inspect the login route.", files: ["src/routes/auth.ts"], evidence: [route] }];
+    p.testPlan = [{ description: "No test file is implied.", path: null, kind: "existing", evidence: [] }];
+    const { plan, report } = validatePlan(p, ctx, facts);
+    expect(report.status).toBe("WARNINGS");
+    expect(report.issues).toEqual([expect.objectContaining({ severity: "warning", code: "no-editable-files", field: "affectedFiles" })]);
+    expect(report.confidence).toBe(0.77);
+    expect(deriveEditScope(plan!, facts)).toMatchObject({ modify: [], create: [], delete: [] });
+
+    // A file the code engine must never change does not count either.
+    p.affectedFiles = [{ path: ".env", change: "modify", reason: "Add the limit.", certainty: "INFERRED", evidence: [] }];
+    expect(validatePlan(p, ctx, facts).report.issues.map((i) => i.code)).toEqual(["secret-file", "no-editable-files"]);
+
+    // One file to modify is enough: no warning.
+    p.affectedFiles = [{ path: "src/routes/auth.ts", change: "modify", reason: "Declares POST /login.", certainty: "VERIFIED", evidence: [route] }];
+    expect(validatePlan(p, ctx, facts).report).toMatchObject({ status: "PASSED", issues: [] });
   });
 
   it("rejects output that does not match the schema, and clamps confidence", () => {

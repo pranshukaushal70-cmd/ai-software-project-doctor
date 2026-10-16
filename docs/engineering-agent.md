@@ -157,6 +157,7 @@ not exist as far as it knows, must cite evidence ids and must mark certainty. De
 | Proposed test files look like test files | Otherwise `implausible-test-path` (warning) |
 | Files named in steps exist or are listed in affected files | Otherwise `unlisted-step-file` (warning) |
 | Plans do not touch secret files (`.env`, keys, credentials) | Flagged `secret-file` (warning) |
+| At least one file may be changed by the code engine (the scope rules in [code-engine.md](code-engine.md#generating-and-validating-edits)) | Otherwise `no-editable-files` (warning), e.g. when every item is `review` (read only); such a plan can be approved, but the code engine refuses to start a run for it (409) |
 | No credentials in any text field | Redacted with the analyzer's secret patterns (error) |
 | No shell commands in any text field (`npm install`, `curl`, `rm -rf`, `git push`, `bash -c`, `child_process`, …) | The text is replaced by `[shell command removed by validation]` (error) |
 | Sizes | Lists, text and evidence lists are truncated to the limits above |

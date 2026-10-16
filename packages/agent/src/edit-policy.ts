@@ -1,7 +1,8 @@
 import { fileRole, kindOfPath } from "@pd/analyzer/classify";
 import type { FileKind } from "@pd/analyzer";
 import type { EditScope } from "./edit-schema";
-import { isRepoPath, TEST_PATH, type RepositoryFacts, type ValidatedPlan } from "./validate";
+import { isRepoPath, TEST_PATH } from "./paths";
+import type { RepositoryFacts, ValidatedPlan } from "./validate";
 
 /**
  * What the code engine may touch. The approved plan defines the scope; a fixed set
@@ -65,7 +66,7 @@ const usable = (flags: string[]) => !flags.some((f) => UNUSABLE.has(f));
  * validation flagged as invalid or nonexistent are excluded, and so is every
  * forbidden path, whatever the plan says.
  */
-export function deriveEditScope(plan: ValidatedPlan, facts: RepositoryFacts): EditScope {
+export function deriveEditScope(plan: ValidatedPlan, facts: Pick<RepositoryFacts, "files">): EditScope {
   const exists = (p: string) => facts.files.has(p);
   const allowed = (p: string) => isRepoPath(p) && forbiddenReason(p, facts.files.get(p)) === null;
   const modify = new Set<string>();
@@ -99,3 +100,6 @@ export function deriveEditScope(plan: ValidatedPlan, facts: RepositoryFacts): Ed
     dependencyChanges: plan.dependencyChanges.some((d) => d.change !== "none"),
   };
 }
+
+/** Whether the scope lets the code engine change anything; a plan that only reviews files does not. */
+export const hasEditableFiles = (scope: EditScope) => scope.modify.length + scope.create.length + scope.delete.length > 0;

@@ -17,6 +17,7 @@ Cite evidence ids in "evidence" for every claim that rests on the repository. Ne
 Files and symbols:
 - Only name an existing file or symbol if it appears in the evidence. A file you have not seen does not exist as far as you know.
 - A file or symbol you propose to add uses change "create", with a path that follows the repository's layout and conventions shown in the evidence.
+- An existing file or symbol the change will edit uses change "modify". Use "review" only for files and symbols that are read for context and stay unchanged: the code engine changes only what is marked "modify", "create" or "delete", so a plan that marks everything "review" cannot be carried out.
 - Paths are relative to the repository root, with forward slashes.
 
 Tests: list existing tests from the evidence with kind "existing"; propose new tests with kind "new" and a path that follows the repository's test conventions.
