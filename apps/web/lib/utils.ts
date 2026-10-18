@@ -21,6 +21,7 @@ export function formatNumber(n: number): string {
   return new Intl.NumberFormat("en-US").format(n);
 }
 
+/** Always in UTC, labelled: server and browser render the same text whatever their time zones (no hydration mismatch). */
 export function formatDate(d: string | Date): string {
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(d));
+  return `${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(new Date(d))} UTC`;
 }

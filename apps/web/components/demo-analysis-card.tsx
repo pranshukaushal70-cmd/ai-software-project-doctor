@@ -27,16 +27,20 @@ export function DemoAnalysisCard() {
   }
 
   return (
-    <Card id="demo" className="mt-6">
+    <Card id="demo" className="mt-6 border-dashed">
       <CardContent className="flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <FlaskConical className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-violet/15 text-violet ring-1 ring-violet/25">
+            <FlaskConical className="size-5" aria-hidden />
+          </span>
           <div className="text-sm">
             <div className="font-medium">No repository at hand?</div>
             <p className="text-muted-foreground">
               Analyse the demo project: a small web shop with deliberate security, API, database, testing and documentation problems.
             </p>
-            <FormError message={error} />
+            <div className="mt-2 empty:hidden">
+              <FormError message={error} />
+            </div>
           </div>
         </div>
         <Button type="button" variant="outline" onClick={start} disabled={pending} className="shrink-0">

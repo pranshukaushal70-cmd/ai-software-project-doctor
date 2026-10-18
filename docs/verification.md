@@ -3,6 +3,37 @@
 What has been verified, phase by phase, with the dates of the end-to-end checks. The current totals are in the
 [README](../README.md#verification-status); how to run each suite is in [testing.md](testing.md).
 
+## Frontend refresh (2026-10-18)
+
+Local runs on the `feat/frontend-refresh` branch, without any real AI request. The refresh changes only `apps/web`: the
+animated landing page, a shared page header, empty states, notices and form styles, phone navigation, loading, error
+and not-found pages, the light and dark palettes, UTC date display and accessibility fixes (see the
+[README](../README.md#web-interface)). CI has not run on this branch yet.
+
+| Check | Result |
+|---|---|
+| `npm run typecheck`, `npm run lint`, `npm run build`, `git diff --check` | Clean, all eleven workspaces; build succeeds (22 pages) |
+| `npm test` | **860 passed**, 0 failed, 4 skipped (864; the real-Docker sandbox tests, not run). The refresh adds 30 tests in seven new files (the other 7 over the 823 recorded for `main` on 2026-10-15 came with PR #15): navigation active state, the shared state components and the error and not-found pages, avatar initials, scroll reveal never hiding content, the illustration's geometry, hit-testing, keyboard stepping and SVG fallback, UTC date formatting including a hydration test (server in UTC, browser in Asia/Kolkata: no mismatch), the New analysis lock icon, the Repositories status tiles as a labelled list, and one `<main>` with the `h1` on the landing, sign-in, sign-up and site-wide 404 pages |
+| `npm audit` | 0 known vulnerabilities |
+| End to end, full suite (38 specs), isolated compose stack (project `pd-e2e` on port 3002, model stub; never the demo stack) | Sandbox off: **34 passed**, 0 failed, 4 skipped (the sandbox-only repair specs, not run). Sandbox on: **not run** on this branch |
+| Browser checks, headless Chromium, page loads only (66 checks) | Landing at 1440, 768 and 390 px in light and dark: one `h1` and `<main>`, no horizontal scrolling, illustration drawn and visible, no console errors. The illustration animates, follows the mouse, steps through nodes with the arrow keys (announced to screen readers) and holds one still frame with reduced motion. Keyboard focus visible on every landing tab stop; theme toggle switches the theme; signed-out `/dashboard` redirects to `/login`. Seven signed-in pages at three widths in both themes (42 checks): HTTP 200, one `h1` and `<main>`, no horizontal scrolling, no console errors; all nine analysis tabs render; report exports offered; unknown and malformed ids show the not-found page. 64 passed at first; one landing check sampled the illustration during its 0.7 s fade-in and passed on three re-checks; one failed (contrast, below) |
+| Colour contrast (WCAG AA) | Dark theme: every checked pair passes (lowest 6.36:1). Light theme: the browser sweep found the primary colour below 4.5:1 for normal text (white on primary 4.23:1, primary text on the background 4.22:1; the light palette predated the refresh). **Fixed**: the light `--primary` is now `oklch(0.5 0.12 190)` (was `oklch(0.55 0.13 190)`); measured in headless Chromium from `globals.css`: white on primary **5.21:1**, primary text on the background **5.20:1**, on cards 5.34:1, on muted surfaces 4.84:1; every checked light and dark text pair now meets 4.5:1. The dark theme and the landing hero (always dark) are unchanged. Verified on the running demo stack after rebuilding only its web container: the served stylesheet has the new colour (`#00736f`), and on `/login` the rendered *Sign in* button measures 5.21:1 and the *Create an account* link 5.34:1 in the light theme (10.83:1 and 10.71:1 in dark), with no console errors. The isolated `pd-e2e` stack still runs the previous web image, and the end-to-end suite has not been re-run since this colour change |
+| Demo stack after updating only its web container | Health check passed; worker, PostgreSQL, Redis, migrations, volumes and database row counts unchanged |
+
+**Known behaviour.** Inside the signed-in app, a missing analysis or report shows the not-found page with HTTP 200, not
+404: `app/(app)/loading.tsx` makes these pages stream, and once streaming has started Next.js keeps status 200 and adds
+`<meta name="robots" content="noindex">` (documented in the Next.js `not-found` file convention). The page, its wording
+and its links are correct; the API still returns 404 (`e2e/specs/api/analysis.spec.ts`, `reports.spec.ts`), and the
+site-wide 404 page for unknown addresses returns 404. Restoring the status would mean removing the loading skeleton.
+
+**Dates** are formatted in UTC and labelled (`Oct 18, 2026, 8:45 PM UTC`). Before, the analysis page formatted its
+date in the server's time zone (UTC in the container) and again in the browser's, so the text differed and React
+reported a hydration mismatch (error #418); viewers outside UTC now see UTC instead of their local time.
+
+**Not verified:** the sandbox-on end-to-end specs and the real-Docker sandbox tests on this branch, a screen reader, an
+automated accessibility scan, real phones and touch input, the error page under a real server failure, the loading
+skeleton on a slow connection, and any real-model run since 2026-10-13.
+
 ## Real-model checks (2026-10-13)
 
 Manual, single-shot checks with the Gemini API free tier, on isolated compose stacks (never the demo stack), with

@@ -47,7 +47,7 @@ Reports (Phase 9), on demand: immutable, redacted snapshots of an analysis, a pl
 
 | Path | Purpose |
 |---|---|
-| `apps/web` | Next.js 16 app: landing page, auth, dashboard, API route handlers |
+| `apps/web` | Next.js 16 app: animated landing page, auth, dashboard, API route handlers |
 | `apps/worker` | BullMQ worker: the analysis pipeline, and planner and code-engine jobs |
 | `packages/analyzer` | Pure deterministic engine: no database; network only for `git clone` and the OSV.dev lookup, which uses a `fetch` passed in by the worker |
 | `packages/db` | Prisma 7 schema, migrations and client |
@@ -84,6 +84,28 @@ The same data is available from the API, including `GET /api/analysis/:id/depend
 
 **Demo project.** Signed-in users can analyse a bundled, deliberately flawed sample application from **New analysis →
 Try the demo project** (`POST /api/analysis/demo`). Its planted issues are listed in [demo/README.md](demo/README.md).
+
+## Web interface
+
+- **Landing page.** A dark hero with an interactive illustration of the workflow: a glowing core, repository nodes and
+  dependency lines drawn on a 2D canvas (no WebGL), with particles, mouse parallax, drag to orbit, and arrow keys to step
+  through the nodes. It loads after the page and fades in over a server-rendered SVG still, which stays in place where
+  canvas is unavailable. With `prefers-reduced-motion` it draws one still frame; it pauses when off screen or in a
+  background tab. The illustration is not data from your repository, and says so.
+- **Signed-in pages.** Repositories (with latest-analysis status tiles), New analysis, the analysis tabs, Planner and
+  Reports share one page header, empty states, notices and form styles. On phones the main navigation moves to a
+  scrollable row under the header.
+- **Themes.** Light and dark (toggle in the header); the landing hero stays dark in both.
+- **Page states.** A loading skeleton while a page's data loads, an error page with *Try again*, and not-found pages
+  that never reveal whether another user's item exists.
+- **Accessibility.** One `h1` and one `<main>` per page, a top-level header, visible keyboard focus, labelled controls,
+  keyboard-operable tabs, and animations that stop with reduced motion.
+- **Dates** are shown in UTC and labelled (for example `Oct 18, 2026, 8:45 PM UTC`), so the server and the browser
+  render the same text whatever their time zones.
+- **Not-found status code.** Inside the signed-in app, a missing analysis or report shows the not-found page with HTTP
+  **200**, not 404: the loading skeleton makes these pages stream, and Next.js keeps status 200 once streaming has
+  started (it adds `<meta name="robots" content="noindex">` instead). The page and its links are correct, the API
+  returns 404, and unknown addresses outside the app return 404. Only tools that check page status codes notice.
 
 ## Tech stack
 
@@ -216,10 +238,11 @@ production images with the sandbox off and on.
 
 | Check | Result |
 |---|---|
-| `npm test` (Vitest, all workspaces) | **823 passed**, 4 skipped (827): the real-Docker sandbox tests, which run with `PD_DOCKER_TESTS=1`. Local on `main` (2026-10-15); the CI unit-test job also passed |
-| Real-Docker sandbox tests (`PD_DOCKER_TESTS=1 npx vitest run --project sandbox`) | Passed in CI on PR #14 and `main` (2026-10-15); locally 23 of 23, including the 4 Docker tests (2026-10-14) |
-| `npm run typecheck`, `npm run lint`, `npm run build`, `npm audit` | Local on `main` (2026-10-15): clean for all eleven workspaces (`lint` runs the same strict typecheck); build succeeds; 0 known vulnerabilities |
-| End to end (Playwright, production images, model stub; 38 specs) | CI on PR #14 and `main` (2026-10-15): both legs (sandbox off and on) passed. Last local run (2026-10-14): sandbox off **34 passed**, 4 skipped (sandbox-only repair specs); sandbox on **36 passed**, 1 skipped (the sandbox-off variant), 1 failed only on transient `net::ERR_NETWORK_CHANGED` browser console errors and passed when re-run alone |
+| `npm test` (Vitest, all workspaces) | **860 passed**, 4 skipped (864): the skipped tests are the real-Docker sandbox tests, which run with `PD_DOCKER_TESTS=1`. Local on `feat/frontend-refresh` (2026-10-18); CI has not run on this branch yet; the refresh adds 30 tests. On `main` (2026-10-15, before PR #15 added 7): 823 passed, 4 skipped, also in CI |
+| Real-Docker sandbox tests (`PD_DOCKER_TESTS=1 npx vitest run --project sandbox`) | Passed in CI on PR #14 and `main` (2026-10-15); locally 23 of 23, including the 4 Docker tests (2026-10-14). Not run on `feat/frontend-refresh` |
+| `npm run typecheck`, `npm run lint`, `npm run build`, `npm audit` | Local on `feat/frontend-refresh` (2026-10-18): clean for all eleven workspaces (`lint` runs the same strict typecheck); build succeeds (22 pages); 0 known vulnerabilities |
+| End to end (Playwright, production images, model stub; 38 specs) | Local on `feat/frontend-refresh` (2026-10-18), isolated stack (project `pd-e2e`, never the demo stack), sandbox off: **34 passed**, 0 failed, 4 skipped (the sandbox-only repair specs, not run). Sandbox on: not run on this branch. CI on PR #14 and `main` (2026-10-15): both legs (sandbox off and on) passed |
+| Frontend refresh, browser checks (2026-10-18) | Headless Chromium, page loads only: landing illustration draws, animates, follows the mouse, steps with the arrow keys and holds a still frame with reduced motion; every signed-in page at 1440, 768 and 390 px in light and dark has one `h1` and one `<main>`, no horizontal scrolling and no console errors; all nine analysis tabs render. Light-theme contrast of the primary colour, below WCAG AA in that sweep, is fixed: white on primary 5.21:1, primary text on the background 5.20:1 (measured from the stylesheet and on the running demo stack; see [verification](docs/verification.md#frontend-refresh-2026-10-18)). Not verified: a screen reader, an automated accessibility scan, real devices |
 | GitHub CI, PR #14 and the merge commit on `main` (2026-10-15) | All four jobs passed on both: typecheck, unit tests, build and migrations; sandbox against real Docker; end to end with the sandbox off; end to end with the sandbox on |
 | Detection benchmark (2026-10-08) | Precision 97.3 %, recall 97.3 % ([results](benchmarks/results/detection.md)) |
 | Planner and code-engine evaluation | Stub: 5 of 6 tasks. Real model: benchmark not run yet ([docs/benchmark.md](docs/benchmark.md)) |
