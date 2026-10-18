@@ -17,6 +17,20 @@ export function NewAnalysisForm({ maxUploadMb }: { maxUploadMb: number }) {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [dragging, setDragging] = useState(false);
+
+  const select = (id: Tab) => {
+    setTab(id);
+    setError(null);
+  };
+  // Arrow keys move between the two tabs (WAI-ARIA tabs pattern); focus follows the selection.
+  const onTabKey = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const next: Tab = tab === "url" ? "zip" : "url";
+    select(next);
+    document.getElementById(`source-tab-${next}`)?.focus();
+  };
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -54,16 +68,17 @@ export function NewAnalysisForm({ maxUploadMb }: { maxUploadMb: number }) {
         ).map(([id, Icon, label]) => (
           <button
             key={id}
+            id={`source-tab-${id}`}
             role="tab"
             type="button"
             aria-selected={tab === id}
-            onClick={() => {
-              setTab(id);
-              setError(null);
-            }}
+            aria-controls="source-panel"
+            tabIndex={tab === id ? 0 : -1}
+            onClick={() => select(id)}
+            onKeyDown={onTabKey}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground",
-              tab === id && "border-primary text-foreground",
+              "flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground",
+              tab === id && "border-primary bg-primary/5 text-foreground",
             )}
           >
             <Icon className="size-4" /> {label}
@@ -71,7 +86,7 @@ export function NewAnalysisForm({ maxUploadMb }: { maxUploadMb: number }) {
         ))}
       </div>
 
-      <CardContent className="pt-5">
+      <CardContent id="source-panel" role="tabpanel" aria-labelledby={`source-tab-${tab}`} className="pt-5">
         <form onSubmit={submit} className="flex flex-col gap-5">
           {tab === "url" ? (
             <div className="flex flex-col gap-1.5">
@@ -86,20 +101,32 @@ export function NewAnalysisForm({ maxUploadMb }: { maxUploadMb: number }) {
               <input
                 type="file"
                 accept=".zip,application/zip"
-                className="sr-only"
+                className="peer sr-only"
                 id="zip"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               />
               <label
                 htmlFor="zip"
-                onDragOver={(e) => e.preventDefault()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={(e) => {
+                  // Moving over the icon or text inside fires dragleave too; only leaving the zone counts.
+                  if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
+                }}
                 onDrop={(e) => {
                   e.preventDefault();
+                  setDragging(false);
                   setFile(e.dataTransfer.files[0] ?? null);
                 }}
-                className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-10 text-center transition-colors hover:bg-muted/50"
+                className={cn(
+                  // The file input itself is visually hidden; its keyboard focus shows on this drop zone.
+                  "flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-10 text-center transition-colors hover:border-primary/40 hover:bg-muted/50 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring",
+                  (dragging || file) && "border-primary/50 bg-primary/5",
+                )}
               >
-                <UploadCloud className="size-6 text-muted-foreground" />
+                <UploadCloud className={cn("size-6 text-muted-foreground transition-colors", (dragging || file) && "text-primary")} aria-hidden />
                 {file ? (
                   <span className="text-sm">
                     <span className="font-medium">{file.name}</span>{" "}
@@ -112,10 +139,10 @@ export function NewAnalysisForm({ maxUploadMb }: { maxUploadMb: number }) {
             </div>
           )}
 
-          <fieldset className="rounded-lg border p-4">
+          <fieldset className="rounded-lg border bg-muted/20 p-4">
             <legend className="px-1 text-sm font-medium">Analysis mode</legend>
             <div className="flex items-start gap-3">
-              <Lock className="mt-0.5 size-4 text-primary" aria-hidden />
+              <Lock className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
               <div className="text-sm">
                 <div className="font-medium">Local-only</div>
                 <p className="text-muted-foreground">

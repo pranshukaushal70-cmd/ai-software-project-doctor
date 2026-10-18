@@ -1,7 +1,11 @@
 import Link from "next/link";
+import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import type { ReportOutcomeName, ReportStatusName, ReportTypeName } from "@pd/shared/constants";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Notice } from "@/components/ui/notice";
 import { cn, formatDate } from "@/lib/utils";
 import { OUTCOME, REPORT_STATUS, REPORT_TYPE } from "./labels";
 
@@ -44,37 +48,44 @@ const href = (type: ReportTypeName | null, page = 1) => {
 export function ReportList({ list, type, error }: { list: ReportListDto | null; type: ReportTypeName | null; error?: string | null }) {
   return (
     <div className="space-y-4">
-      <nav className="flex flex-wrap gap-1.5" aria-label="Report type">
+      <nav className="inline-flex flex-wrap gap-1 rounded-lg border bg-card p-1" aria-label="Report type">
         {FILTERS.map((f) => (
           <Link
             key={f.label}
             href={href(f.type)}
             aria-current={f.type === type ? "page" : undefined}
-            className={cn("rounded-md border px-3 py-1 text-sm text-muted-foreground hover:text-foreground", f.type === type && "border-primary bg-muted text-foreground")}
+            className={cn(
+              "rounded-md px-3 py-1 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
+              f.type === type && "bg-primary/12 text-foreground ring-1 ring-primary/40",
+            )}
           >
             {f.label}
           </Link>
         ))}
       </nav>
       {error ? (
-        <Card className="px-6 py-8 text-sm" role="alert">
-          <p className="font-medium text-sev-critical">Reports could not be loaded</p>
-          <p className="mt-1 text-muted-foreground">{error}</p>
-        </Card>
+        <Notice tone="error" role="alert" title="Reports could not be loaded" className="px-4 py-4">
+          {error}
+        </Notice>
       ) : !list || list.items.length === 0 ? (
-        <Card className="grid place-items-center px-6 py-14 text-center">
-          <h2 className="font-medium">No reports yet</h2>
-          <p className="mt-1 max-w-md text-sm text-muted-foreground">
-            Generate a report from an analysis page, or from a plan or run on the Planner page. A report records what the Project Doctor found, planned, changed and tested.
-          </p>
-        </Card>
+        <EmptyState
+          icon={FileText}
+          title="No reports yet"
+          action={
+            <Button asChild variant="outline">
+              <Link href="/planner">Open the planner</Link>
+            </Button>
+          }
+        >
+          Generate a report from an analysis page, or from a plan or run on the Planner page. A report records what the Project Doctor found, planned, changed and tested.
+        </EmptyState>
       ) : (
         <>
           <Card className="divide-y overflow-hidden">
             {list.items.map((r) => {
               const outcome = OUTCOME[r.outcome];
               return (
-                <Link key={r.id} href={`/reports/${r.id}`} className="block min-w-0 px-4 py-3 transition-colors hover:bg-muted/50">
+                <Link key={r.id} href={`/reports/${r.id}`} className="group block min-w-0 px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50">
                   <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <Badge>{REPORT_TYPE[r.type]}</Badge>
                     <Badge tone={outcome.tone}>{outcome.label}</Badge>
@@ -83,7 +94,7 @@ export function ReportList({ list, type, error }: { list: ReportListDto | null; 
                     {r.warningCount > 0 && <Badge tone="medium">{r.warningCount} warnings</Badge>}
                     <span className="ml-auto text-xs text-muted-foreground">{formatDate(r.generatedAt)}</span>
                   </div>
-                  <p className="mt-1 truncate font-medium" title={r.title}>
+                  <p className="mt-1 truncate font-medium transition-colors group-hover:text-primary" title={r.title}>
                     {r.title}
                   </p>
                   <p className="line-clamp-2 text-sm break-words text-muted-foreground">{r.summary}</p>
@@ -95,9 +106,21 @@ export function ReportList({ list, type, error }: { list: ReportListDto | null; 
             <span className="text-muted-foreground">
               {list.total} reports · page {list.page} of {list.pages}
             </span>
-            <span className="flex gap-3">
-              {list.page > 1 && <Link href={href(type, list.page - 1)}>Previous</Link>}
-              {list.page < list.pages && <Link href={href(type, list.page + 1)}>Next</Link>}
+            <span className="flex gap-2">
+              {list.page > 1 && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={href(type, list.page - 1)}>
+                    <ChevronLeft aria-hidden /> Previous
+                  </Link>
+                </Button>
+              )}
+              {list.page < list.pages && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={href(type, list.page + 1)}>
+                    Next <ChevronRight aria-hidden />
+                  </Link>
+                </Button>
+              )}
             </span>
           </div>
         </>

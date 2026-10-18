@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ClipboardList, Loader2, ScanSearch, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FormError, Input, Label } from "@/components/ui/form";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FormError, Input, Label, Select, Textarea } from "@/components/ui/form";
 import { api } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { PlanView, type PlanDto } from "./plan-view";
@@ -116,11 +118,17 @@ export function PlannerView({ analyses, initialAnalysisId }: { analyses: Plannab
 
   if (analyses.length === 0) {
     return (
-      <Card className="mt-6">
-        <CardContent className="py-8 text-center text-sm text-muted-foreground">
-          No analysed repositories with a repository index yet. Run an analysis first; the planner works from its index.
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={ScanSearch}
+        className="mt-6"
+        action={
+          <Button asChild>
+            <Link href="/new">New analysis</Link>
+          </Button>
+        }
+      >
+        No analysed repositories with a repository index yet. Run an analysis first; the planner works from its index.
+      </EmptyState>
     );
   }
 
@@ -133,31 +141,17 @@ export function PlannerView({ analyses, initialAnalysisId }: { analyses: Plannab
             <form onSubmit={submit} className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="analysis">Repository</Label>
-                <select
-                  id="analysis"
-                  value={analysisId}
-                  onChange={(e) => setAnalysisId(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-card px-2 text-sm shadow-xs"
-                >
+                <Select id="analysis" value={analysisId} onChange={(e) => setAnalysisId(e.target.value)}>
                   {analyses.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.repository} — analysed {a.createdAt.slice(0, 10)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="task">Task</Label>
-                <textarea
-                  id="task"
-                  name="task"
-                  required
-                  minLength={10}
-                  maxLength={2000}
-                  rows={4}
-                  placeholder="e.g. Add rate limiting to the login endpoint"
-                  className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring"
-                />
+                <Textarea id="task" name="task" required minLength={10} maxLength={2000} rows={4} placeholder="e.g. Add rate limiting to the login endpoint" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="scope">Scope (optional)</Label>
@@ -165,12 +159,7 @@ export function PlannerView({ analyses, initialAnalysisId }: { analyses: Plannab
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="constraints">Constraints (optional, one per line)</Label>
-                <textarea
-                  id="constraints"
-                  name="constraints"
-                  rows={2}
-                  className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm shadow-xs focus-visible:outline-2 focus-visible:outline-ring"
-                />
+                <Textarea id="constraints" name="constraints" rows={2} />
               </div>
               <FormError message={error} />
               <Button type="submit" disabled={pending || !analysisId} className="w-full">
@@ -185,9 +174,11 @@ export function PlannerView({ analyses, initialAnalysisId }: { analyses: Plannab
         </Card>
 
         <div>
-          <h2 className="mb-2 text-sm font-medium">Tasks</h2>
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-medium">
+            <ClipboardList className="size-4 text-muted-foreground" aria-hidden /> Tasks
+          </h2>
           {tasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tasks for this analysis yet.</p>
+            <p className="rounded-md border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">No tasks for this analysis yet.</p>
           ) : (
             <ul className="space-y-1.5">
               {tasks.map((t) => (
@@ -196,7 +187,10 @@ export function PlannerView({ analyses, initialAnalysisId }: { analyses: Plannab
                     type="button"
                     onClick={() => open(t.id)}
                     aria-current={t.id === selected ? "true" : undefined}
-                    className={cn("w-full rounded-md border px-3 py-2 text-left text-sm transition-colors hover:bg-muted", t.id === selected && "border-primary bg-muted")}
+                    className={cn(
+                      "w-full rounded-md border px-3 py-2 text-left text-sm transition-[background-color,border-color,box-shadow] hover:border-primary/30 hover:bg-muted/60",
+                      t.id === selected && "border-primary/60 bg-muted shadow-[0_0_0_3px_var(--glow)]",
+                    )}
                   >
                     <span className="line-clamp-2 break-words">{t.request}</span>
                     <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
@@ -214,12 +208,10 @@ export function PlannerView({ analyses, initialAnalysisId }: { analyses: Plannab
 
       <div className="min-w-0">
         {!selected ? (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Describe a task to get an engineering plan grounded in this repository&apos;s index: affected files and symbols, steps, tests, risks, and which claims are verified, inferred or
-              unknown.
-            </CardContent>
-          </Card>
+          <EmptyState icon={Sparkles}>
+            Describe a task to get an engineering plan grounded in this repository&apos;s index: affected files and symbols, steps, tests, risks, and which claims are verified, inferred or
+            unknown.
+          </EmptyState>
         ) : (
           <div className="space-y-3">
             {current && (
@@ -235,7 +227,11 @@ export function PlannerView({ analyses, initialAnalysisId }: { analyses: Plannab
                 )}
               </div>
             )}
-            {plan ? <PlanView plan={plan} /> : <p className="text-sm text-muted-foreground">No plan yet.</p>}
+            {plan ? (
+              <PlanView plan={plan} />
+            ) : (
+              <p className="rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground">No plan yet.</p>
+            )}
             {plan?.status === "COMPLETED" && plan.plan && <RunPanel key={plan.id} planId={plan.id} approvedAt={plan.approvedAt} />}
           </div>
         )}

@@ -3,12 +3,12 @@ import { Slot } from "./slot";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-200 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
-        outline: "border bg-card hover:bg-muted",
+        default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-[0_6px_24px_-6px_var(--glow)]",
+        outline: "border bg-card hover:border-primary/40 hover:bg-muted",
         ghost: "hover:bg-muted",
         subtle: "bg-muted hover:bg-muted/70",
         link: "text-primary underline-offset-4 hover:underline",

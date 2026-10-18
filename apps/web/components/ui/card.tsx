@@ -1,7 +1,10 @@
 import { cn } from "@/lib/utils";
 
-export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-xl border bg-card text-card-foreground shadow-xs", className)} {...props} />;
+/** `interactive` adds a hover lift and border glow, for cards that are links or open something. */
+export const cardInteractive = "transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_10px_30px_-12px_var(--glow)]";
+
+export function Card({ className, interactive, ...props }: React.HTMLAttributes<HTMLDivElement> & { interactive?: boolean }) {
+  return <div className={cn("rounded-xl border bg-card text-card-foreground shadow-xs", interactive && cardInteractive, className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

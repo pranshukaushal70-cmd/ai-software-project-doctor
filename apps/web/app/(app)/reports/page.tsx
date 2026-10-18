@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { reportsQuerySchema } from "@pd/shared";
+import { FileText } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { ReportList, type ReportListDto } from "@/components/reports/report-list";
 import { requireUser } from "@/server/auth/session";
 import { findReports } from "@/server/services/report-service";
@@ -15,11 +17,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const list: ReportListDto = JSON.parse(JSON.stringify(await findReports(user.id, query)));
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
-      <p className="mt-1 mb-6 max-w-3xl text-sm text-muted-foreground">
-        Snapshots of what the Project Doctor found, planned, changed, validated and tested, built from stored data. A report never changes after it is generated; secrets and code are
-        never included.
-      </p>
+      <PageHeader
+        icon={FileText}
+        title="Reports"
+        className="mb-6"
+        description="Snapshots of what the Project Doctor found, planned, changed, validated and tested, built from stored data. A report never changes after it is generated; secrets and code are never included."
+      />
       <ReportList list={list} type={query.type ?? null} />
     </div>
   );
