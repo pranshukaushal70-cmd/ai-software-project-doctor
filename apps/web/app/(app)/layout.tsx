@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="flex h-14 items-center justify-between gap-4">
             <div className="flex items-center gap-6">
-              <Logo href="/dashboard" />
+              <Logo />
               <AppNav />
             </div>
             <div className="flex items-center gap-1">
