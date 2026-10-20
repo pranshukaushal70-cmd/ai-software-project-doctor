@@ -3,12 +3,31 @@
 What has been verified, phase by phase, with the dates of the end-to-end checks. The current totals are in the
 [README](../README.md#verification-status); how to run each suite is in [testing.md](testing.md).
 
+## Brand-link fix (2026-10-19)
+
+PR #17 (`13f9d59`, merged as `e39fe7e`): the logo in the signed-in header (`app/(app)/layout.tsx`) linked to
+`/dashboard`; it now links to the landing page (`/`), like the logo on the landing, sign-in, sign-up and 404 pages. Local
+runs on the change before it was committed (the files were byte-identical to the commit), without Docker, a database or
+any real AI request; dates in UTC.
+
+| Check | Result |
+|---|---|
+| `apps/web/test/brand-link.test.ts` (new) | 2 of 2 passed: in the signed-in header the logo's `href` is `/` and a click hands `/` to the router; the landing, sign-in, sign-up and 404 pages also link to `/` |
+| `npm test` | 66 test files passed, 1 skipped; **862 tests passed**, 0 failed, 4 skipped (866; the real-Docker sandbox tests, not run): the frontend refresh's 860 plus the 2 new tests |
+| `npm run typecheck`, `npm run build`, `git diff --check` | Typecheck clean for all workspaces; the production build passed (22 pages); no whitespace errors |
+| Manual check on the local app (web container on port 3000), before the commit | The logo leads to the landing page from inside the app; a smoke test of authentication, repository analysis, planner, reports and responsive layout was reported as passing. The planner's AI provider was not recorded, so this is not a real-model check |
+| GitHub CI | All four jobs passed on the PR (`13f9d59`) and on the merge commit on `main` (`e39fe7e`) |
+
+Not run for this change: the real-Docker sandbox tests and the end-to-end suite locally (both ran in CI), `npm audit`,
+and any real-model request.
+
 ## Frontend refresh (2026-10-18)
 
 Local runs on the `feat/frontend-refresh` branch, without any real AI request. The refresh changes only `apps/web`: the
 animated landing page, a shared page header, empty states, notices and form styles, phone navigation, loading, error
 and not-found pages, the light and dark palettes, UTC date display and accessibility fixes (see the
-[README](../README.md#web-interface)). CI has not run on this branch yet.
+[README](../README.md#web-interface)). CI had not run on the branch when these results were recorded; all four CI jobs
+later passed on PR #16 (`9e730c3`) and its merge commit on `main` (`f54ce6e`).
 
 | Check | Result |
 |---|---|
@@ -51,6 +70,12 @@ with 503; one `gemini-3.5-flash-lite` plan and one edit). What remains unverifie
 these checks) is covered by mocked tests only: the levels per model and the request field match Google's `generateContent`
 documentation (REST example `"thinkingConfig": { "thinkingLevel": "low" }`), but no real request has used it yet.
 
+**Earlier Anthropic attempts.** Two single-task attempts with `claude-opus-5-5` (2026-10-09 and 2026-10-10;
+`clean-lib` fixture, tests off; local results in the git-ignored `benchmarks/results/local/`) failed at the planning
+stage with "The AI provider returned an error (network).", the message for an SDK error without an HTTP status; no
+tokens were recorded and no code-engine run started. The requests were attempted, but no Anthropic response has been
+confirmed.
+
 ## Gemini thinking level and current totals (2026-10-14)
 
 Local runs on the `feat/gemini-thinking-level` branch, without any real AI request:
@@ -89,8 +114,8 @@ sandbox off (the default deployment) and **33 of 33** with `docker-compose.sandb
 sandbox container without network and passed; no sandbox containers or volumes left). Service logs contained no keys,
 passwords, task text or patch content. Detection benchmark: precision 97.3 %, recall 97.3 % (36 of 37 planted issues, one
 false positive; [results](../benchmarks/results/detection.md)). Planner/code-engine evaluation against the stub: 5 of 6 tasks
-(the stub's planner picks the wrong file of the import cycle, as expected of a script). The real-model evaluation has not
-been run (no API key was available); see [docs/benchmark.md](benchmark.md). Found and fixed by the end-to-end run:
+(the stub's planner picks the wrong file of the import cycle, as expected of a script). The real-model evaluation had not
+been run by then (no API key was available); see [docs/benchmark.md](benchmark.md). Found and fixed by the end-to-end run:
 the sandbox override enabled the sandbox only in the worker, so the web tier refused test execution; it now sets the
 switches (never the socket) for the web tier too.
 
