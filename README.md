@@ -236,21 +236,48 @@ Every push to `main` and every pull request runs [CI](docs/ci.md): typecheck, un
 migrations against an empty database, the sandbox against real Docker, and the Playwright end-to-end suite against the
 production images with the sandbox off and on.
 
+**GitHub CI.** The four jobs: typecheck, unit tests, build and migrations; sandbox against real Docker; end to end with
+the sandbox off; end to end with the sandbox on.
+
+| Run | Result |
+|---|---|
+| PR #16 (`9e730c3`) and its merge commit on `main` (`f54ce6e`), 2026-10-18 | All four jobs passed on both |
+| PR #17 (`13f9d59`) and its merge commit on `main` (`e39fe7e`), 2026-10-19 | All four jobs passed on both; `e39fe7e` is the current `main` |
+
+**Local runs.**
+
 | Check | Result |
 |---|---|
-| `npm test` (Vitest, all workspaces) | **860 passed**, 4 skipped (864): the skipped tests are the real-Docker sandbox tests, which run with `PD_DOCKER_TESTS=1`. Local on `feat/frontend-refresh` (2026-10-18); CI has not run on this branch yet; the refresh adds 30 tests. On `main` (2026-10-15, before PR #15 added 7): 823 passed, 4 skipped, also in CI |
-| Real-Docker sandbox tests (`PD_DOCKER_TESTS=1 npx vitest run --project sandbox`) | Passed in CI on PR #14 and `main` (2026-10-15); locally 23 of 23, including the 4 Docker tests (2026-10-14). Not run on `feat/frontend-refresh` |
-| `npm run typecheck`, `npm run lint`, `npm run build`, `npm audit` | Local on `feat/frontend-refresh` (2026-10-18): clean for all eleven workspaces (`lint` runs the same strict typecheck); build succeeds (22 pages); 0 known vulnerabilities |
-| End to end (Playwright, production images, model stub; 38 specs) | Local on `feat/frontend-refresh` (2026-10-18), isolated stack (project `pd-e2e`, never the demo stack), sandbox off: **34 passed**, 0 failed, 4 skipped (the sandbox-only repair specs, not run). Sandbox on: not run on this branch. CI on PR #14 and `main` (2026-10-15): both legs (sandbox off and on) passed |
-| Frontend refresh, browser checks (2026-10-18) | Headless Chromium, page loads only: landing illustration draws, animates, follows the mouse, steps with the arrow keys and holds a still frame with reduced motion; every signed-in page at 1440, 768 and 390 px in light and dark has one `h1` and one `<main>`, no horizontal scrolling and no console errors; all nine analysis tabs render. Light-theme contrast of the primary colour, below WCAG AA in that sweep, is fixed: white on primary 5.21:1, primary text on the background 5.20:1 (measured from the stylesheet and on the running demo stack; see [verification](docs/verification.md#frontend-refresh-2026-10-18)). Not verified: a screen reader, an automated accessibility scan, real devices |
-| GitHub CI, PR #14 and the merge commit on `main` (2026-10-15) | All four jobs passed on both: typecheck, unit tests, build and migrations; sandbox against real Docker; end to end with the sandbox off; end to end with the sandbox on |
+| `npm test` (Vitest, all workspaces), brand-link change (2026-10-19) | 66 test files passed, 1 skipped; **862 tests passed**, 4 skipped, 0 failed. The skipped file holds the real-Docker sandbox tests, which run with `PD_DOCKER_TESTS=1`. On the change committed as `13f9d59` (PR #17) |
+| `npm test` (Vitest, all workspaces), frontend refresh (2026-10-18) | **860 passed**, 0 failed, 4 skipped (864; the real-Docker sandbox tests). On `feat/frontend-refresh` before PR #16 was merged; the refresh added 30 tests |
+| `npm run typecheck`, `npm run lint`, `npm run build` | On the brand-link change (`13f9d59`), 2026-10-19: typecheck clean for all workspaces (`lint` runs the same strict typecheck); the production build passed (22 pages) |
+| `npm audit` | 0 known vulnerabilities on `feat/frontend-refresh` (2026-10-18); not re-run since |
+| Real-Docker sandbox tests (`PD_DOCKER_TESTS=1 npx vitest run --project sandbox`) | 23 of 23, including the 4 Docker tests (2026-10-14); since then covered by CI only |
+| End to end (Playwright, production images, model stub; 38 specs) | On `feat/frontend-refresh` (2026-10-18), isolated stack (project `pd-e2e`, never the demo stack), sandbox off: **34 passed**, 0 failed, 4 skipped (the sandbox-only repair specs). Sandbox on: covered by CI only |
+
+**Browser checks.**
+
+| Check | Result |
+|---|---|
+| Frontend refresh, automated (2026-10-18) | Headless Chromium, page loads only: landing illustration draws, animates, follows the mouse, steps with the arrow keys and holds a still frame with reduced motion; every signed-in page at 1440, 768 and 390 px in light and dark has one `h1` and one `<main>`, no horizontal scrolling and no console errors; all nine analysis tabs render. Light-theme contrast of the primary colour, below WCAG AA in that sweep, is fixed: white on primary 5.21:1, primary text on the background 5.20:1 (measured from the stylesheet and on the running demo stack; see [verification](docs/verification.md#frontend-refresh-2026-10-18)) |
+| Brand-logo navigation (PR #17) | The *Project Doctor* logo in the signed-in header now links to the landing page (`/`) instead of `/dashboard`, like the logo on the landing, sign-in, sign-up and 404 pages. Checked by hand on the local app (web container on port 3000) before the change was committed: the logo leads to the landing page from inside the app. Covered by `apps/web/test/brand-link.test.ts` (2 tests), part of CI's unit tests; all four of PR #17's CI jobs passed |
+| Manual smoke test, before PR #17 was merged | By hand, on the same local app: authentication, repository analysis, planner, reports and responsive layout. Reported as passing. The planner's AI provider was not recorded, so this check does not establish that a real model was used (see below) |
+| Not verified | A screen reader, an automated accessibility scan, real devices |
+
+**Benchmarks and real models.**
+
+| Check | Result |
+|---|---|
 | Detection benchmark (2026-10-08) | Precision 97.3 %, recall 97.3 % ([results](benchmarks/results/detection.md)) |
-| Planner and code-engine evaluation | Stub: 5 of 6 tasks. Real model: benchmark not run yet ([docs/benchmark.md](docs/benchmark.md)) |
-| Real model, single manual checks (2026-10-13, Gemini free tier) | `gemini-3.5-flash-lite`: plan **and code edit verified** (patch applied, sandbox tests 3 of 3, hidden assertion passed). `gemini-3.8-flash` (the configured default): plan verified once; **code edit not verified** (two 503 overload responses) |
+| Planner and code-engine evaluation | Stub: 5 of 6 tasks. Real model: two single-task attempts with `claude-opus-5-5` (2026-10-09, 2026-10-10) failed at the planning stage without a provider response; no real-model evaluation has succeeded ([docs/benchmark.md](docs/benchmark.md)) |
+| Real model, single manual checks (2026-10-13, Gemini free tier) | `gemini-3.5-flash-lite`: plan **and code edit verified** (patch applied, sandbox tests 3 of 3, hidden assertion passed). `gemini-3.8-flash` (the configured default): plan verified once; the plan-and-edit attempt was **unsuccessful**: both plan requests were rejected with HTTP 503 (model overloaded), so no edit request was sent and its **code edit is not verified** |
 
 The automated planner and code-engine evaluation has run only against the model stub, which runs the real provider code
 over HTTP with scripted responses. Real models have been checked by hand: one complete Gemini code edit with
-`gemini-3.5-flash-lite`, and one plan with `gemini-3.8-flash`, whose code editing remains unverified; Anthropic and xAI
-have not been called ([docs/verification.md](docs/verification.md#real-model-checks-2026-10-13)).
+`gemini-3.5-flash-lite`, and one plan with `gemini-3.8-flash`, whose code editing remains unverified
+([docs/verification.md](docs/verification.md#real-model-checks-2026-10-13)). Anthropic: two planner requests to
+`claude-opus-5-5` were attempted (2026-10-09, 2026-10-10) and both failed without an HTTP response (no status, no
+tokens), so no Anthropic response has been confirmed ([docs/verification.md](docs/verification.md#real-model-checks-2026-10-13)). No xAI
+request is recorded.
 
 What each phase was verified with, test by test and with its end-to-end check: [docs/verification.md](docs/verification.md).
