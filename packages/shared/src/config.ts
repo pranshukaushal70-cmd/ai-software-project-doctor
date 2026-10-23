@@ -6,6 +6,10 @@ const int = (def: number) => z.coerce.number().int().positive().default(def);
 
 const limitsSchema = z.object({
   WORKSPACE_DIR: z.string().optional(),
+  ZIP_UPLOADS_ENABLED: z
+    .enum(["true", "false", "1", "0"])
+    .default("true")
+    .transform((v) => v === "true" || v === "1"),
   MAX_UPLOAD_MB: int(50),
   MAX_EXTRACTED_MB: int(500),
   MAX_ZIP_ENTRIES: int(20_000),
@@ -22,6 +26,8 @@ const limitsSchema = z.object({
 
 export interface AnalyzerLimits {
   workspaceDir: string;
+  /** Accept uploaded .zip archives; off where web and worker do not share WORKSPACE_DIR (e.g. Railway). */
+  zipUploadsEnabled: boolean;
   maxUploadBytes: number;
   maxExtractedBytes: number;
   maxZipEntries: number;
@@ -41,6 +47,7 @@ export function loadLimits(env: NodeJS.ProcessEnv = process.env): AnalyzerLimits
   );
   return {
     workspaceDir: parsed.WORKSPACE_DIR ? path.resolve(parsed.WORKSPACE_DIR) : path.join(os.tmpdir(), "project-doctor"),
+    zipUploadsEnabled: parsed.ZIP_UPLOADS_ENABLED,
     maxUploadBytes: parsed.MAX_UPLOAD_MB * 1024 * 1024,
     maxExtractedBytes: parsed.MAX_EXTRACTED_MB * 1024 * 1024,
     maxZipEntries: parsed.MAX_ZIP_ENTRIES,

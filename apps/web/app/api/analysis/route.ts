@@ -15,8 +15,10 @@ export const POST = route(async (req) => {
   const contentType = req.headers.get("content-type") ?? "";
 
   if (contentType.startsWith("multipart/form-data")) {
+    const { maxUploadBytes, zipUploadsEnabled } = loadLimits();
+    // Refused before rate limiting or reading the body; repository URLs and the demo are unaffected.
+    if (!zipUploadsEnabled) throw new AppError("FORBIDDEN", "ZIP uploads are disabled on this server; analyse a public repository URL instead");
     await rateLimit("upload", user.id);
-    const { maxUploadBytes } = loadLimits();
     const declared = Number(req.headers.get("content-length") ?? 0);
     // Reject before buffering the body; multipart overhead gets a small allowance.
     if (declared > maxUploadBytes + 64 * 1024) {

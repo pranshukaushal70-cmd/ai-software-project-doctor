@@ -150,6 +150,7 @@ See [.env.example](.env.example). The important ones:
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Used by `docker-compose.yml` to create the database. `POSTGRES_PASSWORD` is required (no default); it only takes effect when the database volume is first created. PostgreSQL and Redis are published on `127.0.0.1` only |
 | `REDIS_URL` | Redis for the job queue and rate limiting |
 | `JWT_SECRET` | ≥32-char secret used to HMAC session tokens before storage |
+| `SIGNUP_ENABLED` | Account registration: `true` or `false`. Unset: open in development, **closed in production** (including the containers). Signing in is not affected |
 | `AI_PROVIDER` | Planner and code-engine provider: `anthropic` (default; needs `ANTHROPIC_API_KEY`), `xai` (needs `XAI_API_KEY` and `XAI_MODEL`), `gemini` (needs `GEMINI_API_KEY`) or `baseline` (deterministic evidence-only plans, no LLM; cannot write code, so code-engine runs are refused) |
 | `ANTHROPIC_API_KEY` | Optional. Enables LLM planning (Phase 7) and code editing (Phase 8). Needed by the web app (checked) and the worker (used). Read from the environment only; never stored, logged or sent to the browser |
 | `ANTHROPIC_MODEL` | Model for planning and editing, default `claude-opus-5-5` |
@@ -165,6 +166,7 @@ See [.env.example](.env.example). The important ones:
 | `SANDBOX_RUNTIME`, `SANDBOX_IMAGE_*`, `SANDBOX_*_SECONDS`, `SANDBOX_MEMORY_MB`, `SANDBOX_CPUS`, `SANDBOX_PIDS` | Sandbox runtime (`runc`/`runsc`), digest-pinned images and limits; see [docs/code-engine.md](docs/code-engine.md#configuration) |
 | `ENGINE_CONCURRENCY` | Planner and code-engine jobs the worker runs at once (default 1) |
 | `WORKSPACE_DIR` | Where uploads and clones are stored temporarily (default: OS temp dir) |
+| `ZIP_UPLOADS_ENABLED` | `true` (default) accepts uploaded `.zip` archives; `false` offers repository URLs and the demo only. Turn it off where web and worker do not share `WORKSPACE_DIR` |
 | `MAX_UPLOAD_MB`, `MAX_EXTRACTED_MB`, `MAX_ZIP_ENTRIES`, `MAX_COMPRESSION_RATIO`, `MAX_FILE_KB` | Ingest safety limits |
 | `CLONE_TIMEOUT_SECONDS`, `CLONE_DEPTH` | Clone limits |
 | `OSV_ENABLED` | `true` (default) checks exact dependency versions against OSV.dev; `false` makes no OSV.dev requests. See [security.md](docs/security.md#outbound-network-osvdev) for what is sent |

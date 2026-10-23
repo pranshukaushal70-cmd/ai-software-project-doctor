@@ -96,6 +96,8 @@ services:
       APP_URL: ${APP_URL:-http://localhost:3000}
       # Only behind a reverse proxy that overwrites X-Forwarded-For (docs/deployment.md).
       TRUST_PROXY: ${TRUST_PROXY:-false}
+      # The images run in production, where registration is closed unless this is true.
+      SIGNUP_ENABLED: ${SIGNUP_ENABLED:-}
     # Published on localhost only: put a TLS-terminating reverse proxy in front for anything else.
     ports:
       - "127.0.0.1:${WEB_PORT:-3000}:3000"

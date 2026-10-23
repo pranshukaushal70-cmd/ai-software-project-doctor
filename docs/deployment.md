@@ -48,6 +48,9 @@ Without it, forwarding headers are ignored and the per-IP limits on login and si
 Uploads go to the `workspace` volume, shared by `web` (writes archives) and `worker` (reads and keeps them for the code
 engine); both run as uid 1000, which owns the volume.
 
+The containers run in production, where registration is closed unless `SIGNUP_ENABLED=true`. Set it in `.env` to create
+the first accounts, then remove it (or set `false`) to close registration again; existing accounts can always sign in.
+
 ## Configuration
 
 The containers read the same variables as a local installation ([README](../README.md#environment-variables)); compose
@@ -107,6 +110,55 @@ dangerous part of the API.
 | Upgrade | `git pull && docker compose --profile app up -d --build` (migrations run first) |
 | Back up | `docker compose exec postgres pg_dump -U doctor project_doctor > backup.sql` |
 | Stop / remove data | `docker compose --profile app down` / add `--volumes` to delete the database and uploads |
+
+## Railway (staging)
+
+A staging or demo deployment on [Railway](https://railway.com). Compose cannot be deployed there as one service: each
+container is its own Railway service, and a Railway volume belongs to one service only.
+
+**Services.** Every application service builds from the repository root with this `Dockerfile`. Railway's
+documentation describes no build-target setting, so the service variable `APP_TARGET` selects the stage (the final `FROM ${APP_TARGET}` line);
+without it the build produces `migrate`, as before.
+
+| Service | Source | `APP_TARGET` | Networking | Health check | Restart policy |
+|---|---|---|---|---|---|
+| `web` | this repository | `web` | Public Railway domain, target port 3000 | `/api/health` | On failure |
+| `worker` | this repository | `worker` | Private only (no domain, no port) | none (no HTTP) | On failure |
+| `migrate` | this repository | `migrate` | Private only | none | Never (run once per release) |
+| Postgres | Railway PostgreSQL 17 | — | Private only: **no TCP proxy** | — | — |
+| Redis | Railway Redis | — | Private only: **no TCP proxy** | — | — |
+
+Leave the start commands empty (each image has its own) and run one replica of each. Railway applies none of compose's
+`read_only`, `cap_drop` or `no-new-privileges` settings; the images still run as the unprivileged `node` user.
+
+**Variables** (names only; values are set in Railway, never committed):
+
+| Service | Variables |
+|---|---|
+| `web` | `APP_TARGET`, `PORT`, `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `APP_URL`, `TRUST_PROXY`, `SIGNUP_ENABLED`, `ZIP_UPLOADS_ENABLED`, `SANDBOX_ENABLED`, `SANDBOX_INSTALL_ENABLED`, `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `LOG_LEVEL` |
+| `worker` | `APP_TARGET`, `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `SANDBOX_ENABLED`, `SANDBOX_INSTALL_ENABLED`, `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_THINKING_LEVEL`, `AI_MAX_REQUESTS`, `WORKER_CONCURRENCY`, `ENGINE_CONCURRENCY`, `CLONE_TIMEOUT_SECONDS`, `CLONE_DEPTH`, `OSV_ENABLED`, `LOG_LEVEL` |
+| `migrate` | `APP_TARGET`, `DATABASE_URL` |
+
+- `PORT=3000` on `web`, matching the domain's target port: the server listens on `PORT`, which Railway may otherwise
+  set to its own value. `APP_URL` must be the exact public origin (`https://<name>.up.railway.app`): every POST,
+  including sign-in, is checked against it.
+- `DATABASE_URL` and `REDIS_URL` reference the private connection strings of the Postgres and Redis services. If the
+  environment's private network is IPv6-only, ioredis needs `?family=0` on `REDIS_URL`.
+- `ZIP_UPLOADS_ENABLED=false`: web and worker share no disk, so uploads are refused and only repository URLs and the
+  demo project are offered.
+- `SANDBOX_ENABLED=false` and `SANDBOX_INSTALL_ENABLED=false`: Railway gives containers no Docker engine, and the sandbox
+  must never run there. Code-engine runs end with a diff for review.
+- `AI_PROVIDER=gemini` with a key from a Google Cloud project without billing, and a small `AI_MAX_REQUESTS`. Leave the
+  `ANTHROPIC_*` and `XAI_*` variables unset; nothing falls back to another provider.
+- `SIGNUP_ENABLED` unset (closed). Open it only to create the staging accounts, then close it again.
+- `TRUST_PROXY=false` unless Railway's proxy is confirmed to overwrite `X-Forwarded-For`; until then the per-IP limits
+  apply to all clients together.
+
+**Order.** Provision Postgres and Redis, run `migrate` and check that it exits with code 0, then deploy `worker` and
+`web`. For a release with new migrations, run `migrate` again before redeploying the others. Railway health checks
+run only during a deploy; nothing watches the worker afterwards.
+
+**Cost.** Four always-on services (web, worker, Postgres, Redis) plus the one-off `migrate`. Set a hard usage limit on the Railway project before the first deploy.
 
 ## Known limitations
 

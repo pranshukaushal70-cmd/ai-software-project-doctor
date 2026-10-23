@@ -18,5 +18,7 @@ services:
       GEMINI_API_KEY: ""
       # Deterministic analysis input: no OSV.dev lookups.
       OSV_ENABLED: "false"
+      # The benchmark registers its own users.
+      SIGNUP_ENABLED: "true"
   worker:
     environment: *eval-env

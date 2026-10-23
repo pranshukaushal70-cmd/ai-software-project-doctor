@@ -11,7 +11,7 @@ import { cn, formatBytes } from "@/lib/utils";
 
 type Tab = "url" | "zip";
 
-export function NewAnalysisForm({ maxUploadMb }: { maxUploadMb: number }) {
+export function NewAnalysisForm({ maxUploadMb, zipUploadsEnabled }: { maxUploadMb: number; zipUploadsEnabled: boolean }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("url");
   const [file, setFile] = useState<File | null>(null);
@@ -59,34 +59,41 @@ export function NewAnalysisForm({ maxUploadMb }: { maxUploadMb: number }) {
 
   return (
     <Card className="mt-6">
-      <div role="tablist" aria-label="Repository source" className="flex border-b">
-        {(
-          [
-            ["url", FolderGit2, "Repository URL"],
-            ["zip", FileArchive, "Upload ZIP"],
-          ] as const
-        ).map(([id, Icon, label]) => (
-          <button
-            key={id}
-            id={`source-tab-${id}`}
-            role="tab"
-            type="button"
-            aria-selected={tab === id}
-            aria-controls="source-panel"
-            tabIndex={tab === id ? 0 : -1}
-            onClick={() => select(id)}
-            onKeyDown={onTabKey}
-            className={cn(
-              "flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground",
-              tab === id && "border-primary bg-primary/5 text-foreground",
-            )}
-          >
-            <Icon className="size-4" /> {label}
-          </button>
-        ))}
-      </div>
+      {/* With uploads turned off the URL is the only source, so there is nothing to switch between. */}
+      {zipUploadsEnabled && (
+        <div role="tablist" aria-label="Repository source" className="flex border-b">
+          {(
+            [
+              ["url", FolderGit2, "Repository URL"],
+              ["zip", FileArchive, "Upload ZIP"],
+            ] as const
+          ).map(([id, Icon, label]) => (
+            <button
+              key={id}
+              id={`source-tab-${id}`}
+              role="tab"
+              type="button"
+              aria-selected={tab === id}
+              aria-controls="source-panel"
+              tabIndex={tab === id ? 0 : -1}
+              onClick={() => select(id)}
+              onKeyDown={onTabKey}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground",
+                tab === id && "border-primary bg-primary/5 text-foreground",
+              )}
+            >
+              <Icon className="size-4" /> {label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <CardContent id="source-panel" role="tabpanel" aria-labelledby={`source-tab-${tab}`} className="pt-5">
+      <CardContent
+        id="source-panel"
+        {...(zipUploadsEnabled && { role: "tabpanel", "aria-labelledby": `source-tab-${tab}` })}
+        className="pt-5"
+      >
         <form onSubmit={submit} className="flex flex-col gap-5">
           {tab === "url" ? (
             <div className="flex flex-col gap-1.5">
