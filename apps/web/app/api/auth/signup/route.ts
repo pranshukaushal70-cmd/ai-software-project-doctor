@@ -2,10 +2,13 @@ import { getPrisma, Prisma } from "@pd/db";
 import { AppError, signupSchema } from "@pd/shared";
 import { hashPassword } from "@/server/auth/password";
 import { createSession } from "@/server/auth/session";
+import { signupEnabled } from "@/server/auth/signup";
 import { clientIp, ok, readJson, route } from "@/server/http";
 import { rateLimit } from "@/server/rate-limit";
 
 export const POST = route(async (req) => {
+  // Refused before rate limiting or reading the body; sign-in is not affected.
+  if (!signupEnabled()) throw new AppError("FORBIDDEN", "Registration is closed on this server");
   const ip = clientIp(req);
   await rateLimit("signup", ip);
   const input = signupSchema.parse(await readJson(req));

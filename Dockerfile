@@ -10,6 +10,8 @@
 # Base images are pinned by digest. node:24-slim is the same image the sandbox runs tests in.
 ARG NODE_IMAGE=node:24-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
 ARG DOCKER_CLI_IMAGE=docker:29-cli@sha256:b1805116a6a86cc591b5d5f60a910a0715cdcc9d18d866ad68b1457ead25c35c
+# Stage built by platforms without a build-target setting (Railway); compose and `--target` ignore it.
+ARG APP_TARGET=migrate
 
 FROM ${DOCKER_CLI_IMAGE} AS docker-cli
 
@@ -107,3 +109,5 @@ COPY packages/db packages/db
 WORKDIR /app/packages/db
 USER node
 CMD ["/app/node_modules/.bin/prisma", "migrate", "deploy"]
+
+FROM ${APP_TARGET} AS app
